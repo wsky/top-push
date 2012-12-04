@@ -33,9 +33,21 @@ import org.jboss.netty.logging.InternalLoggerFactory;
 import org.jboss.netty.util.CharsetUtil;
 
 import com.sun.corba.se.impl.encoding.OSFCodeSetRegistry.Entry;
+import com.sun.tools.javac.util.List;
 
 public class WebSocketServer {
+	private static List<Channel> ClientsChannels;
+	
+	public static void AddClient(Channel channel) {
+		ClientsChannels.add(channel);
+	}
+	public static void RemoveClient(Channel channel) {
+		ClientsChannels.remove(channel);
+	}
+	
 	public void Run() {
+		
+		
 		ServerBootstrap bootstrap = new ServerBootstrap(
 				new NioServerSocketChannelFactory(
 						Executors.newCachedThreadPool(), 
@@ -94,10 +106,10 @@ public class WebSocketServer {
 	            return;
 	        }
 	        
-	        if(logger.isInfoEnabled())
-	        for (java.util.Map.Entry<String, String> h : req.getHeaders()) {
-	        	logger.info(h.getKey() + " : " + h.getValue());
-	        }
+	        if(logger.isDebugEnabled())
+	        	for (java.util.Map.Entry<String, String> h : req.getHeaders()) {
+	        		logger.debug(h.getKey() + " : " + h.getValue());
+	        	}
 	        
 	        //Handshake
 	        //Subprotocols is null
@@ -123,6 +135,7 @@ public class WebSocketServer {
 	        if (frame instanceof CloseWebSocketFrame) {
 	        	//CLose Frame
 	            handshaker.close(ctx.getChannel(), (CloseWebSocketFrame) frame);
+	            //hangup
 	            ctx.getChannel().close();
 	            return;
 	        } else if (frame instanceof PingWebSocketFrame) {
@@ -144,10 +157,19 @@ public class WebSocketServer {
 	        	Channel channel = ctx.getChannel();
 	        	channel.write(new TextWebSocketFrame(i + ""));
 	        	TextWebSocketFrame r = new TextWebSocketFrame(request);
+	        	int k = 0;
 	        	for(int j = 0; j < i; j++) {
 	        		//channel.write(new TextWebSocketFrame(request));
-	        		channel.write(r);
+	        		//many message will course OOM, data pinned whill unwritable.
+	        		if(channel.isWritable())
+	        			channel.write(r);
+	        		else {
+						logger.info("can not write");
+						k++;
+					}
 	        	}
+	        	logger.info(k+"");
+	        	logger.info(String.format("Channel %s send %s meesages", ctx.getChannel().getId(), i));
 	        } else if (frame instanceof BinaryWebSocketFrame) {
 	            throw new UnsupportedOperationException(String.format("%s frame types not supported",  
 	                    frame.getClass().getName()));  

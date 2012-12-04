@@ -5,14 +5,22 @@
 
 
   <servlet>
-    <servlet-name>WS</servlet-name>
-    <servlet-class>com.tmall.top.WebSocketHandle</servlet-class>
-    <load-on-startup>1</load-on-startup>
+    <servlet-name>simple</servlet-name>
+    <servlet-class>com.tmall.top.SimpleWebSocketServlet</servlet-class>
   </servlet>
-    
+  <servlet>
+    <servlet-name>polling</servlet-name>
+    <servlet-class>com.tmall.top.PollingWebSocketServlet</servlet-class>
+  </servlet>
+  
   <servlet-mapping>
-    <servlet-name>WS</servlet-name>
-    <url-pattern>/talk/*</url-pattern>
+    <servlet-name>simple</servlet-name>
+    <url-pattern>/simple</url-pattern>
+  </servlet-mapping>  
+  <servlet-mapping>
+    <servlet-name>polling</servlet-name>
+    <url-pattern>/polling</url-pattern>
   </servlet-mapping>
+  
 
 </web-app>
