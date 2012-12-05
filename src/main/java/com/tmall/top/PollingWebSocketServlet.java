@@ -23,13 +23,16 @@ public class PollingWebSocketServlet extends WebSocketServlet {
 	
 	private static Object _syncObject = new Object();
 	private static Thread _workerThread;
-	private static java.util.List<PollingWebSocket> _clients = Collections.synchronizedList(new ArrayList<PollingWebSocket>());
+	private static java.util.List<PollingWebSocket> _clients = new ArrayList<PollingWebSocket>();
 	
 	public WebSocket doWebSocketConnect(HttpServletRequest arg0, String arg1) {
-		if(_workerThread!=null) {
+		if(_workerThread == null) {
 			synchronized(_syncObject){
-				if(_workerThread!=null)
+				if(_workerThread == null) {
 					_workerThread =	new Thread(new PollingSender());
+					_workerThread.start();
+					System.out.println("worker running...");
+				}
 			}
 		}
 		return new PollingWebSocket();
@@ -55,6 +58,7 @@ public class PollingWebSocketServlet extends WebSocketServlet {
 				return;
 			}
 			this.Message = arg0;
+			System.out.println(String.format("[polling] total=%s, message=%s", this.Total, this.Message));
 		}
 	}
 	private class PollingSender implements Runnable {
@@ -74,8 +78,8 @@ public class PollingWebSocketServlet extends WebSocketServlet {
 						} catch (IOException e) {
 							e.printStackTrace();
 						}
-						
 					}
+					System.out.println(String.format("[Polling] Send %s meesages", client.SendCount));
 				}
 				try {
 					Thread.sleep(50);

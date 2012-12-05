@@ -37,7 +37,8 @@ client.on('connect', function(connection) {
                 console.log('avg: %s msg/s', (total / cost) * 1000);
                 console.log('match: %s', match);
                 connection.close();
-                process.send('done');
+                if(process.send)
+                    process.send('done');
                 process.exit();
             } 
         }

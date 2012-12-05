@@ -34,7 +34,7 @@ public class SimpleWebSocketServlet extends WebSocketServlet {
 				for(int i = 0; i < this._total; i++) {
 					this._connection.sendMessage(msg);
 				}
-				System.out.println(String.format("Send %s meesages", this._total));
+				System.out.println(String.format("[Simple] Send %s meesages", this._total));
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
