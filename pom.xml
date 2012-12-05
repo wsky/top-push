@@ -22,6 +22,7 @@
       <version>4.8.2</version>
       <scope>test</scope>
     </dependency>
+
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-websocket</artifactId>
@@ -32,7 +33,7 @@
       <artifactId>javax.servlet</artifactId>
       <version>3.0.0.v201112011016</version>
     </dependency>
-            
+                        
     <dependency>
       <groupId>io.netty</groupId>
       <artifactId>netty</artifactId>
@@ -56,6 +57,8 @@
             <connector implementation="org.eclipse.jetty.server.nio.SelectChannelConnector">
               <port>9090</port>
               <maxIdleTime>60000</maxIdleTime>
+              <!--default 8192-->
+              <responseBufferSize>65536</responseBufferSize>
             </connector>
           </connectors>
         </configuration>

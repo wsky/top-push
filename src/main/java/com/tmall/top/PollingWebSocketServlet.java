@@ -8,14 +8,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.eclipse.jetty.websocket.WebSocket;
 import org.eclipse.jetty.websocket.WebSocketServlet;
-import org.eclipse.jetty.websocket.WebSocket.Connection;
 import org.eclipse.jetty.websocket.WebSocket.OnTextMessage;
-
-import sun.misc.Cleaner;
-import sun.misc.Lock;
-
-import com.sun.org.apache.bcel.internal.generic.NEW;
-import com.sun.tools.javac.util.List;
 
 /*
  * keep client connections for polling and send messages
@@ -89,7 +82,12 @@ public class PollingWebSocketServlet extends WebSocketServlet {
 					}
 					
 					for(int j = 0; j < client.Total; j++){
+						
+						//prevent channel buffer and keep balance
+						if(j==100) break;
+						
 						try {
+							//will block?
 							client.Connection.sendMessage(client.Message);
 							client.SendCount++;
 						} catch (IOException e) {

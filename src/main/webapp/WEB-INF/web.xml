@@ -12,6 +12,14 @@
     <servlet-name>polling</servlet-name>
     <servlet-class>com.tmall.top.PollingWebSocketServlet</servlet-class>
   </servlet>
+  <servlet>
+    <servlet-name>frontend</servlet-name>
+    <servlet-class>com.tmall.top.FrontendWebSocketServlet</servlet-class>
+  </servlet>
+  <servlet>
+    <servlet-name>backend</servlet-name>
+    <servlet-class>com.tmall.top.BackendWebSocketServlet</servlet-class>
+  </servlet>
   
   <servlet-mapping>
     <servlet-name>simple</servlet-name>
@@ -20,6 +28,14 @@
   <servlet-mapping>
     <servlet-name>polling</servlet-name>
     <url-pattern>/polling</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>frontend</servlet-name>
+    <url-pattern>/frontend</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>backend</servlet-name>
+    <url-pattern>/backend</url-pattern>
   </servlet-mapping>
   
 
