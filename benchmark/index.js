@@ -16,9 +16,9 @@ function tryExit() {
         console.log('conections: %s, failures: %s, total messages: %s, cost: %sms, avg: %smsg/s', 
             test_count,
             test_error_count,
-            test_count * test_message_count,
+            (test_count - test_error_count) * test_message_count,
             cost,
-            test_count * test_message_count * 1000 / cost);
+            (test_count - test_error_count) * test_message_count * 1000 / cost);
         console.log('\n-------------------\n');
         process.exit();
     }
@@ -38,10 +38,9 @@ for(var i = 0; i < test_total; i++) {
         //if (error !== null) {
         //  console.log('exec error: ' + error);
         //}
-        if(m == 'done')
-            test_count++;
-        else
+        if(m != 'done')
             test_error_count++;
+        test_count++;
     });
 }
 

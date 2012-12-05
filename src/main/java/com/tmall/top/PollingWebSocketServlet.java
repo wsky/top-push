@@ -11,6 +11,7 @@ import org.eclipse.jetty.websocket.WebSocketServlet;
 import org.eclipse.jetty.websocket.WebSocket.Connection;
 import org.eclipse.jetty.websocket.WebSocket.OnTextMessage;
 
+import sun.misc.Cleaner;
 import sun.misc.Lock;
 
 import com.sun.org.apache.bcel.internal.generic.NEW;
@@ -23,7 +24,8 @@ public class PollingWebSocketServlet extends WebSocketServlet {
 	
 	private static Object _syncObject = new Object();
 	private static Thread _workerThread;
-	private static java.util.List<PollingWebSocket> _clients = new ArrayList<PollingWebSocket>();
+	//arraylist not threadsafe, evne lose element!
+	private static java.util.List<PollingWebSocket> _clients =Collections.synchronizedList(new ArrayList<PollingWebSocket>());
 	
 	public WebSocket doWebSocketConnect(HttpServletRequest arg0, String arg1) {
 		if(_workerThread == null) {
@@ -45,6 +47,7 @@ public class PollingWebSocketServlet extends WebSocketServlet {
 		
 		public void onClose(int arg0, String arg1) { 
 			PollingWebSocketServlet._clients.remove(this);
+			System.out.println("client closed");
 		}
 		
 		public void onOpen(Connection arg0) {
@@ -58,18 +61,32 @@ public class PollingWebSocketServlet extends WebSocketServlet {
 				return;
 			}
 			this.Message = arg0;
-			System.out.println(String.format("[polling] total=%s, message=%s", this.Total, this.Message));
+			System.out.println(String.format("[polling] #%s total=%s, message=%s", this.hashCode(), this.Total, this.Message));
 		}
 	}
 	private class PollingSender implements Runnable {
 
 		public void run() {
 			while(true) {
-				for(int i = 0; i < PollingWebSocketServlet._clients.size(); i++) {
+				int size = PollingWebSocketServlet._clients.size();
+				//System.out.print("size:"+size);
+				for(int i = 0; i < size; i++) {
+					//System.out.print(i);
+					if(i >= PollingWebSocketServlet._clients.size())
+						break;
+					
 					PollingWebSocket client = PollingWebSocketServlet._clients.get(i);
 					
-					if(!client.Connection.isOpen() || client.Total == client.SendCount) 
+					if(!client.Connection.isOpen() || 
+							client.Total == client.SendCount || 
+							client.Total == 0 || 
+							client.Message == null) {
+						/*System.out.println(String.format("client is closed or finished or not ready, %s %s %s", 
+								client.Total, 
+								client.SendCount, 
+								client.Message));*/
 						continue;
+					}
 					
 					for(int j = 0; j < client.Total; j++){
 						try {
@@ -82,7 +99,7 @@ public class PollingWebSocketServlet extends WebSocketServlet {
 					System.out.println(String.format("[Polling] Send %s meesages", client.SendCount));
 				}
 				try {
-					Thread.sleep(50);
+					Thread.sleep(10);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}

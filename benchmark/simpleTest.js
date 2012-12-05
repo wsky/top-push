@@ -2,27 +2,31 @@ var WebSocketClient = require('websocket').client,
     client = new WebSocketClient(),
     count = 0,
     match = 0,
+    count_connect_fail = 0;
     begin = null,
     uri = process.argv[2],
     total = parseInt(process.argv[3]),
     MSG = '';
 
 //client.config.websocketVersion = 8;
-console.log(process.argv);
+//console.log(process.argv);
 
 client.on('connectFailed', function(error) {
+    count_connect_fail += 1;
+    //socket Hang up
     console.log('Connect Failed: ' + error.toString());
-    process.exit();
+    sendAndExit(error);
 });
 
 client.on('connect', function(connection) {
     console.log('WebSocket client connected');
+
     connection.on('error', function(error) {
         console.log("Connection Error: " + error.toString());
-        process.exit();
+        sendAndExit(error);
     });
     connection.on('close', function() {
-        console.log('echo-protocol Connection Closed');
+        console.log('Connection Closed');
         process.exit();
     });
     connection.on('message', function(message) {
@@ -32,14 +36,15 @@ client.on('connect', function(connection) {
             if(msg == MSG) match++;
             //console.log('count: %s', count);
             if(count == total) {
+                connection.close();
+
                 var cost = new Date() - begin;
                 console.log('cost: %s ms', cost);
                 console.log('avg: %s msg/s', (total / cost) * 1000);
                 console.log('match: %s', match);
-                connection.close();
-                if(process.send)
-                    process.send('done');
-                process.exit();
+                console.log('count_connect_fail: %s', count_connect_fail);
+            
+                sendAndExit('done');
             } 
         }
     });
@@ -53,6 +58,12 @@ client.on('connect', function(connection) {
     }
 });
 
+function sendAndExit(e){
+    if(process.send)
+        process.send(e);
+    process.exit();
+}
+
 //100 byte
 for(var i = 0; i < 100; i++)
     MSG += 'i';
@@ -60,13 +71,3 @@ for(var i = 0; i < 100; i++)
 if(!isNaN(total)){
     client.connect(uri);
 }
-process.on('message', function(m) {
-    var i = parseInt(m);
-
-    if(isNaN(i))
-        total = i;
-    else if(!isNaN(i))
-        uri = m;
-    else if(m == 'start')
-        client.connect(uri);
-});
