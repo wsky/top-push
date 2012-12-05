@@ -9,3 +9,8 @@
 .project
 .classpath
 .settings
+
+packages
+bin
+obj
+*.user
