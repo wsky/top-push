@@ -12,3 +12,10 @@
 
 target
 *.com
+
+
+# csharp
+packages
+bin
+obj
+*.user
