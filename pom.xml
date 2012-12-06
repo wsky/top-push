@@ -55,10 +55,11 @@
           </webAppConfig>
           <connectors>
             <connector implementation="org.eclipse.jetty.server.nio.SelectChannelConnector">
-              <port>9090</port>
+              <port>8080</port>
               <maxIdleTime>60000</maxIdleTime>
               <!--default 8192-->
-              <responseBufferSize>65536</responseBufferSize>
+              <!--1024k-->
+              <responseBufferSize>1048576</responseBufferSize>
             </connector>
           </connectors>
         </configuration>

@@ -65,6 +65,8 @@ function sendAndExit(e){
 }
 
 //100 byte
+//1k
+//4k
 for(var i = 0; i < 100; i++)
     MSG += 'i';
 

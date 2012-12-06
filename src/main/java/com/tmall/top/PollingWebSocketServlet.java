@@ -18,7 +18,8 @@ public class PollingWebSocketServlet extends WebSocketServlet {
 	private static Object _syncObject = new Object();
 	private static Thread _workerThread;
 	//arraylist not threadsafe, evne lose element!
-	private static java.util.List<PollingWebSocket> _clients =Collections.synchronizedList(new ArrayList<PollingWebSocket>());
+	//private static java.util.List<PollingWebSocket> _clients = Collections.synchronizedList(new ArrayList<PollingWebSocket>());
+	private static java.util.List<PollingWebSocket> _clients = Collections.synchronizedList(new ArrayList<PollingWebSocket>());
 	
 	public WebSocket doWebSocketConnect(HttpServletRequest arg0, String arg1) {
 		if(_workerThread == null) {
