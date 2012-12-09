@@ -1,6 +1,7 @@
 var fork = require('child_process').fork,
     websocket = require('websocket').client,
-	client = new websocket();
+	SIZE = 1024 * 64,
+    client = new WebSocketClient({ fragmentationThreshold: SIZE }),
 	uri = process.argv[2] ? process.argv[2] : 'ws://localhost:9090/frontend',
     total = parseInt(process.argv[3]),
     fork_count = parseInt(process.argv[4]),
@@ -10,7 +11,7 @@ var fork = require('child_process').fork,
     count_match = 0;
     MSG = '';
 
-for(var i = 0; i < 100; i++)
+for(var i = 0; i < SIZE; i++)
     MSG += 'i';
 
 client.on('connectFailed', function(error) { console.log('Connect Failed: ' + error.toString()); });

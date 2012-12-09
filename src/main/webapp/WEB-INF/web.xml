@@ -7,6 +7,10 @@
   <servlet>
     <servlet-name>simple</servlet-name>
     <servlet-class>com.tmall.top.SimpleWebSocketServlet</servlet-class>
+    <!--<init-param>
+        <param-name>bufferSize</param-name>
+        <param-value>10485760</param-value>
+    </init-param>-->
   </servlet>
   <servlet>
     <servlet-name>polling</servlet-name>

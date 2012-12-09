@@ -12,5 +12,3 @@ ssh -i $KEY_PAIRS $SERVER "cd ~;sh server-install.sh"
 #copy
 scp -i $KEY_PAIRS client-install.sh $CLIENT_01:~/client-install.sh
 ssh -i $KEY_PAIRS $CLIENT_01 "cd ~;sh client-install.sh"
-#scp -i $KEY_PAIRS client-install.sh $CLIENT_01:~/server-install.sh
-

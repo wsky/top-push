@@ -1,6 +1,8 @@
 package com.tmall.top;
 
 import java.io.IOException;
+import java.util.Date;
+
 import javax.servlet.http.HttpServletRequest;
 import org.eclipse.jetty.websocket.WebSocket;
 import org.eclipse.jetty.websocket.WebSocket.OnBinaryMessage;
@@ -27,14 +29,17 @@ public class SimpleWebSocketServlet extends WebSocketServlet {
 		
 		public void onClose(int arg0, String arg1) {}
 
-		public void onOpen(Connection arg0) { this._connection = arg0; }
+		public void onOpen(Connection arg0) { 
+			this._connection = arg0;
+			this._connection.setMaxTextMessageSize(1024*1024*10);
+		}
 
 		public void onMessage(String msg) {
 			if(this._total == 0) {
 				this._total = Integer.parseInt(msg);
 				return;
 			}
-			
+			/*
 			int worker = 4;
 			int per = this._total / worker;
 			
@@ -42,17 +47,17 @@ public class SimpleWebSocketServlet extends WebSocketServlet {
 				new Thread(new Sender(this, per, msg)).start();
 			}
 			
-			return;
-			/*
+			return;*/
+			long begin = System.currentTimeMillis();
 			try {				
 				for(int i = 0; i < this._total; i++) {
 					this._connection.sendMessage(msg);
 				}
-				System.out.println(String.format("[Simple] Send %s meesages", this._total));
+				System.out.println(String.format("[Simple] Send %s meesages in %sms", this._total, System.currentTimeMillis() - begin));
 			} catch (IOException e) {
 				e.printStackTrace();
-			}*/
-		}	
+			}
+		}
 	}
 	
 	private class SimpleBinaryWebSocket implements OnBinaryMessage {

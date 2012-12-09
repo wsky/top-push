@@ -1,12 +1,15 @@
 var WebSocketClient = require('websocket').client,
-    client = new WebSocketClient(),
+    SIZE = 1024 * 64,//64K
+    client = new WebSocketClient({ fragmentationThreshold: SIZE }),
     count = 0,
     match = 0,
-    count_connect_fail = 0;
+    count_connect_fail = 0,
     begin = null,
     uri = process.argv[2],
     total = parseInt(process.argv[3]),
     MSG = '';
+for(var i = 0; i < SIZE; i++)
+    MSG += 'i';
 
 //client.config.websocketVersion = 8;
 //console.log(process.argv);
@@ -34,7 +37,6 @@ client.on('connect', function(connection) {
             var msg = message.utf8Data;
             count++;
             if(msg == MSG) match++;
-            //console.log('count: %s', count);
             if(count == total) {
                 connection.close();
 
@@ -63,12 +65,6 @@ function sendAndExit(e){
         process.send(e);
     process.exit();
 }
-
-//100 byte
-//1k
-//4k
-for(var i = 0; i < 100; i++)
-    MSG += 'i';
 
 if(!isNaN(total)){
     client.connect(uri);

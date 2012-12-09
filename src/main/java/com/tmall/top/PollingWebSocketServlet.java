@@ -46,6 +46,7 @@ public class PollingWebSocketServlet extends WebSocketServlet {
 		
 		public void onOpen(Connection arg0) {
 			this.Connection = arg0;
+			this.Connection.setMaxTextMessageSize(1024*1024*10);
 			PollingWebSocketServlet._clients.add(this);
 		}
 		
@@ -85,7 +86,7 @@ public class PollingWebSocketServlet extends WebSocketServlet {
 					for(int j = 0; j < client.Total; j++){
 						
 						//prevent channel buffer and keep balance
-						if(j==100) break;
+						if(j==10000) break;
 						
 						try {
 							//will block?
