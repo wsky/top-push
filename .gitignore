@@ -12,7 +12,7 @@
 
 target
 *.com
-
+jetty-distribution-8.1.7.v20120910
 
 # csharp
 packages

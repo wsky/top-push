@@ -26,12 +26,19 @@ function tryExit() {
         setTimeout(tryExit, 200);
 }
 
-console.log(process.argv);
+//console.log(process.argv);
 
 begin = new Date();
 
+var args = new Array(process.argv.length - 3);
+args[0] = test_uri;
+for(var i = 1; i < args.length; i++){
+    args[i] = process.argv[i + 4];
+}
+console.log(args);
+
 for(var i = 0; i < test_total; i++) {
-    var child = fork(test_file, [test_uri, test_message_count]);
+    var child = fork(test_file, args);
     child.on('message', function(m) { 
         //console.log('stdout: ' + stdout);
         //console.log('stderr: ' + stderr);

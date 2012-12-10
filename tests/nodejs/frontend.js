@@ -1,55 +1,44 @@
-var fork = require('child_process').fork,
-    websocket = require('websocket').client,
-	SIZE = 1024 * 64,
-    client = new WebSocketClient({ fragmentationThreshold: SIZE }),
-	uri = process.argv[2] ? process.argv[2] : 'ws://localhost:9090/frontend',
-    total = parseInt(process.argv[3]),
-    fork_count = parseInt(process.argv[4]),
-    isChild = process.argv[5],
-    childIndex = process.argv[6],
-    count = 0,
-    count_match = 0;
-    MSG = '';
+/*
+    test multi-connects to ws-frontend in single process
+    will ping
+    just receive
+*/
 
-for(var i = 0; i < SIZE; i++)
-    MSG += 'i';
+var base = require('./base'),
+    VAR = base.var(),
+    ws = base.ws,
 
-client.on('connectFailed', function(error) { console.log('Connect Failed: ' + error.toString()); });
+	uri = process.argv[2],
+    connects = parseInt(process.argv[3]),
+    mode = process.argv[4];
 
-client.on('connect', function(connection) {
-    console.log('WebSocket client connected, wait for %s messages', total);
-
-    var begin = new Date();
-
-    connection.on('error', function(error) { console.log("Connection Error: " + error.toString()); });
-    connection.on('close', function() { console.log('Connection Closed'); });
-    connection.on('message', function(message) {
-        if (message.type === 'utf8') {
-            if(count == 0) 
-                begin = new Date();
-            count++;
-            if(message.utf8Data == MSG) count_match++;
-            if(count != total) return;
-            console.log('#%s %s messages received in %sms, matchs %s', 
-                childIndex, 
-                count, 
-                new Date() - begin, 
-                count_match);
-            if(isChild)
-                process.exit();
-        }
-    });
-});
-
-client.connect(uri);
+function connect() {
+    ws(null, null, true, true).connect(uri);
+}
 
 var i = 0;
-function doFork() {
-    if(++i == fork_count) return;
-    fork('frontend.js', [uri, total, fork_count, true, i]);
-    setTimeout(doFork, 10);
+function doConnect() {
+    if(i++ == connects) return;
+    connect();
+    setTimeout(doConnect, 10);
+}
+function doParallelConnect() {
+    for(var j = 0;j < connects; j++)
+        connect();
+}
+function doParallelConnect2() {
+    for(var j = 0;j < 100; j++) {
+        if(i == connects) return;
+        connect();
+        i++;
+    }
+    setTimeout(doParallelConnect2, 20);
 }
 
-if(!isChild) {
-    doFork();
-}
+if(mode == 1)
+    doParallelConnect();
+else if(mode == 2)
+    doParallelConnect2();
+else
+    doConnect();
+

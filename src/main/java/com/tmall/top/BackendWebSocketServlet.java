@@ -2,17 +2,22 @@ package com.tmall.top;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import javax.servlet.http.HttpServletRequest;
 
 import org.eclipse.jetty.websocket.WebSocket;
+import org.eclipse.jetty.websocket.WebSocket.Connection;
 import org.eclipse.jetty.websocket.WebSocketServlet;
 import org.eclipse.jetty.websocket.WebSocket.OnTextMessage;
 
 import com.tmall.top.FrontendWebSocketServlet.FrontendWebSocket;
 
 public class BackendWebSocketServlet extends WebSocketServlet {
-
+	
+	public static ConcurrentLinkedQueue<String> Messages = new ConcurrentLinkedQueue<String>();
+	public static Connection Backend = null;
+	
 	public WebSocket doWebSocketConnect(HttpServletRequest arg0, String arg1) {
 		return new BackendWebSocket();
 	}
@@ -23,11 +28,17 @@ public class BackendWebSocketServlet extends WebSocketServlet {
 		
 		public void onClose(int arg0, String arg1) {}
 
-		public void onOpen(Connection arg0) {}
+		public void onOpen(Connection arg0) {
+			Backend = arg0;
+			Backend.setMaxTextMessageSize(1024 * 1024 * 10);
+		}
 
 		public void onMessage(String arg0) {
-			_total++;
+			Messages.add(arg0);
 			
+			//_total++;
+			
+			/*
 			int size = FrontendWebSocketServlet.Clients.size();
 			int count = 0;
 			for(int i = 0; i < size; i++) {
@@ -44,6 +55,7 @@ public class BackendWebSocketServlet extends WebSocketServlet {
 					}
 			}
 			System.out.println(String.format("has send %s messages to %s clients at %s", this._total, count, new Date()));
+			*/
 		}
 		
 	}

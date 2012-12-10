@@ -1,14 +1,20 @@
 #!/bin/bash
 source var.sh
 
-#server
-#copy
-scp -i $KEY_PAIRS server-install.sh $SERVER:~/server-install.sh
-#install
-#if you need
-ssh -i $KEY_PAIRS $SERVER "cd ~;sh server-install.sh"
+#servers
+for i in "${SERSERS[@]}"
+do
+	echo $i
+	scp -i $KEY_PAIRS -o "StrictHostKeyChecking no" base-install.sh $i:~/base-install.sh
+	scp -i $KEY_PAIRS -o "StrictHostKeyChecking no" server-install.sh $i:~/server-install.sh
+	ssh -i $KEY_PAIRS -o "StrictHostKeyChecking no" $i "cd ~;sh base-install.sh;sh server-install.sh;"
+done
 
 #clients
-#copy
-scp -i $KEY_PAIRS client-install.sh $CLIENT_01:~/client-install.sh
-ssh -i $KEY_PAIRS $CLIENT_01 "cd ~;sh client-install.sh"
+for i in "${CLIENTS[@]}"
+do
+	echo $i
+	scp -i $KEY_PAIRS -o "StrictHostKeyChecking no" base-install.sh $i:~/base-install.sh
+	scp -i $KEY_PAIRS -o "StrictHostKeyChecking no" client-install.sh $i:~/client-install.sh
+	ssh -i $KEY_PAIRS -o "StrictHostKeyChecking no" $i "cd ~;sh base-install.sh;sh client-install.sh"
+done

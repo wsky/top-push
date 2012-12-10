@@ -21,12 +21,18 @@ public class FrontendWebSocketServlet extends WebSocketServlet {
 			.synchronizedList(new ArrayList<FrontendWebSocket>());
 
 	public WebSocket doWebSocketConnect(HttpServletRequest arg0, String arg1) {
-		/*
-		 * if(_workerThread == null) { synchronized(_syncObject){
-		 * if(_workerThread == null) { _workerThread = new Thread(new
-		 * Forwarder()); _workerThread.start();
-		 * System.out.println("worker running..."); } } }
-		 */
+		if (_workerThread == null) {
+			synchronized (_syncObject) {
+				if (_workerThread == null) {
+					(_workerThread = new Thread(new Forwarder())).start();
+					(_workerThread = new Thread(new Forwarder())).start();
+					(_workerThread = new Thread(new Forwarder())).start();
+					(_workerThread = new Thread(new Forwarder())).start();
+				}
+				System.out.println("worker running...");
+			}
+		}
+
 		return new FrontendWebSocket();
 	}
 
@@ -54,35 +60,39 @@ public class FrontendWebSocketServlet extends WebSocketServlet {
 		}
 
 		public void onMessage(String arg0) {
-			
+			if (BackendWebSocketServlet.Backend != null
+					&& BackendWebSocketServlet.Backend.isOpen())
+				try {
+					BackendWebSocketServlet.Backend.sendMessage(arg0);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 		}
 
 		public boolean onControl(byte arg0, byte[] arg1, int arg2, int arg3) {
-			//http://tools.ietf.org/html/rfc6455#section-5.5
-			//http://www.kanasansoft.com/weblab/2012/07/send_ping_and_pong_frame_of_websocket_with_jetty.html
-			//try {
-				if (this.FrameConnection.isPing(arg0)) {
-					/*if (this.FrameConnection.isPong((byte) 0x03)) {
-						this.FrameConnection.sendControl((byte) 0x03, null, 0,
-								0);
-					} else if (this.FrameConnection.isPong((byte) 0x0a)) {
-						this.FrameConnection.sendControl((byte) 0x0a, null, 0,
-								0);
-					}*/
-					//System.out.println("receive ping");
-				} else if (this.FrameConnection.isPong(arg0)) {
-					/*if (this.FrameConnection.isPing((byte) 0x02)) {
-						this.FrameConnection.sendControl((byte) 0x02, null, 0,
-								0);
-					} else if (this.FrameConnection.isPing((byte) 0x09)) {
-						this.FrameConnection.sendControl((byte) 0x09, null, 0,
-								0);
-					}*/
-					//System.out.println("receive pong");
-				}
-			//} catch (IOException e) {
-			//	e.printStackTrace();
-			//}
+			// http://tools.ietf.org/html/rfc6455#section-5.5
+			// http://www.kanasansoft.com/weblab/2012/07/send_ping_and_pong_frame_of_websocket_with_jetty.html
+			// try {
+			if (this.FrameConnection.isPing(arg0)) {
+				/*
+				 * if (this.FrameConnection.isPong((byte) 0x03)) {
+				 * this.FrameConnection.sendControl((byte) 0x03, null, 0, 0); }
+				 * else if (this.FrameConnection.isPong((byte) 0x0a)) {
+				 * this.FrameConnection.sendControl((byte) 0x0a, null, 0, 0); }
+				 */
+				// System.out.println("receive ping");
+			} else if (this.FrameConnection.isPong(arg0)) {
+				/*
+				 * if (this.FrameConnection.isPing((byte) 0x02)) {
+				 * this.FrameConnection.sendControl((byte) 0x02, null, 0, 0); }
+				 * else if (this.FrameConnection.isPing((byte) 0x09)) {
+				 * this.FrameConnection.sendControl((byte) 0x09, null, 0, 0); }
+				 */
+				// System.out.println("receive pong");
+			}
+			// } catch (IOException e) {
+			// e.printStackTrace();
+			// }
 			return false;
 		}
 
@@ -97,9 +107,46 @@ public class FrontendWebSocketServlet extends WebSocketServlet {
 	}
 
 	private class Forwarder implements Runnable {
+		private int _total;
 
 		public void run() {
 
+			while (true) {
+				try {
+					int size = FrontendWebSocketServlet.Clients.size();
+					// TODO:use active percent, 20%/30%
+					int count = 0;
+					String msg;
+					while ((msg = BackendWebSocketServlet.Messages.poll()) != null) {
+						for (int i = 0; i < size; i++) {
+							if (i >= FrontendWebSocketServlet.Clients.size())
+								break;
+
+							FrontendWebSocket client = FrontendWebSocketServlet.Clients
+									.get(i);
+							if (client.Connection.isOpen())
+								try {
+									client.Connection.sendMessage(msg);
+									count++;
+								} catch (IOException e) {
+									e.printStackTrace();
+								}
+						}
+					}
+					if (this._total > 0 && this._total % 100 == 0)
+						System.out.println(String.format(
+								"#%s has send %s messages to %s clients",
+								Thread.currentThread().getId(), this._total,
+								count));
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				try {
+					Thread.sleep(50);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
 		}
 
 	}

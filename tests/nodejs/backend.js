@@ -1,34 +1,45 @@
-var websocket = require('websocket').client,
-	client = new websocket();
-	MSG = ''
-	uri = process.argv[2] ? process.argv[2] : 'ws://localhost:9090/backend',
-	total = process.argv[3] ? parseInt(process.argv[3]) : 10000;
+var base = require('./base'),
+    VAR = base.var(),
+    ws = base.ws,
 
-console.log(process.argv);
+    count = 0,
+    count_match = 0;
+    begin = null,
 
-//100 byte
-for(var i = 0; i < 100; i++)
-    MSG += 'i';
+	uri = process.argv[2],
+	total = parseInt(process.argv[3]);
 
-client.on('connectFailed', function(error) { console.log('Connect Failed: ' + error.toString()); });
+ws(
+    function(connection){
+        begin = new Date();
 
-client.on('connect', function(connection) {
-    connection.on('error', function(error) { console.log("Connection Error: " + error.toString()); });
-    connection.on('close', function() { console.log('Connection Closed'); });
-    connection.on('message', function(message) {
-        if (message.type === 'utf8') {}
-    });
-	
-	var begin = new Date();
+        for(var i = 0; i < total; i++)
+            connection.sendUTF(VAR.MSG);
+        
+        var cost = new Date() - begin;
+        console.log('cost: %s ms', cost);
+        console.log('avg: %s msg/s', (total / cost) * 1000);
 
-	for(var i = 0; i < total; i++)
- 		connection.sendUTF(MSG);
-    
-    var cost = new Date() - begin;
-    console.log('cost: %s ms', cost);
-    console.log('avg: %s msg/s', (total / cost) * 1000);
-    //must wait all message send out.
-    //process.exit();
-});
+    },
+    function(message) {
+        if (message.type === 'utf8') {
+            count++;
 
-client.connect(uri);
+            var msg = message.utf8Data;
+            if(msg == VAR.MSG_CONFIRM) count_match++;
+            
+            if(count % 10000 == 0) {
+                var delay = new Date() - begin;
+                console.log('%s messages received, matchs %s, delay: %sms, avg:%smessages/s', 
+                    count, 
+                    count_match,
+                    delay,
+                    10000 * 1000 / delay);
+                begin = new Date();
+            }
+        } else {
+            console.log(message);
+        }
+    },
+    null).
+connect(uri);
