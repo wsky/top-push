@@ -31,7 +31,6 @@ public class SimpleWebSocketServlet extends WebSocketServlet {
 
 		public void onOpen(Connection arg0) { 
 			this._connection = arg0;
-			this._connection.setMaxTextMessageSize(1024*1024*10);
 		}
 
 		public void onMessage(String msg) {

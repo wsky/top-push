@@ -11,7 +11,7 @@ function init() {
 	var r = {
 		MSG: '',
 		MSG_CONFIRM: '',
-		PING_INTERVAL: 30000,
+		PING_INTERVAL: 60000,//adjust to server idle time
 		WS_CONFIG: {
         	//https://github.com/Worlize/WebSocket-Node/blob/master/lib/WebSocketClient.js
         	//default is 16k

@@ -2,7 +2,7 @@
 source var.sh
 
 #servers
-for i in "${SERSERS[@]}"
+for i in "${SERVERS[@]}"
 do
 	echo $i
 	scp -i $KEY_PAIRS -o "StrictHostKeyChecking no" base-install.sh $i:~/base-install.sh

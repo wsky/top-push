@@ -8,5 +8,5 @@ sudo sysctl -w kern.maxfilesperproc=1048576
 #kern.maxfilesperproc: 10240 -> 1048576
 ulimit -n
 #256
-ulimit -n 1048576
+ulimit -SHn 1048576
 ulimit -n

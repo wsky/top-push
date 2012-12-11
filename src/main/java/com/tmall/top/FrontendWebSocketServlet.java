@@ -3,7 +3,9 @@ package com.tmall.top;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -16,7 +18,9 @@ public class FrontendWebSocketServlet extends WebSocketServlet {
 
 	private static Object _syncObject = new Object();
 	private static Thread _workerThread;
+	private static int _activePersent = 20;
 
+	public static ConcurrentLinkedQueue<String> Messages = new ConcurrentLinkedQueue<String>();
 	public static List<FrontendWebSocket> Clients = Collections
 			.synchronizedList(new ArrayList<FrontendWebSocket>());
 
@@ -24,12 +28,20 @@ public class FrontendWebSocketServlet extends WebSocketServlet {
 		if (_workerThread == null) {
 			synchronized (_syncObject) {
 				if (_workerThread == null) {
+					String p = this.getInitParameter("activePersent");
+					if (p != null && !p.isEmpty())
+						_activePersent = Integer.parseInt(p);
+					// start 4 forward-workers for backend
 					(_workerThread = new Thread(new Forwarder())).start();
 					(_workerThread = new Thread(new Forwarder())).start();
 					(_workerThread = new Thread(new Forwarder())).start();
 					(_workerThread = new Thread(new Forwarder())).start();
+
+					// start 1 forward-workers for frontend
+					// (_workerThread = new Thread(new Forwarder2())).start();
 				}
-				System.out.println("worker running...");
+				System.out.println(String.format(
+						"worker running, activePersent=%s", _activePersent));
 			}
 		}
 
@@ -53,20 +65,13 @@ public class FrontendWebSocketServlet extends WebSocketServlet {
 
 		public void onOpen(Connection arg0) {
 			this.Connection = arg0;
-			this.Connection.setMaxTextMessageSize(1024 * 1024 * 10);
 			FrontendWebSocketServlet.Clients.add(this);
 			System.out.println(String.format("has connected %s clients",
 					FrontendWebSocketServlet.Clients.size()));
 		}
 
 		public void onMessage(String arg0) {
-			if (BackendWebSocketServlet.Backend != null
-					&& BackendWebSocketServlet.Backend.isOpen())
-				try {
-					BackendWebSocketServlet.Backend.sendMessage(arg0);
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
+			// Messages.add(arg0);
 		}
 
 		public boolean onControl(byte arg0, byte[] arg1, int arg2, int arg3) {
@@ -106,6 +111,7 @@ public class FrontendWebSocketServlet extends WebSocketServlet {
 		}
 	}
 
+	// read backend's forward to front-end
 	private class Forwarder implements Runnable {
 		private int _total;
 
@@ -113,31 +119,33 @@ public class FrontendWebSocketServlet extends WebSocketServlet {
 
 			while (true) {
 				try {
-					int size = FrontendWebSocketServlet.Clients.size();
-					// TODO:use active percent, 20%/30%
+					// HACK:use active percent, 20%/30%
+					int size = (int) (FrontendWebSocketServlet.Clients.size()
+							* _activePersent / 100);
 					int count = 0;
 					String msg;
 					while ((msg = BackendWebSocketServlet.Messages.poll()) != null) {
+						// TODO:set max send messages to prevent slow client?
 						for (int i = 0; i < size; i++) {
 							if (i >= FrontendWebSocketServlet.Clients.size())
 								break;
 
 							FrontendWebSocket client = FrontendWebSocketServlet.Clients
 									.get(i);
-							if (client.Connection.isOpen())
+
+							if (client != null && client.Connection != null)
+							// && client.Connection.isOpen())//avoid some cost?
+							{
 								try {
 									client.Connection.sendMessage(msg);
 									count++;
 								} catch (IOException e) {
 									e.printStackTrace();
 								}
+							}
 						}
+						this._total++;
 					}
-					if (this._total > 0 && this._total % 100 == 0)
-						System.out.println(String.format(
-								"#%s has send %s messages to %s clients",
-								Thread.currentThread().getId(), this._total,
-								count));
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -148,6 +156,36 @@ public class FrontendWebSocketServlet extends WebSocketServlet {
 				}
 			}
 		}
+	}
+
+	// read frontend's forward to backend
+	private class Forwarder2 implements Runnable {
+
+		public void run() {
+			String msg;
+
+			while (true) {
+				while ((msg = FrontendWebSocketServlet.Messages.poll()) != null) {
+					if (BackendWebSocketServlet.Backend != null
+							&& BackendWebSocketServlet.Backend.isOpen())
+						try {
+							BackendWebSocketServlet.Backend.sendMessage(msg);
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+					else {
+						FrontendWebSocketServlet.Messages.add(msg);
+					}
+				}
+
+				try {
+					Thread.sleep(50);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		}
 
 	}
+
 }

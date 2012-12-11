@@ -20,7 +20,7 @@ var i = 0;
 function doConnect() {
     if(i++ == connects) return;
     connect();
-    setTimeout(doConnect, 10);
+    setTimeout(doConnect, 100);
 }
 function doParallelConnect() {
     for(var j = 0;j < connects; j++)
@@ -32,7 +32,7 @@ function doParallelConnect2() {
         connect();
         i++;
     }
-    setTimeout(doParallelConnect2, 20);
+    setTimeout(doParallelConnect2, 200);
 }
 
 if(mode == 1)

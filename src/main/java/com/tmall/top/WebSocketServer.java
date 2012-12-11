@@ -1,6 +1,8 @@
 package com.tmall.top;
 
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.concurrent.Executors;
 
 import org.jboss.netty.bootstrap.ServerBootstrap;
@@ -34,28 +36,31 @@ import org.jboss.netty.util.CharsetUtil;
 
 import com.sun.corba.se.impl.encoding.OSFCodeSetRegistry.Entry;
 import com.sun.tools.javac.util.List;
+import com.tmall.top.FrontendWebSocketServlet.FrontendWebSocket;
 
 public class WebSocketServer {
-	private static List<Channel> ClientsChannels;
-
-	public static void AddClient(Channel channel) {
-		ClientsChannels.add(channel);
-	}
-
-	public static void RemoveClient(Channel channel) {
-		ClientsChannels.remove(channel);
-	}
+//	private static List<Channel> Frontends = (List<Channel>) Collections
+//			.synchronizedList(new ArrayList<Channel>());
+//	private static Channel Backend = null;
 
 	public void Run() {
-
-		ServerBootstrap bootstrap = new ServerBootstrap(
+		//fontend
+		ServerBootstrap bootstrap_front = new ServerBootstrap(
 				new NioServerSocketChannelFactory(
 						Executors.newCachedThreadPool(),
 						Executors.newCachedThreadPool()));
-		bootstrap.setPipelineFactory(new WebSocketServerPipelineFactory());
-		bootstrap.bind(new InetSocketAddress(9090));
+		bootstrap_front.setPipelineFactory(new WebSocketServerPipelineFactory());
+		bootstrap_front.bind(new InetSocketAddress(8080));
 
-		System.out.println("server running at *:9090...");
+		//backend
+		ServerBootstrap bootstrap_back = new ServerBootstrap(
+				new NioServerSocketChannelFactory(
+						Executors.newCachedThreadPool(),
+						Executors.newCachedThreadPool()));
+		bootstrap_back.setPipelineFactory(new WebSocketServerPipelineFactory());
+		bootstrap_back.bind(new InetSocketAddress(9090));
+		
+		System.out.println("server running at *:8080/*:9090...");
 	}
 
 	public class WebSocketServerPipelineFactory implements
@@ -173,8 +178,10 @@ public class WebSocketServer {
 					// unwritable.but will resue as buffer.
 					channel.write(r);
 				}
-				logger.info(String.format("Channel %s send %s meesages: length=%s", ctx
-						.getChannel().getId(), this.total, request.length()));
+				logger.info(String.format(
+						"Channel %s send %s meesages: length=%s", ctx
+								.getChannel().getId(), this.total, request
+								.length()));
 			} else if (frame instanceof BinaryWebSocketFrame) {
 				throw new UnsupportedOperationException(String.format(
 						"%s frame types not supported", frame.getClass()

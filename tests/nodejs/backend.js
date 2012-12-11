@@ -12,7 +12,11 @@ var base = require('./base'),
 ws(
     function(connection){
         begin = new Date();
+        connection.sendUTF(total);
+        connection.sendUTF(VAR.MSG);
+        return;
 
+        //client send will slow, avoid this currently.
         for(var i = 0; i < total; i++)
             connection.sendUTF(VAR.MSG);
         
@@ -34,8 +38,7 @@ ws(
                     count, 
                     count_match,
                     delay,
-                    10000 * 1000 / delay);
-                begin = new Date();
+                    count * 1000 / delay);
             }
         } else {
             console.log(message);

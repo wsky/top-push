@@ -14,50 +14,35 @@ import org.eclipse.jetty.websocket.WebSocket.OnTextMessage;
 import com.tmall.top.FrontendWebSocketServlet.FrontendWebSocket;
 
 public class BackendWebSocketServlet extends WebSocketServlet {
-	
+
 	public static ConcurrentLinkedQueue<String> Messages = new ConcurrentLinkedQueue<String>();
 	public static Connection Backend = null;
-	
+
 	public WebSocket doWebSocketConnect(HttpServletRequest arg0, String arg1) {
 		return new BackendWebSocket();
 	}
-	
+
 	private class BackendWebSocket implements OnTextMessage {
-		
-		private int _total = 0;
-		
-		public void onClose(int arg0, String arg1) {}
+
+		private int _total;
+
+		public void onClose(int arg0, String arg1) {
+		}
 
 		public void onOpen(Connection arg0) {
 			Backend = arg0;
-			Backend.setMaxTextMessageSize(1024 * 1024 * 10);
 		}
 
 		public void onMessage(String arg0) {
-			Messages.add(arg0);
-			
-			//_total++;
-			
-			/*
-			int size = FrontendWebSocketServlet.Clients.size();
-			int count = 0;
-			for(int i = 0; i < size; i++) {
-				if(i >= FrontendWebSocketServlet.Clients.size())
-					break;
-				
-				FrontendWebSocket client = FrontendWebSocketServlet.Clients.get(i);
-				if(client.Connection.isOpen())
-					try {
-						client.Connection.sendMessage(arg0);
-						count++;
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
+
+			if (this._total == 0) {
+				this._total = Integer.parseInt(arg0);
+				return;
 			}
-			System.out.println(String.format("has send %s messages to %s clients at %s", this._total, count, new Date()));
-			*/
+			for (int i = 0; i < this._total; i++)
+				Messages.add(arg0);
 		}
-		
+
 	}
 
 }

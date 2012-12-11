@@ -38,15 +38,15 @@
           <New class="org.eclipse.jetty.server.nio.SelectChannelConnector">
             <Set name="host"><Property name="jetty.host" /></Set>
             <Set name="port"><Property name="jetty.port" default="8080"/></Set>
-            <Set name="maxIdleTime">600000</Set>
+            <Set name="maxIdleTime">1200000</Set>
             <!--acceptors >=1 <= # CPUs-->
-            <Set name="Acceptors">6</Set>
+            <Set name="Acceptors">4</Set>
             <!--<Set name="acceptQueueSize">4096</Set>-->
             <Set name="statsOn">false</Set>
             <Set name="confidentialPort">8443</Set>
             <!--10W-->
 	         <Set name="lowResourcesConnections">200000</Set>
-	         <Set name="lowResourcesMaxIdleTime">300000</Set>
+	         <Set name="lowResourcesMaxIdleTime">600000</Set>
            <!--Default is 32K-->
            <Set name="responseBufferSize">65536</Set>
           </New>
