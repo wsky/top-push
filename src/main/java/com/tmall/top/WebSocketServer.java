@@ -45,12 +45,12 @@ public class WebSocketServer {
 
 	public void Run() {
 		//fontend
-		ServerBootstrap bootstrap_front = new ServerBootstrap(
-				new NioServerSocketChannelFactory(
-						Executors.newCachedThreadPool(),
-						Executors.newCachedThreadPool()));
-		bootstrap_front.setPipelineFactory(new WebSocketServerPipelineFactory());
-		bootstrap_front.bind(new InetSocketAddress(8080));
+//		ServerBootstrap bootstrap_front = new ServerBootstrap(
+//				new NioServerSocketChannelFactory(
+//						Executors.newCachedThreadPool(),
+//						Executors.newCachedThreadPool()));
+//		bootstrap_front.setPipelineFactory(new WebSocketServerPipelineFactory());
+//		bootstrap_front.bind(new InetSocketAddress(8080));
 
 		//backend
 		ServerBootstrap bootstrap_back = new ServerBootstrap(

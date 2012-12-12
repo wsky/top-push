@@ -33,7 +33,7 @@
 		</init-param>
 		<init-param>
 			<param-name>activePersent</param-name>
-			<param-value>30</param-value>
+			<param-value>20</param-value>
 		</init-param>
 	</servlet>
 	<servlet>

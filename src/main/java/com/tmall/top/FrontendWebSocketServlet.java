@@ -37,6 +37,9 @@ public class FrontendWebSocketServlet extends WebSocketServlet {
 					(_workerThread = new Thread(new Forwarder())).start();
 					(_workerThread = new Thread(new Forwarder())).start();
 
+					//netty run
+					new WebSocketServer().Run();
+					
 					// start 1 forward-workers for frontend
 					// (_workerThread = new Thread(new Forwarder2())).start();
 				}
@@ -133,9 +136,8 @@ public class FrontendWebSocketServlet extends WebSocketServlet {
 							FrontendWebSocket client = FrontendWebSocketServlet.Clients
 									.get(i);
 
-							if (client != null && client.Connection != null)
-							// && client.Connection.isOpen())//avoid some cost?
-							{
+							if (client != null && client.Connection != null
+									&& client.Connection.isOpen()) {
 								try {
 									client.Connection.sendMessage(msg);
 									count++;
