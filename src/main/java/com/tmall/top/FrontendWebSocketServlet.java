@@ -128,7 +128,6 @@ public class FrontendWebSocketServlet extends WebSocketServlet {
 					int count = 0;
 					String msg;
 					while ((msg = BackendWebSocketServlet.Messages.poll()) != null) {
-						// TODO:set max send messages to prevent slow client?
 						for (int i = 0; i < size; i++) {
 							if (i >= FrontendWebSocketServlet.Clients.size())
 								break;

@@ -59,7 +59,7 @@ public class Server implements Runnable {
 					serverChannel.close();
 				}
 			} catch (Exception e2) {
-				// TODO: handle exception
+			
 			}
 		}
 	}

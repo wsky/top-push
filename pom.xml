@@ -9,20 +9,20 @@
   <packaging>war</packaging>
 
   <name>Top Push Server</name>
-  <url>http://top.taobao.org</url>
+  <url>http://open.taobao.com</url>
 
   <properties>
     <jetty.version>8.1.7.v20120910</jetty.version>
   </properties>
 
   <dependencies>
-    <dependency>
+    <!--<dependency>
       <groupId>com.sun</groupId>
       <artifactId>tools</artifactId>
       <version>1.6</version>
       <scope>system</scope>
-      <systemPath>${java.home}\lib\tools.jar</systemPath>
-    </dependency>
+      <systemPath>${java.home}/lib/tools.jar</systemPath>
+    </dependency>-->
 
     <dependency>
       <groupId>junit</groupId>

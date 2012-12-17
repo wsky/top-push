@@ -11,7 +11,7 @@ public class Client {
 	public String getId() {
 		return this.id;
 	}
-
+	
 	public Client(String id) {
 		this.id = id;
 		this.connections = new ConcurrentLinkedQueue<ClientConnection>();

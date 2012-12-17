@@ -5,6 +5,7 @@ import org.eclipse.jetty.websocket.WebSocket.Connection;
 import org.eclipse.jetty.websocket.WebSocket.FrameConnection;
 
 import com.alibaba.fastjson.JSON;
+import com.tmall.top.push.messaging.ConfirmMessage;
 import com.tmall.top.push.messaging.Message;
 
 public class WebSocketClientConnection extends ClientConnection {
@@ -32,11 +33,13 @@ public class WebSocketClientConnection extends ClientConnection {
 	}
 
 	// TODO:parse by protocol
-	public Message parse(String message) {
+	public void receive(Receiver receiver, String message) {
 		// if(protocol=="mqtt")
 		// if(protocol=="wamp")
 		String[] arrStrings = JSON.parseObject(message, String[].class);
-		return null;
+		ConfirmMessage msg= receiver.acquireConfirmMessage();
+		//TODO:fill msg by protocol
+		receiver.receive(msg);
 	}
 	public String parse(Message message) {
 		// if(protocol=="mqtt")

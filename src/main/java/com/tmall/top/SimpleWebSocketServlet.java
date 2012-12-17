@@ -65,7 +65,6 @@ public class SimpleWebSocketServlet extends WebSocketServlet {
 		private int _total = 0;
 		
 		public void onClose(int arg0, String arg1) {
-			// TODO Auto-generated method stub
 			
 		}
 

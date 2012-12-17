@@ -102,7 +102,6 @@ public class WebSocketServer {
 			logger.error("Error", error);
 			// error.printStackTrace();
 			// if(error instanceof WebSocketHandshakeException)
-			// TODO:remove client while connectionClose.
 			// e.getChannel().close();
 		}
 
