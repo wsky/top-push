@@ -8,6 +8,7 @@
 	<!-- <param-value>1048576</param-value> -->
 	<!-- </context-param> -->
 
+	<!--testing-->
 	<servlet>
 		<servlet-name>simple</servlet-name>
 		<servlet-class>com.tmall.top.SimpleWebSocketServlet</servlet-class>
@@ -25,7 +26,7 @@
 		</init-param>
 	</servlet>
 	<servlet>
-		<servlet-name>frontend</servlet-name>
+		<servlet-name>front</servlet-name>
 		<servlet-class>com.tmall.top.FrontendWebSocketServlet</servlet-class>
 		<init-param>
 			<param-name>maxTextMessageSize</param-name>
@@ -37,7 +38,7 @@
 		</init-param>
 	</servlet>
 	<servlet>
-		<servlet-name>backend</servlet-name>
+		<servlet-name>back</servlet-name>
 		<servlet-class>com.tmall.top.BackendWebSocketServlet</servlet-class>
 		<init-param>
 			<param-name>maxTextMessageSize</param-name>
@@ -54,13 +55,29 @@
 		<url-pattern>/polling</url-pattern>
 	</servlet-mapping>
 	<servlet-mapping>
+		<servlet-name>front</servlet-name>
+		<url-pattern>/front</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>back</servlet-name>
+		<url-pattern>/back</url-pattern>
+	</servlet-mapping>
+
+	<servlet>
+		<servlet-name>init</servlet-name>
+		<servlet-class>com.tmall.top.push.InitServlet</servlet-class>
+		<load-on-startup>2</load-on-startup>
+	</servlet>
+	<servlet>
+		<servlet-name>frontend</servlet-name>
+		<servlet-class>com.tmall.top.push.FrontendServlet</servlet-class>
+		<init-param>
+			<param-name>maxTextMessageSize</param-name>
+			<param-value>1048576</param-value>
+		</init-param>
+	</servlet>
+	<servlet-mapping>
 		<servlet-name>frontend</servlet-name>
 		<url-pattern>/frontend</url-pattern>
 	</servlet-mapping>
-	<servlet-mapping>
-		<servlet-name>backend</servlet-name>
-		<url-pattern>/backend</url-pattern>
-	</servlet-mapping>
-
-
 </web-app>

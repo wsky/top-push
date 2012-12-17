@@ -13,7 +13,14 @@ var base = require('./base'),
     mode = process.argv[4];
 
 function connect() {
-    ws(null, null, true, true).connect(uri);
+    ws(null, null, true, true).connect(
+        uri, 
+        'wamp', //subprotocol using "Sec-WebSocket-Protocol" header
+        'origin', //origin
+        {
+            id: 'top-push-client01'
+        }//headers
+    );
 }
 
 var i = 0;
