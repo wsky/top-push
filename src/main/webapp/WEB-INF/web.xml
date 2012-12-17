@@ -65,12 +65,20 @@
 
 	<servlet>
 		<servlet-name>init</servlet-name>
-		<servlet-class>com.tmall.top.push.InitServlet</servlet-class>
+		<servlet-class>com.tmall.top.push.servlet.InitServlet</servlet-class>
 		<load-on-startup>2</load-on-startup>
 	</servlet>
 	<servlet>
 		<servlet-name>frontend</servlet-name>
-		<servlet-class>com.tmall.top.push.FrontendServlet</servlet-class>
+		<servlet-class>com.tmall.top.push.servlet.FrontendServlet</servlet-class>
+		<init-param>
+			<param-name>maxTextMessageSize</param-name>
+			<param-value>1048576</param-value>
+		</init-param>
+	</servlet>
+	<servlet>
+		<servlet-name>backend</servlet-name>
+		<servlet-class>com.tmall.top.push.servlet.BackendServlet</servlet-class>
 		<init-param>
 			<param-name>maxTextMessageSize</param-name>
 			<param-value>1048576</param-value>
@@ -79,5 +87,9 @@
 	<servlet-mapping>
 		<servlet-name>frontend</servlet-name>
 		<url-pattern>/frontend</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>backend</servlet-name>
+		<url-pattern>/backend</url-pattern>
 	</servlet-mapping>
 </web-app>
