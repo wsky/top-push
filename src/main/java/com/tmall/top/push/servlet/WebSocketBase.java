@@ -64,7 +64,12 @@ public class WebSocketBase implements WebSocket.OnTextMessage,
 	public void onMessage(byte[] data, int offset, int length) {
 		// FIXME: jetty not support subprotocol friendly, then, will course
 		// unnecessary copy
-		this.clientConnection.receive(receiver, data, offset, length);
+		try {
+			this.clientConnection.receive(receiver, data, offset, length);
+		} catch (Exception e) {
+			e.printStackTrace();
+			this.frameConnection.close(400, "message too long");
+		}
 	}
 
 	@Override

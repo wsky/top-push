@@ -29,6 +29,21 @@ public class BackendServlet extends WebSocketServlet {
 				WebSocketClientConnection clientConnection) {
 			super(receiver, client, clientConnection);
 		}
+		
+		//TODO: implement an easy RPC for publisher
+		/*
+		 * publish(to, msgs){
+		 * 		//conns is FIFO queue with easy loadbalance
+		 * 		for(var i=0;i<conns.length;i++){
+		 * 			if(conns[i].isConnected(to)) {
+		 * 				conns[i].sendMesage(msg);
+		 * 			}
+		 * 		}
+		 * }
+		 * or
+		 * client.getConn(id).send(msg);
+		 * 
+		 */
 
 	}
 }

@@ -11,6 +11,9 @@ public class Receiver {
 	// private Object publishLock = new String("publishLock");
 	// private Object confirmLock = new String("confirmLock");
 
+	private int publishMessageSize;
+	private int confirmMessageSize;
+	
 	private PublishMessagePool publishMessagePool;
 	private PublishConfirmMessagePool confirmMessagePool;
 	private byte[] publishBuffer;
@@ -22,6 +25,9 @@ public class Receiver {
 
 	public Receiver(int publishMessageSize, int confirmMessageSize,
 			int publishMessageBufferCount, int confirmMessageBufferCount) {
+		this.publishMessageSize=publishMessageSize;
+		this.confirmMessageSize=confirmMessageSize;
+		
 		// object pool
 		this.publishMessagePool = new PublishMessagePool(POOL_SIZE);
 		this.confirmMessagePool = new PublishConfirmMessagePool(POOL_SIZE);
@@ -33,9 +39,9 @@ public class Receiver {
 		this.confirmMessageQueue = new ConcurrentLinkedQueue<PublishConfirmMessage>();
 
 		// TODO:improve buffer more efficient
-		this.publishBuffer = new byte[publishMessageSize
+		this.publishBuffer = new byte[this.publishMessageSize
 				* publishMessageBufferCount];
-		this.confirmBuffer = new byte[confirmMessageSize
+		this.confirmBuffer = new byte[this.confirmMessageSize
 				* confirmMessageBufferCount];
 
 		this.fillBufferQueue(this.publishBufferQueue, this.publishBuffer,
@@ -44,14 +50,18 @@ public class Receiver {
 				confirmMessageSize, confirmMessageBufferCount);
 	}
 
-	public ByteBuffer getPublishBuffer() {
+	public ByteBuffer getPublishBuffer(int length) throws Exception {
+		if(length>this.publishMessageSize)
+			throw new Exception("length is bigger than max publishMessageSize");
 		ByteBuffer buffer = this.publishBufferQueue.poll();
 		if (buffer != null)
 			buffer.position(0);
 		return buffer;
 	}
 
-	public ByteBuffer getConfirmBuffer() {
+	public ByteBuffer getConfirmBuffer(int length) throws Exception {
+		if(length>this.confirmMessageSize)
+			throw new Exception("length is bigger than max confirmMessageSize");
 		ByteBuffer buffer = this.confirmBufferQueue.poll();
 		if (buffer != null)
 			buffer.position(0);
@@ -68,7 +78,7 @@ public class Receiver {
 
 	public synchronized void release(PublishMessage msg) {
 		// return buffer
-		if (msg.body instanceof ByteBuffer) {
+		if (msg.body != null && msg.body instanceof ByteBuffer) {
 			this.publishBufferQueue.add((ByteBuffer) msg.body);
 		}
 		msg.clear();
@@ -77,7 +87,7 @@ public class Receiver {
 
 	public synchronized void release(PublishConfirmMessage msg) {
 		// return buffer
-		if (msg.body instanceof ByteBuffer) {
+		if (msg.body != null && msg.body instanceof ByteBuffer) {
 			this.confirmBufferQueue.add((ByteBuffer) msg.body);
 		}
 		msg.clear();
@@ -90,6 +100,14 @@ public class Receiver {
 
 	public void receive(PublishConfirmMessage value) {
 		this.confirmMessageQueue.add(value);
+	}
+
+	public PublishMessage pollPublishMessage() {
+		return this.publishMessageQueue.poll();
+	}
+
+	public PublishConfirmMessage pollConfirmMessage() {
+		return this.confirmMessageQueue.poll();
 	}
 
 	private void fillBufferQueue(ConcurrentLinkedQueue<ByteBuffer> bufferQueue,

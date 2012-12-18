@@ -39,19 +39,27 @@ public class WebSocketClientConnection extends ClientConnection {
 	}
 
 	public void receive(Receiver receiver, byte[] message, int offset,
-			int length) {
+			int length) throws Exception {
 		int messageType = this.parseMessageType(message[offset]);
+		boolean drop = false;
 		if (messageType == MessageType.PUBLISH) {
-			ByteBuffer buffer = receiver.getPublishBuffer();
-			buffer.put(message, offset, length);
-			receiver.receive(this.parse(receiver.acquirePublishMessage(),
-					buffer));
+			ByteBuffer buffer = receiver.getPublishBuffer(length);
+			if (buffer != null) {
+				buffer.put(message, offset, length);
+				receiver.receive(this.parse(receiver.acquirePublishMessage(),
+						buffer));
+			}
 		} else if (messageType == MessageType.PUBCONFIRM) {
-			ByteBuffer buffer = receiver.getConfirmBuffer();
-			buffer.put(message, offset, length);
-			receiver.receive(this.parse(receiver.acquireConfirmMessage(),
-					buffer));
+			ByteBuffer buffer = receiver.getConfirmBuffer(length);
+			if (buffer != null) {
+				buffer.put(message, offset, length);
+				receiver.receive(this.parse(receiver.acquireConfirmMessage(),
+						buffer));
+			}
 		}
+		if (drop)
+			System.out.println(String.format(
+					"no buffer! drop message: messageType=%s", messageType));
 	}
 
 	public void receive(Receiver receiver, String message) {
@@ -109,6 +117,11 @@ public class WebSocketClientConnection extends ClientConnection {
 
 	private PublishMessage parse(PublishMessage msg, ByteBuffer buffer) {
 		// TODO: fill msg from buffer by protocol
+		msg.messageType =0;
+		msg.messageSize=1024;
+		msg.to="";
+		msg.id="12345";
+		msg.body=buffer;
 		return msg;
 	}
 

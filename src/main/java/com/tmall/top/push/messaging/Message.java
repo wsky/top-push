@@ -17,14 +17,18 @@ public abstract class Message {
 	// message body payload
 	public int messageSize;
 
+	// target client id
+	public String to;
+
 	public Object body;
 
 	public void clear() {
 		this.messageType = 0;
 		this.messageSize = 0;
+		this.to = null;
 		this.body = null;
 		this.internalClear();
 	}
-	
+
 	protected abstract void internalClear();
 }
