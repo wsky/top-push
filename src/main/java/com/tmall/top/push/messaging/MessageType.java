@@ -1,8 +1,24 @@
 package com.tmall.top.push.messaging;
 
 public class MessageType {
-	public int subscribe = 0;
-	public int unsubscribe = 1;
-	public int publish = 2;
-	public int event = 3;
+	// http://public.dhe.ibm.com/software/dw/webservices/ws-mqtt/mqtt-v3r1.html#msg-format
+	// like MQTT
+	// CONNECT,
+	// CONNACK,
+	// DISCONNECT,
+	// SUBSCRIBE,
+	// SUBACK,
+	// UNSUBSCRIBE,
+	// UNSUBACK,
+	// PINGREQ,
+	// PINGRESP,
+
+	// publish message
+	// publisher->server
+	// server->subscriber
+	public final static int PUBLISH = 1;
+	// one pub, one acknowledge
+	// PUBACK,
+	// batch pub and batch confirm
+	public final static int PUBCONFIRM = 2;
 }

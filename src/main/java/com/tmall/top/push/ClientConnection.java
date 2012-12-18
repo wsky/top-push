@@ -3,7 +3,6 @@ package com.tmall.top.push;
 import java.util.Date;
 import java.util.Hashtable;
 
-import com.alibaba.fastjson.JSON;
 import com.tmall.top.push.messaging.Message;
 
 public abstract class ClientConnection {

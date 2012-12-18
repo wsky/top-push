@@ -1,12 +1,17 @@
 package com.tmall.top.push;
 
+import java.nio.ByteBuffer;
+
+import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.jetty.websocket.WebSocket.Connection;
 import org.eclipse.jetty.websocket.WebSocket.FrameConnection;
 
 import com.alibaba.fastjson.JSON;
-import com.tmall.top.push.messaging.ConfirmMessage;
 import com.tmall.top.push.messaging.Message;
+import com.tmall.top.push.messaging.MessageType;
+import com.tmall.top.push.messaging.PublishConfirmMessage;
+import com.tmall.top.push.messaging.PublishMessage;
 
 public class WebSocketClientConnection extends ClientConnection {
 	private final static String ID = "id";
@@ -27,24 +32,46 @@ public class WebSocketClientConnection extends ClientConnection {
 	}
 
 	public int verifyHeaders() {
+		// TODO:authentication here
 		if (StringUtils.isEmpty(this.id))
 			return 401;
 		return 101;
 	}
 
-	// TODO:parse by protocol
-	public void receive(Receiver receiver, String message) {
-		// if(protocol=="mqtt")
-		// if(protocol=="wamp")
-		String[] arrStrings = JSON.parseObject(message, String[].class);
-		ConfirmMessage msg= receiver.acquireConfirmMessage();
-		//TODO:fill msg by protocol
-		receiver.receive(msg);
+	public void receive(Receiver receiver, byte[] message, int offset,
+			int length) {
+		int messageType = this.parseMessageType(message[offset]);
+		if (messageType == MessageType.PUBLISH) {
+			ByteBuffer buffer = receiver.getPublishBuffer();
+			buffer.put(message, offset, length);
+			receiver.receive(this.parse(receiver.acquirePublishMessage(),
+					buffer));
+		} else if (messageType == MessageType.PUBCONFIRM) {
+			ByteBuffer buffer = receiver.getConfirmBuffer();
+			buffer.put(message, offset, length);
+			receiver.receive(this.parse(receiver.acquireConfirmMessage(),
+					buffer));
+		}
 	}
+
+	public void receive(Receiver receiver, String message) {
+		// use Text-oriented protocol
+		if (protocol == "wamp") {
+			String[] array = JSON.parseObject(message.toString(),
+					String[].class);
+			if (Integer.parseInt(array[0]) == MessageType.PUBLISH) {
+				receiver.receive(this.parse(receiver.acquirePublishMessage(),
+						array));
+			} else if (Integer.parseInt(array[0]) == MessageType.PUBCONFIRM) {
+				receiver.receive(this.parse(receiver.acquireConfirmMessage(),
+						array));
+			}
+		}
+	}
+
 	public String parse(Message message) {
-		// if(protocol=="mqtt")
-		// if(protocol=="wamp")
-		return JSON.toJSONString(message);
+		throw new NotImplementedException();
+		// return JSON.toJSONString(message);
 	}
 
 	@Override
@@ -68,5 +95,29 @@ public class WebSocketClientConnection extends ClientConnection {
 	@Override
 	public void sendMessage(Message msg) throws Exception {
 		this.connection.sendMessage(this.parse(msg));
+	}
+
+	private PublishMessage parse(PublishMessage msg, String[] array) {
+		// TODO:fill msg by protocol
+		return msg;
+	}
+
+	private PublishConfirmMessage parse(PublishConfirmMessage msg,
+			String[] array) {
+		return msg;
+	}
+
+	private PublishMessage parse(PublishMessage msg, ByteBuffer buffer) {
+		// TODO: fill msg from buffer by protocol
+		return msg;
+	}
+
+	private PublishConfirmMessage parse(PublishConfirmMessage msg,
+			ByteBuffer buffer) {
+		return msg;
+	}
+
+	private int parseMessageType(byte headerByte) {
+		return (headerByte & 240) >> 4;
 	}
 }

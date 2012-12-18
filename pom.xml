@@ -8,21 +8,22 @@
   <version>1.0-SNAPSHOT</version>
   <packaging>war</packaging>
 
-  <name>Top Push Server</name>
+  <name>Push Server</name>
   <url>http://open.taobao.com</url>
 
   <properties>
     <jetty.version>8.1.7.v20120910</jetty.version>
+    <javax.servlet.version>3.0.0.v201112011016</javax.servlet.version>
   </properties>
 
   <dependencies>
-    <!--<dependency>
+    <dependency>
       <groupId>com.sun</groupId>
       <artifactId>tools</artifactId>
       <version>1.6</version>
       <scope>system</scope>
       <systemPath>${java.home}/lib/tools.jar</systemPath>
-    </dependency>-->
+    </dependency>
 
     <dependency>
       <groupId>junit</groupId>
@@ -57,7 +58,7 @@
     <dependency>
       <groupId>org.eclipse.jetty.orbit</groupId>
       <artifactId>javax.servlet</artifactId>
-      <version>3.0.0.v201112011016</version>
+      <version>${javax.servlet.version}</version>
     </dependency>
     <!--<dependency>
       <groupId>org.eclipse.jetty</groupId>

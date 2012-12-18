@@ -7,12 +7,13 @@ import com.tmall.top.push.Receiver;
 import com.tmall.top.push.WebSocketClientConnection;
 
 public class WebSocketBase implements WebSocket.OnTextMessage,
-		WebSocket.OnControl, WebSocket.OnFrame {
-
-	private Receiver receiver;
+		WebSocket.OnBinaryMessage, WebSocket.OnControl, WebSocket.OnFrame {
+	
 	private FrameConnection frameConnection;
+	
 	private Client client;
 	private WebSocketClientConnection clientConnection;
+	private Receiver receiver;
 
 	public WebSocketBase(Receiver receiver, Client client,
 			WebSocketClientConnection clientConnection) {
@@ -55,7 +56,15 @@ public class WebSocketBase implements WebSocket.OnTextMessage,
 
 	@Override
 	public void onMessage(String arg0) {
+		//Text-oriented protocol can use this way
 		this.clientConnection.receive(receiver, arg0);
+	}
+
+	@Override
+	public void onMessage(byte[] data, int offset, int length) {
+		// FIXME: jetty not support subprotocol friendly, then, will course
+		// unnecessary copy
+		this.clientConnection.receive(receiver, data, offset, length);
 	}
 
 	@Override
@@ -66,7 +75,7 @@ public class WebSocketBase implements WebSocket.OnTextMessage,
 	private void release() {
 		this.client.RemoveConnection(this.clientConnection);
 		this.clientConnection.clear();
-		PushManager.Current().ClientConnectionPool
+		PushManager.Current().getClientConnectionPool()
 				.release(this.clientConnection);
 	}
 }

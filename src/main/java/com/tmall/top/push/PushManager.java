@@ -1,11 +1,10 @@
 package com.tmall.top.push;
 
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import javax.servlet.ServletConfig;
-import com.tmall.top.push.messaging.ConfirmMessage;
-import com.tmall.top.push.messaging.EventMessage;
 
 public final class PushManager {
 	// TODO: use IOC managing life cycle
@@ -13,26 +12,32 @@ public final class PushManager {
 	private static PushManager current;
 
 	public static void Init(ServletConfig config) {
-		current = new PushManager(1024);
-		current.receiver =new Receiver(100000, 100000);
-		//start sender workers
+		// TODO:read config from ServletConfig
+		current = new PushManager(100000, 1024, 10, 100000, 100000);
 	}
 
 	public static PushManager Current() {
 		return current;
 	}
 
-	// object pool
-	public WebSocketClientConnectionPool ClientConnectionPool;
+	private WebSocketClientConnectionPool clientConnectionPool;
+	private ConcurrentHashMap<String, Client> clients;
+	private Receiver receiver;
+	private List<Sender> senders;
 
-	public ConcurrentHashMap<String, Client> clients;
-
-	public Receiver receiver;
-	
-	public PushManager(int connPoolSize) {
-		this.ClientConnectionPool = new WebSocketClientConnectionPool(
+	public PushManager(int connPoolSize, int publishMessageSize,
+			int confirmMessageSize, int publishMessageBufferCount,
+			int confirmMessageBufferCount) {
+		this.clientConnectionPool = new WebSocketClientConnectionPool(
 				connPoolSize);
 		this.clients = new ConcurrentHashMap<String, Client>();
+		this.receiver = new Receiver(publishMessageSize, confirmMessageSize,
+				publishMessageBufferCount, confirmMessageBufferCount);
+		// TODO:start sender workers
+	}
+
+	public WebSocketClientConnectionPool getClientConnectionPool() {
+		return this.clientConnectionPool;
 	}
 
 	public Client getClient(String id) {
@@ -43,5 +48,9 @@ public final class PushManager {
 			}
 		}
 		return clients.get(id);
+	}
+
+	public Receiver getReceiver() {
+		return this.receiver;
 	}
 }

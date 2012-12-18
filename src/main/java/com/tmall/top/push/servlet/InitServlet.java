@@ -10,8 +10,6 @@ public class InitServlet extends HttpServlet {
 	@Override
 	public void init(ServletConfig config) throws ServletException {
 		PushManager.Init(config);
-		//worker
-		
 		super.init(config);
 	}
 }
