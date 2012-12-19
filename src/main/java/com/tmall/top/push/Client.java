@@ -15,12 +15,15 @@ public class Client {
 	private ConcurrentLinkedQueue<ClientConnection> connectionQueue;
 	private ConcurrentLinkedQueue<Message> pendingMessages;
 
-	public Client(String id) {
+	private PushManager manager;
+
+	public Client(String id, PushManager manager) {
 		this.id = id;
 		this.receivePing();
 		this.connections = new LinkedList<ClientConnection>();
 		this.connectionQueue = new ConcurrentLinkedQueue<ClientConnection>();
 		this.pendingMessages = new ConcurrentLinkedQueue<Message>();
+		this.manager = manager;
 	}
 
 	public String getId() {
@@ -63,6 +66,7 @@ public class Client {
 		this.lastPingTime = new Date();
 	}
 
+	// pend message waiting to be send
 	public void pendingMessage(Message msg) {
 		if (msg != null)
 			this.pendingMessages.add(msg);
@@ -79,7 +83,7 @@ public class Client {
 			Message msg = this.pendingMessages.poll();
 			if (msg == null)
 				break;
-			this.SendMessage(msg);
+			this.SendMessage(token, msg);
 			temp++;
 		}
 		if (temp > 0)
@@ -87,9 +91,11 @@ public class Client {
 					temp, this.getId()));
 	}
 
-	protected void SendMessage(Message msg) {
+	protected void SendMessage(CancellationToken token, Message msg) {
 		// FIFO queue for easy load-balance
 		while (true) {
+			if (token.isCancelling())
+				break;
 			ClientConnection connection = this.connectionQueue.poll();
 			if (connection == null)
 				break;
@@ -107,7 +113,9 @@ public class Client {
 				// FIXME:maybe course dead-loop
 				this.AddConnection(connection);
 			}
+			break;
 		}
-
+		// release message object always
+		this.manager.getReceiver().release(msg);
 	}
 }

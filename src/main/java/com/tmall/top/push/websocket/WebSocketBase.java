@@ -3,18 +3,22 @@ package com.tmall.top.push.websocket;
 import org.eclipse.jetty.websocket.WebSocket;
 
 import com.tmall.top.push.Client;
+import com.tmall.top.push.PushManager;
 import com.tmall.top.push.messageTooLongException;
+import com.tmall.top.push.messages.Message;
 
 public class WebSocketBase implements WebSocket.OnTextMessage,
 		WebSocket.OnBinaryMessage, WebSocket.OnControl, WebSocket.OnFrame {
 
 	private FrameConnection frameConnection;
 
+	private PushManager manager;
 	private Client client;
 	private WebSocketClientConnection clientConnection;
 
-	public WebSocketBase(Client client,
+	public WebSocketBase(PushManager manager, Client client,
 			WebSocketClientConnection clientConnection) {
+		this.manager = manager;
 		this.client = client;
 		this.clientConnection = clientConnection;
 	}
@@ -54,18 +58,16 @@ public class WebSocketBase implements WebSocket.OnTextMessage,
 	@Override
 	public void onMessage(String arg0) {
 		this.receivePing();
-		// Text-oriented protocol can use this way
-		this.client.pendingMessage(this.clientConnection.parse(arg0));
 	}
 
 	@Override
 	public void onMessage(byte[] data, int offset, int length) {
 		this.receivePing();
 		// TODO: jetty not support subprotocol friendly, then, will course
-		// unnecessary copy
+		// unnecessary copy?
 		try {
-			this.client.pendingMessage(this.clientConnection.parse(data,
-					offset, length));
+			Message msg = this.clientConnection.parse(data, offset, length);
+			this.manager.getClient(msg.to).pendingMessage(msg);
 		} catch (messageTooLongException e) {
 			e.printStackTrace();
 			this.frameConnection.close(400, e.getMessage());

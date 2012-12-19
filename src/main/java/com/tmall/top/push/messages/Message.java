@@ -14,7 +14,7 @@ public abstract class Message {
 	// the message after it has been delivered to the current subscribers
 	// public boolean retain;
 
-	// remaining length exclude head(messageType)
+	// full length include head(messageType)/to
 	public int messageSize;
 
 	// 8byte

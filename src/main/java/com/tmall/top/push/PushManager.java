@@ -22,6 +22,7 @@ public final class PushManager {
 		return current;
 	}
 
+	private int totalConnections;
 	// easy find client by id
 	private HashMap<String, Client> clients;
 	// hold clients which having pending messages and in processing
@@ -74,7 +75,7 @@ public final class PushManager {
 		if (!clients.containsKey(id)) {
 			synchronized (lock) {
 				if (!clients.containsKey(id))
-					clients.put(id, new Client(id));
+					clients.put(id, new Client(id, this));
 			}
 		}
 		return clients.get(id);
@@ -107,18 +108,26 @@ public final class PushManager {
 		TimerTask task = new TimerTask() {
 			public void run() {
 				// checking senders
-				// System.out.println("checking senders weather working well");
-				for (Map.Entry<Sender, Thread> entry : senders.entrySet()) {
-					if (!entry.getValue().isAlive())
-						System.out.println(String.format(
-								"sender#%s is broken!", entry.getKey()));
+				try {
+					for (Map.Entry<Sender, Thread> entry : senders.entrySet()) {
+						if (!entry.getValue().isAlive())
+							System.out.println(String.format(
+									"sender#%s is broken!", entry.getKey()));
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
 				}
-
-				rebuildClientsState();
-				System.out.println(String.format(
-						"total %s clients, %s is idle, %s is offline",
-						clients.size(), idleClients.size(),
-						offlineClients.size()));
+				try {
+					rebuildClientsState();
+					System.out
+							.println(String
+									.format("total %s connections, total %s clients, %s is idle, %s is offline",
+											totalConnections, clients.size(),
+											idleClients.size(),
+											offlineClients.size()));
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 			}
 		};
 		Timer timer = new Timer(true);
@@ -127,12 +136,16 @@ public final class PushManager {
 
 	// build pending/idle clients queue
 	private void rebuildClientsState() {
+		this.totalConnections = 0;
+		int connCount;
 		// still have pending clients in processing
 		boolean noPending = pendingClients.isEmpty();
 		boolean offline, pending;
-		
+
 		for (Client client : clients.values()) {
-			offline = client.getConnectionsCount() == 0;
+			connCount = client.getConnectionsCount();
+			this.totalConnections += connCount;
+			offline = connCount == 0;
 			pending = client.getPendingMessagesCount() > 0;
 
 			if (noPending && pending && !offline) {

@@ -1,6 +1,5 @@
 package com.tmall.top.push.websocket;
 
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 
 import org.apache.commons.lang.StringUtils;
@@ -66,6 +65,6 @@ public class WebSocketClientConnection extends ClientConnection {
 	public void sendMessage(Message message) throws Exception {
 		ByteBuffer buffer = this.receiver.parseMessage(this.protocol, message);
 		this.connection.sendMessage(buffer.array(), buffer.arrayOffset(),
-				buffer.position() + 1);
+				message.messageSize);
 	}
 }

@@ -17,14 +17,15 @@ public class BackendServlet extends WebSocketServlet {
 				.getClientConnectionPool().acquire();
 		clientConnection.init(Utils.parseHeaders(arg0), manager);
 
-		return new BackendWebSocket(
-				manager.getClient(clientConnection.getId()), clientConnection);
+		return new BackendWebSocket(manager, manager.getClient(clientConnection
+				.getId()), clientConnection);
 	}
 
 	public class BackendWebSocket extends WebSocketBase {
-		public BackendWebSocket(Client client,
+
+		public BackendWebSocket(PushManager manager, Client client,
 				WebSocketClientConnection clientConnection) {
-			super(client, clientConnection);
+			super(manager, client, clientConnection);
 		}
 
 		// TODO: implement an easy RPC for publisher

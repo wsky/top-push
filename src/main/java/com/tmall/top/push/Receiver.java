@@ -37,8 +37,6 @@ public class Receiver {
 		// buffer
 		this.publishBufferQueue = new ConcurrentLinkedQueue<ByteBuffer>();
 		this.confirmBufferQueue = new ConcurrentLinkedQueue<ByteBuffer>();
-
-		// TODO:improve buffer more efficient?
 		this.publishBuffer = new byte[this.publishMessageSize
 				* publishMessageBufferCount];
 		this.confirmBuffer = new byte[this.confirmMessageSize
@@ -50,55 +48,22 @@ public class Receiver {
 				confirmMessageSize, confirmMessageBufferCount);
 	}
 
-	public ByteBuffer getPublishBuffer(int length)
-			throws messageTooLongException {
-		if (length > this.publishMessageSize)
-			throw new messageTooLongException();
-		ByteBuffer buffer = this.publishBufferQueue.poll();
-		if (buffer != null)
-			buffer.position(0);
-		return buffer;
-	}
-
-	public ByteBuffer getConfirmBuffer(int length)
-			throws messageTooLongException {
-		if (length > this.confirmMessageSize)
-			throw new messageTooLongException();
-		ByteBuffer buffer = this.confirmBufferQueue.poll();
-		if (buffer != null)
-			buffer.position(0);
-		return buffer;
-	}
-
-	public PublishMessage acquirePublishMessage() {
-		return this.publishMessagePool.acquire();
-	}
-
-	public PublishConfirmMessage acquireConfirmMessage() {
-		return this.confirmMessagePool.acquire();
-	}
-
-	public synchronized void release(PublishMessage msg) {
+	// must be called after send
+	public synchronized void release(Message msg) {
 		// return buffer for reusing
 		if (msg.body != null && msg.body instanceof ByteBuffer) {
 			this.publishBufferQueue.add((ByteBuffer) msg.body);
 		}
 		msg.clear();
-		this.publishMessagePool.release(msg);
-	}
-
-	public synchronized void release(PublishConfirmMessage msg) {
-		// return buffer for reusing
-		if (msg.body != null && msg.body instanceof ByteBuffer) {
-			this.confirmBufferQueue.add((ByteBuffer) msg.body);
-		}
-		msg.clear();
-		this.confirmMessagePool.release(msg);
+		if (msg instanceof PublishMessage)
+			this.publishMessagePool.release((PublishMessage) msg);
+		if (msg instanceof PublishConfirmMessage)
+			this.confirmMessagePool.release((PublishConfirmMessage) msg);
 	}
 
 	public Message parseMessage(String protocol, byte[] message, int offset,
 			int length) throws messageTooLongException {
-		// TODO:multi-protocol support
+		// TODO:multi-protocol support, design parser factory
 		// using our custom protocol currently
 		int messageType = this.parseMessageType(message[offset]);
 
@@ -132,6 +97,34 @@ public class Receiver {
 		return (ByteBuffer) message.body;
 	}
 
+	private PublishMessage acquirePublishMessage() {
+		return this.publishMessagePool.acquire();
+	}
+
+	private PublishConfirmMessage acquireConfirmMessage() {
+		return this.confirmMessagePool.acquire();
+	}
+
+	private ByteBuffer getPublishBuffer(int length)
+			throws messageTooLongException {
+		if (length > this.publishMessageSize)
+			throw new messageTooLongException();
+		ByteBuffer buffer = this.publishBufferQueue.poll();
+		if (buffer != null)
+			buffer.position(0);
+		return buffer;
+	}
+
+	private ByteBuffer getConfirmBuffer(int length)
+			throws messageTooLongException {
+		if (length > this.confirmMessageSize)
+			throw new messageTooLongException();
+		ByteBuffer buffer = this.confirmBufferQueue.poll();
+		if (buffer != null)
+			buffer.position(0);
+		return buffer;
+	}
+
 	private void fillBufferQueue(ConcurrentLinkedQueue<ByteBuffer> bufferQueue,
 			byte[] buffer, int size, int count) {
 		for (int i = 0; i < count; i++) {
@@ -139,25 +132,32 @@ public class Receiver {
 		}
 	}
 
-	// TODO: fill message from buffer by custom protocol
 	private Message parse(Message msg, ByteBuffer buffer) {
-		msg.messageType = 0;
-		msg.messageSize = 1024;
-		msg.to = "";
+		msg.messageType = buffer.get();
+		msg.to = this.getTo(buffer);
+		// TODO:do message size should include header length?
+		msg.messageSize = buffer.getInt() + 1 + 8;
 		msg.body = buffer;
-
-		if (msg instanceof PublishMessage) {
-			PublishMessage publishMessage = (PublishMessage) msg;
-			publishMessage.id = "12345";
-		} else if (msg instanceof PublishConfirmMessage) {
-			PublishConfirmMessage confirmMessage = (PublishConfirmMessage) msg;
-			confirmMessage.confirmId = "1,2,3";
-		}
-
+		// server do not need convert more body, useless
+		// if (msg instanceof PublishMessage) {
+		// PublishMessage publishMessage = (PublishMessage) msg;
+		// publishMessage.id = "12345";
+		// } else if (msg instanceof PublishConfirmMessage) {
+		// PublishConfirmMessage confirmMessage = (PublishConfirmMessage) msg;
+		// confirmMessage.confirmId = "1,2,3";
+		// }
 		return msg;
 	}
 
 	private int parseMessageType(byte headerByte) {
-		return (headerByte & 240) >> 4;
+		return headerByte;
+		// return (headerByte & 240) >> 4;
+	}
+
+	private String getTo(ByteBuffer buffer) {
+		String to = "";
+		for (int i = 0; i < 8; i++)
+			to += buffer.getChar();
+		return to;
 	}
 }

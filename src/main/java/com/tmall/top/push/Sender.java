@@ -3,7 +3,7 @@ package com.tmall.top.push;
 public class Sender implements Runnable {
 	protected CancellationToken token;
 	protected PushManager manager;
-	private Client client;
+	private Client pendingClient;
 	private int idle;
 
 	public CancellationToken getCancellationToken() {
@@ -24,7 +24,6 @@ public class Sender implements Runnable {
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-
 			try {
 				Thread.sleep(this.idle);
 			} catch (InterruptedException e) {
@@ -35,8 +34,8 @@ public class Sender implements Runnable {
 
 	protected void doSend() {
 		while (!this.token.isCancelling()
-				&& (this.client = this.manager.pollPendingClient()) != null) {
-			this.client.flush(token, 1000);
+				&& (this.pendingClient = this.manager.pollPendingClient()) != null) {
+			this.pendingClient.flush(token, 1000);
 		}
 	}
 }

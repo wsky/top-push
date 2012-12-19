@@ -8,7 +8,6 @@ import org.eclipse.jetty.websocket.WebSocketServlet;
 import com.tmall.top.push.Client;
 import com.tmall.top.push.PushManager;
 
-//handle all client's request
 public class FrontendServlet extends WebSocketServlet {
 
 	@Override
@@ -19,16 +18,17 @@ public class FrontendServlet extends WebSocketServlet {
 				.getClientConnectionPool().acquire();
 		clientConnection.init(Utils.parseHeaders(arg0), manager);
 
-		return new FrontendWebSocket(
+		return new FrontendWebSocket(manager,
 				manager.getClient(clientConnection.getId()), clientConnection);
 	}
 
 	private class FrontendWebSocket extends WebSocketBase {
 
-		public FrontendWebSocket(Client client,
+		public FrontendWebSocket(PushManager manager, Client client,
 				WebSocketClientConnection clientConnection) {
-			super(client, clientConnection);
+			super(manager, client, clientConnection);
 		}
+
 	}
 
 }
