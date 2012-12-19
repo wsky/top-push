@@ -1,6 +1,6 @@
 package com.tmall.top.push;
 
-import com.tmall.top.push.messaging.PublishConfirmMessage;
+import com.tmall.top.push.messages.PublishConfirmMessage;
 
 public class PublishConfirmMessagePool extends Pool<PublishConfirmMessage>{
 

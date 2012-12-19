@@ -1,4 +1,4 @@
-package com.tmall.top.push.messaging;
+package com.tmall.top.push.messages;
 
 public class MessageType {
 	// http://public.dhe.ibm.com/software/dw/webservices/ws-mqtt/mqtt-v3r1.html#msg-format

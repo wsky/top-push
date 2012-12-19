@@ -1,4 +1,4 @@
-package com.tmall.top.push.servlet;
+package com.tmall.top.websocket;
 
 import java.util.Enumeration;
 import java.util.Hashtable;
@@ -6,6 +6,17 @@ import java.util.Hashtable;
 import javax.servlet.http.HttpServletRequest;
 
 public class Utils {
+
+	public static WebSocketClientConnectionPool pool;
+
+	public static void initClientConnectionPool(int poolSize) {
+		pool = new WebSocketClientConnectionPool(poolSize);
+	}
+
+	public static WebSocketClientConnectionPool getClientConnectionPool() {
+		return pool;
+	}
+
 	public static Hashtable<String, String> parseHeaders(
 			HttpServletRequest request) {
 		Hashtable<String, String> headers = new Hashtable<String, String>();

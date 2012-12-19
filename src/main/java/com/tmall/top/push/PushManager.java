@@ -1,55 +1,69 @@
 package com.tmall.top.push;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.ConcurrentHashMap;
-
-import javax.servlet.ServletConfig;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public final class PushManager {
-	private final static String CONFIRM_CLIENT = "confirm";
 	// TODO: use IOC managing life cycle
 	private static Object lock = new Object();
 	private static PushManager current;
 
-	public static void Init(ServletConfig config) {
-		// TODO:read config from ServletConfig
-		current = new PushManager(100000, 1024, 10, 100000, 100000, 4, 1);
+	public static void current(PushManager manager) {
+		if (current == null)
+			current = manager;
 	}
 
-	public static PushManager Current() {
+	public static PushManager current() {
 		return current;
 	}
 
-	private WebSocketClientConnectionPool clientConnectionPool;
-	private ConcurrentHashMap<String, Client> clients;
+	// easy find client by id
+	private HashMap<String, Client> clients;
+	// hold clients which having pending messages
+	// not immediately
+	private ConcurrentLinkedQueue<Client> pendingClients;
+	// hold clients which do not having pending messages and not in processing
+	// not immediately
+	private LinkedHashMap<String, Client> idleClients;
+
 	private Receiver receiver;
 	private HashMap<Sender, Thread> senders;
+	// for managing some worker state
 	private CancellationToken token;
 
-	public PushManager(int connPoolSize, int publishMessageSize,
-			int confirmMessageSize, int publishMessageBufferCount,
-			int confirmMessageBufferCount, int publishSenderCount,
-			int confirmSenderCount) {
-		this.clientConnectionPool = new WebSocketClientConnectionPool(
-				connPoolSize);
-		this.clients = new ConcurrentHashMap<String, Client>();
+	public PushManager(int publishMessageSize, int confirmMessageSize,
+			int publishMessageBufferCount, int confirmMessageBufferCount,
+			int senderCount, int senderIdle) {
+		// client management
+		this.clients = new HashMap<String, Client>(1000);
+		this.pendingClients = new ConcurrentLinkedQueue<Client>();
+		this.idleClients = new LinkedHashMap<String, Client>();
+
 		this.receiver = new Receiver(publishMessageSize, confirmMessageSize,
 				publishMessageBufferCount, confirmMessageBufferCount);
 
-		this.prepareSenders(publishSenderCount, confirmSenderCount);
+		this.token = new CancellationToken();
+		this.prepareSenders(senderCount, senderIdle);
 		this.prepareChecker();
 	}
 
-	public WebSocketClientConnectionPool getClientConnectionPool() {
-		return this.clientConnectionPool;
+	// cancel all current job
+	public void cancelAll() {
+		this.token.setCancelling(true);
+	}
+
+	// resume job after cancelAll called
+	public void resume() {
+		this.token.setCancelling(false);
+	}
+
+	public Receiver getReceiver() {
+		return this.receiver;
 	}
 
 	public Client getClient(String id) {
@@ -62,28 +76,21 @@ public final class PushManager {
 		return clients.get(id);
 	}
 
-	public Client getConfirmClient() {
-		return this.getClient(CONFIRM_CLIENT);
+	public boolean isIdleClient(String id) {
+		return this.idleClients.containsKey(id);
 	}
 
-	public Receiver getReceiver() {
-		return this.receiver;
+	public Client pollPendingClient() {
+		return this.pendingClients.poll();
 	}
 
-	private void prepareSenders(int publishSenderCount, int confirmSenderCount) {
-		this.token = new CancellationToken();
-		senders = new HashMap<Sender, Thread>();
-		for (int i = 0; i < publishSenderCount; i++) {
-			PublishSender sender = new PublishSender(token, this);
+	private void prepareSenders(int senderCount, int senderIdle) {
+		this.senders = new HashMap<Sender, Thread>();
+		for (int i = 0; i < senderCount; i++) {
+			Sender sender = new Sender(this, this.token, senderIdle);
 			Thread thread = new Thread(sender);
 			thread.start();
-			senders.put(sender, thread);
-		}
-		for (int i = 0; i < confirmSenderCount; i++) {
-			ConfirmSender sender = new ConfirmSender(token, this);
-			Thread thread = new Thread(sender);
-			thread.start();
-			senders.put(sender, thread);
+			this.senders.put(sender, thread);
 		}
 	}
 
@@ -91,19 +98,29 @@ public final class PushManager {
 		// timer check
 		TimerTask task = new TimerTask() {
 			public void run() {
-				try {
-					System.out.println("checking sender working well");
-					for (Map.Entry<Sender, Thread> entry : senders.entrySet()) {
-						if (!entry.getValue().isAlive())
-							System.out.println(String.format(
-									"sender#%s is broken!", entry.getKey()));
-					}
-				} catch (Exception e) {
-					e.printStackTrace();
+				// checking senders
+				// System.out.println("checking senders weather working well");
+				for (Map.Entry<Sender, Thread> entry : senders.entrySet()) {
+					if (!entry.getValue().isAlive())
+						System.out.println(String.format(
+								"sender#%s is broken!", entry.getKey()));
 				}
+				// build pending/idle clients queue
+				boolean noPending = pendingClients.isEmpty();
+				for (Client client : clients.values()) {
+					boolean pending = client.getPendingMessagesCount() > 0;
+					if (noPending && pending) {
+						pendingClients.add(client);
+						idleClients.remove(client.getId());
+					} else if (!idleClients.containsKey(client.getId())) {
+						idleClients.put(client.getId(), client);
+					}
+				}
+				System.out.println(String.format("total %s clients,%s is idle",
+						clients.size(), idleClients.size()));
 			}
 		};
 		Timer timer = new Timer(true);
-		timer.schedule(task, new Date(), 10000);
+		timer.schedule(task, new Date(), 1000);
 	}
 }

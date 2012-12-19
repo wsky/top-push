@@ -1,23 +1,18 @@
 package com.tmall.top.push;
 
-import com.tmall.top.push.messaging.PublishConfirmMessage;
-
+@Deprecated
 public class ConfirmSender extends Sender {
-	
-	public ConfirmSender(CancellationToken token, PushManager manager) {
-		super(token, manager);
+	private final static String CLIENT_CONFIRM = "confirm";
+
+	public ConfirmSender(PushManager manager, CancellationToken token, int idle) {
+		super(manager, token, idle);
+		// TODO Auto-generated constructor stub
 	}
 
 	@Override
 	protected void doSend() {
-		PublishConfirmMessage msg;
-		// TODO:send batch confirm 1024/8=128
-		while ((msg = this.receiver.pollConfirmMessage()) != null) {
-			if (this.token.isCancelling)
-				break;
-			this.manager.getConfirmClient().SendMessage(msg);
-			this.receiver.release(msg);
-		}
+		// TODO:just support one type confirm backend
+		this.manager.getClient(CLIENT_CONFIRM).flush(this.token, 50000);
 	}
 
 }

@@ -1,4 +1,4 @@
-package com.tmall.top.push.messaging;
+package com.tmall.top.push.messages;
 
 public class PublishConfirmMessage extends Message {
 	// support batch

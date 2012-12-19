@@ -1,23 +1,19 @@
-package com.tmall.top.push.servlet;
+package com.tmall.top.websocket;
 
 import org.eclipse.jetty.websocket.WebSocket;
+
 import com.tmall.top.push.Client;
-import com.tmall.top.push.PushManager;
-import com.tmall.top.push.Receiver;
-import com.tmall.top.push.WebSocketClientConnection;
 
 public class WebSocketBase implements WebSocket.OnTextMessage,
 		WebSocket.OnBinaryMessage, WebSocket.OnControl, WebSocket.OnFrame {
-	
+
 	private FrameConnection frameConnection;
-	
+
 	private Client client;
 	private WebSocketClientConnection clientConnection;
-	private Receiver receiver;
 
-	public WebSocketBase(Receiver receiver, Client client,
+	public WebSocketBase(Client client,
 			WebSocketClientConnection clientConnection) {
-		this.receiver = receiver;
 		this.client = client;
 		this.clientConnection = clientConnection;
 	}
@@ -56,16 +52,17 @@ public class WebSocketBase implements WebSocket.OnTextMessage,
 
 	@Override
 	public void onMessage(String arg0) {
-		//Text-oriented protocol can use this way
-		this.clientConnection.receive(receiver, arg0);
+		// Text-oriented protocol can use this way
+		this.client.pendingMessage(this.clientConnection.parse(arg0));
 	}
 
 	@Override
 	public void onMessage(byte[] data, int offset, int length) {
-		// FIXME: jetty not support subprotocol friendly, then, will course
+		// TODO: jetty not support subprotocol friendly, then, will course
 		// unnecessary copy
 		try {
-			this.clientConnection.receive(receiver, data, offset, length);
+			this.client.pendingMessage(this.clientConnection.parse(data,
+					offset, length));
 		} catch (Exception e) {
 			e.printStackTrace();
 			this.frameConnection.close(400, "message too long");
@@ -80,7 +77,6 @@ public class WebSocketBase implements WebSocket.OnTextMessage,
 	private void release() {
 		this.client.RemoveConnection(this.clientConnection);
 		this.clientConnection.clear();
-		PushManager.Current().getClientConnectionPool()
-				.release(this.clientConnection);
+		Utils.getClientConnectionPool().release(this.clientConnection);
 	}
 }

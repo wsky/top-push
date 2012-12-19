@@ -1,4 +1,4 @@
-package com.tmall.top.push;
+package com.tmall.top.websocket;
 
 import java.nio.ByteBuffer;
 
@@ -8,10 +8,12 @@ import org.eclipse.jetty.websocket.WebSocket.Connection;
 import org.eclipse.jetty.websocket.WebSocket.FrameConnection;
 
 import com.alibaba.fastjson.JSON;
-import com.tmall.top.push.messaging.Message;
-import com.tmall.top.push.messaging.MessageType;
-import com.tmall.top.push.messaging.PublishConfirmMessage;
-import com.tmall.top.push.messaging.PublishMessage;
+import com.tmall.top.push.ClientConnection;
+import com.tmall.top.push.Receiver;
+import com.tmall.top.push.messages.Message;
+import com.tmall.top.push.messages.MessageType;
+import com.tmall.top.push.messages.PublishConfirmMessage;
+import com.tmall.top.push.messages.PublishMessage;
 
 public class WebSocketClientConnection extends ClientConnection {
 	private final static String ID = "id";
@@ -33,53 +35,59 @@ public class WebSocketClientConnection extends ClientConnection {
 
 	public int verifyHeaders() {
 		// TODO:authentication here
+		// TODO:define error code
 		if (StringUtils.isEmpty(this.id))
 			return 401;
 		return 101;
 	}
 
-	public void receive(Receiver receiver, byte[] message, int offset,
-			int length) throws Exception {
+	public Message parse(byte[] message, int offset, int length)
+			throws Exception {
 		int messageType = this.parseMessageType(message[offset]);
+
 		boolean drop = false;
 		if (messageType == MessageType.PUBLISH) {
-			ByteBuffer buffer = receiver.getPublishBuffer(length);
+			ByteBuffer buffer = this.receiver.getPublishBuffer(length);
 			if (buffer != null) {
 				buffer.put(message, offset, length);
-				receiver.receive(this.parse(receiver.acquirePublishMessage(),
-						buffer));
+				return this
+						.parse(this.receiver.acquirePublishMessage(), buffer);
+			} else {
+				drop = true;
 			}
+
 		} else if (messageType == MessageType.PUBCONFIRM) {
-			ByteBuffer buffer = receiver.getConfirmBuffer(length);
+			ByteBuffer buffer = this.receiver.getConfirmBuffer(length);
 			if (buffer != null) {
 				buffer.put(message, offset, length);
-				receiver.receive(this.parse(receiver.acquireConfirmMessage(),
-						buffer));
+				return this
+						.parse(this.receiver.acquireConfirmMessage(), buffer);
+			} else {
+				drop = true;
 			}
 		}
 		if (drop)
 			System.out.println(String.format(
 					"no buffer! drop message: messageType=%s", messageType));
+
+		return null;
 	}
 
-	public void receive(Receiver receiver, String message) {
-		// use Text-oriented protocol
-		if (protocol == "wamp") {
-			String[] array = JSON.parseObject(message.toString(),
-					String[].class);
-			if (Integer.parseInt(array[0]) == MessageType.PUBLISH) {
-				receiver.receive(this.parse(receiver.acquirePublishMessage(),
-						array));
-			} else if (Integer.parseInt(array[0]) == MessageType.PUBCONFIRM) {
-				receiver.receive(this.parse(receiver.acquireConfirmMessage(),
-						array));
-			}
-		}
+	public Message parse(String message) {
+		throw new NotImplementedException();
+		/*
+		 * Receiver receiver = this.manager.getReceiver(); // use Text-oriented
+		 * protocol if (protocol == "wamp") { String[] array =
+		 * JSON.parseObject(message.toString(), String[].class); if
+		 * (Integer.parseInt(array[0]) == MessageType.PUBLISH) { return
+		 * this.parse(receiver.acquirePublishMessage(), array); } else if
+		 * (Integer.parseInt(array[0]) == MessageType.PUBCONFIRM) { return
+		 * this.parse(receiver.acquireConfirmMessage(), array); } } return null;
+		 */
 	}
 
 	public String parse(Message message) {
 		throw new NotImplementedException();
-		// return JSON.toJSONString(message);
 	}
 
 	@Override
@@ -117,11 +125,11 @@ public class WebSocketClientConnection extends ClientConnection {
 
 	private PublishMessage parse(PublishMessage msg, ByteBuffer buffer) {
 		// TODO: fill msg from buffer by protocol
-		msg.messageType =0;
-		msg.messageSize=1024;
-		msg.to="";
-		msg.id="12345";
-		msg.body=buffer;
+		msg.messageType = 0;
+		msg.messageSize = 1024;
+		msg.to = "";
+		msg.id = "12345";
+		msg.body = buffer;
 		return msg;
 	}
 

@@ -1,23 +1,24 @@
 package com.tmall.top.push;
 
-public abstract class Sender implements Runnable {
+public class Sender implements Runnable {
 	protected CancellationToken token;
 	protected PushManager manager;
-	protected Receiver receiver;
+	private Client client;
+	private int idle;
 
 	public CancellationToken getCancellationToken() {
 		return this.token;
 	}
 
-	public Sender(CancellationToken token, PushManager manager) {
-		this.token = token;
+	public Sender(PushManager manager, CancellationToken token, int idle) {
 		this.manager = manager;
-		this.receiver = this.manager.getReceiver();
+		this.token = token;
+		this.idle = idle;
 	}
 
 	@Override
 	public void run() {
-		while (!this.token.isCancelling) {
+		while (!this.token.isStoping()) {
 			try {
 				doSend();
 			} catch (Exception e) {
@@ -25,12 +26,17 @@ public abstract class Sender implements Runnable {
 			}
 
 			try {
-				Thread.sleep(1000);
+				Thread.sleep(this.idle);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
 		}
 	}
 
-	protected abstract void doSend();
+	protected void doSend() {
+		while (!this.token.isCancelling()
+				&& (this.client = this.manager.pollPendingClient()) != null) {
+			this.client.flush(token, 1000);
+		}
+	}
 }
