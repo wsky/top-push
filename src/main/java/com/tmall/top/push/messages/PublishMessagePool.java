@@ -1,6 +1,6 @@
-package com.tmall.top.push;
+package com.tmall.top.push.messages;
 
-import com.tmall.top.push.messages.PublishMessage;
+import com.tmall.top.push.Pool;
 
 public class PublishMessagePool extends Pool<PublishMessage> {
 

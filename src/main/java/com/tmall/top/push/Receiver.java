@@ -4,7 +4,9 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import com.tmall.top.push.messages.PublishConfirmMessage;
+import com.tmall.top.push.messages.PublishConfirmMessagePool;
 import com.tmall.top.push.messages.PublishMessage;
+import com.tmall.top.push.messages.PublishMessagePool;
 
 public class Receiver {
 	private int publishMessageSize;
@@ -45,18 +47,20 @@ public class Receiver {
 				confirmMessageSize, confirmMessageBufferCount);
 	}
 
-	public ByteBuffer getPublishBuffer(int length) throws Exception {
+	public ByteBuffer getPublishBuffer(int length)
+			throws messageTooLongException {
 		if (length > this.publishMessageSize)
-			throw new Exception("length is bigger than max publishMessageSize");
+			throw new messageTooLongException();
 		ByteBuffer buffer = this.publishBufferQueue.poll();
 		if (buffer != null)
 			buffer.position(0);
 		return buffer;
 	}
 
-	public ByteBuffer getConfirmBuffer(int length) throws Exception {
+	public ByteBuffer getConfirmBuffer(int length)
+			throws messageTooLongException {
 		if (length > this.confirmMessageSize)
-			throw new Exception("length is bigger than max confirmMessageSize");
+			throw new messageTooLongException();
 		ByteBuffer buffer = this.confirmBufferQueue.poll();
 		if (buffer != null)
 			buffer.position(0);

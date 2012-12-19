@@ -3,6 +3,7 @@ package com.tmall.top.websocket;
 import org.eclipse.jetty.websocket.WebSocket;
 
 import com.tmall.top.push.Client;
+import com.tmall.top.push.messageTooLongException;
 
 public class WebSocketBase implements WebSocket.OnTextMessage,
 		WebSocket.OnBinaryMessage, WebSocket.OnControl, WebSocket.OnFrame {
@@ -63,9 +64,9 @@ public class WebSocketBase implements WebSocket.OnTextMessage,
 		try {
 			this.client.pendingMessage(this.clientConnection.parse(data,
 					offset, length));
-		} catch (Exception e) {
+		} catch (messageTooLongException e) {
 			e.printStackTrace();
-			this.frameConnection.close(400, "message too long");
+			this.frameConnection.close(400, e.getMessage());
 		}
 	}
 

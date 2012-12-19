@@ -10,7 +10,8 @@ public class InitServlet extends HttpServlet {
 	@Override
 	public void init(ServletConfig config) throws ServletException {
 		Utils.initClientConnectionPool(100000);
-		PushManager.current(new PushManager(1024, 1024, 100000, 100000, 4, 1));
+		PushManager
+				.current(new PushManager(1024, 1024, 100000, 100000, 4, 1000));
 		super.init(config);
 	}
 }

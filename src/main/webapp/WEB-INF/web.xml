@@ -65,22 +65,30 @@
 
 	<servlet>
 		<servlet-name>init</servlet-name>
-		<servlet-class>com.tmall.top.push.servlet.InitServlet</servlet-class>
+		<servlet-class>com.tmall.top.push.websocket.InitServlet</servlet-class>
 		<load-on-startup>0</load-on-startup>
 	</servlet>
 	<servlet>
 		<servlet-name>frontend</servlet-name>
-		<servlet-class>com.tmall.top.push.servlet.FrontendServlet</servlet-class>
+		<servlet-class>com.tmall.top.push.websocket.FrontendServlet</servlet-class>
 		<init-param>
 			<param-name>maxTextMessageSize</param-name>
+			<param-value>1048576</param-value>
+		</init-param>
+		<init-param>
+			<param-name>maxBinaryMessageSize</param-name>
 			<param-value>1048576</param-value>
 		</init-param>
 	</servlet>
 	<servlet>
 		<servlet-name>backend</servlet-name>
-		<servlet-class>com.tmall.top.push.servlet.BackendServlet</servlet-class>
+		<servlet-class>com.tmall.top.push.websocket.BackendServlet</servlet-class>
 		<init-param>
 			<param-name>maxTextMessageSize</param-name>
+			<param-value>1048576</param-value>
+		</init-param>
+		<init-param>
+			<param-name>maxBinaryMessageSize</param-name>
 			<param-value>1048576</param-value>
 		</init-param>
 	</servlet>

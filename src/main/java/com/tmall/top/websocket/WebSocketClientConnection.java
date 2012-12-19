@@ -2,14 +2,12 @@ package com.tmall.top.websocket;
 
 import java.nio.ByteBuffer;
 
-import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.jetty.websocket.WebSocket.Connection;
 import org.eclipse.jetty.websocket.WebSocket.FrameConnection;
 
-import com.alibaba.fastjson.JSON;
 import com.tmall.top.push.ClientConnection;
-import com.tmall.top.push.Receiver;
+import com.tmall.top.push.messageTooLongException;
 import com.tmall.top.push.messages.Message;
 import com.tmall.top.push.messages.MessageType;
 import com.tmall.top.push.messages.PublishConfirmMessage;
@@ -42,39 +40,35 @@ public class WebSocketClientConnection extends ClientConnection {
 	}
 
 	public Message parse(byte[] message, int offset, int length)
-			throws Exception {
+			throws messageTooLongException {
 		int messageType = this.parseMessageType(message[offset]);
 
-		boolean drop = false;
-		if (messageType == MessageType.PUBLISH) {
-			ByteBuffer buffer = this.receiver.getPublishBuffer(length);
-			if (buffer != null) {
-				buffer.put(message, offset, length);
-				return this
-						.parse(this.receiver.acquirePublishMessage(), buffer);
-			} else {
-				drop = true;
-			}
+		Message msg = null;
+		ByteBuffer buffer = null;
 
+		if (messageType == MessageType.PUBLISH) {
+			buffer = this.receiver.getPublishBuffer(length);
+			msg = this.receiver.acquirePublishMessage();
 		} else if (messageType == MessageType.PUBCONFIRM) {
-			ByteBuffer buffer = this.receiver.getConfirmBuffer(length);
-			if (buffer != null) {
-				buffer.put(message, offset, length);
-				return this
-						.parse(this.receiver.acquireConfirmMessage(), buffer);
-			} else {
-				drop = true;
-			}
+			buffer = this.receiver.getConfirmBuffer(length);
+			msg = this.receiver.acquireConfirmMessage();
 		}
-		if (drop)
+
+		if (msg == null) {
+			System.out.println(String.format(
+					"not support message: messageType=%s", messageType));
+		} else if (buffer != null) {
+			buffer.put(message, offset, length);
+			msg = this.parse(msg, buffer);
+		} else {
 			System.out.println(String.format(
 					"no buffer! drop message: messageType=%s", messageType));
-
-		return null;
+		}
+		return msg;
 	}
 
 	public Message parse(String message) {
-		throw new NotImplementedException();
+		return null;
 		/*
 		 * Receiver receiver = this.manager.getReceiver(); // use Text-oriented
 		 * protocol if (protocol == "wamp") { String[] array =
@@ -87,7 +81,7 @@ public class WebSocketClientConnection extends ClientConnection {
 	}
 
 	public String parse(Message message) {
-		throw new NotImplementedException();
+		return null;
 	}
 
 	@Override
@@ -113,28 +107,21 @@ public class WebSocketClientConnection extends ClientConnection {
 		this.connection.sendMessage(this.parse(msg));
 	}
 
-	private PublishMessage parse(PublishMessage msg, String[] array) {
-		// TODO:fill msg by protocol
-		return msg;
-	}
-
-	private PublishConfirmMessage parse(PublishConfirmMessage msg,
-			String[] array) {
-		return msg;
-	}
-
-	private PublishMessage parse(PublishMessage msg, ByteBuffer buffer) {
-		// TODO: fill msg from buffer by protocol
+	// TODO: fill message from buffer by custom protocol
+	private Message parse(Message msg, ByteBuffer buffer) {
 		msg.messageType = 0;
 		msg.messageSize = 1024;
 		msg.to = "";
-		msg.id = "12345";
 		msg.body = buffer;
-		return msg;
-	}
 
-	private PublishConfirmMessage parse(PublishConfirmMessage msg,
-			ByteBuffer buffer) {
+		if (msg instanceof PublishMessage) {
+			PublishMessage publishMessage = (PublishMessage) msg;
+			publishMessage.id = "12345";
+		} else if (msg instanceof PublishConfirmMessage) {
+			PublishConfirmMessage confirmMessage = (PublishConfirmMessage) msg;
+			confirmMessage.confirmId = "1,2,3";
+		}
+
 		return msg;
 	}
 

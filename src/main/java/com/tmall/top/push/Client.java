@@ -39,10 +39,12 @@ public class Client {
 	}
 
 	public void pendingMessage(Message msg) {
-		this.pendingMessages.add(msg);
+		if (msg != null)
+			this.pendingMessages.add(msg);
 	}
 
 	public void flush(CancellationToken token, int count) {
+		int temp = 0;
 		for (int i = 0; i < count; i++) {
 			if (token.isCancelling())
 				break;
@@ -53,7 +55,11 @@ public class Client {
 			if (msg == null)
 				break;
 			this.SendMessage(msg);
+			temp++;
 		}
+		if (temp > 0)
+			System.out.println(String.format("flush %s messages to client#%s ",
+					temp, this.getId()));
 	}
 
 	protected void SendMessage(Message msg) {
@@ -73,6 +79,7 @@ public class Client {
 			} catch (Exception e) {
 				e.printStackTrace();
 			} finally {
+				// FIXME:maybe course dead-loop
 				this.AddConnection(connection);
 			}
 		}
