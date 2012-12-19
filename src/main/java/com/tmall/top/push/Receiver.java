@@ -1,5 +1,6 @@
 package com.tmall.top.push;
 
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -125,15 +126,16 @@ public class Receiver {
 		return msg;
 	}
 
-	public byte[] parseMessage(String protocol, Message message) {
+	public ByteBuffer parseMessage(String protocol, Message message) {
 		// TODO:parse message to bytes
-		return null;
+		// should add remaining length
+		return (ByteBuffer) message.body;
 	}
 
 	private void fillBufferQueue(ConcurrentLinkedQueue<ByteBuffer> bufferQueue,
 			byte[] buffer, int size, int count) {
 		for (int i = 0; i < count; i++) {
-			bufferQueue.add(ByteBuffer.wrap(buffer, i * size, size));
+			bufferQueue.add(ByteBuffer.wrap(buffer, i * size, size).slice());
 		}
 	}
 

@@ -1,5 +1,8 @@
 package com.tmall.top.push.websocket;
 
+import java.nio.Buffer;
+import java.nio.ByteBuffer;
+
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.jetty.websocket.WebSocket.Connection;
 import org.eclipse.jetty.websocket.WebSocket.FrameConnection;
@@ -61,7 +64,8 @@ public class WebSocketClientConnection extends ClientConnection {
 
 	@Override
 	public void sendMessage(Message message) throws Exception {
-		byte[] buffer = this.receiver.parseMessage(this.protocol, message);
-		this.connection.sendMessage(buffer, 0, buffer.length);
+		ByteBuffer buffer = this.receiver.parseMessage(this.protocol, message);
+		this.connection.sendMessage(buffer.array(), buffer.arrayOffset(),
+				buffer.position() + 1);
 	}
 }

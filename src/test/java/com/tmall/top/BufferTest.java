@@ -1,6 +1,10 @@
 package com.tmall.top;
 
 import static org.junit.Assert.*;
+
+import java.nio.Buffer;
+import java.nio.ByteBuffer;
+
 import org.apache.commons.collections.buffer.CircularFifoBuffer;
 import org.apache.commons.lang.time.StopWatch;
 import org.junit.Test;
@@ -67,7 +71,7 @@ public class BufferTest {
 		final CircularFifoBuffer buffer = new CircularFifoBuffer(total);
 
 		for (int i = 0; i < total; i++) {
-			//not thread safe
+			// not thread safe
 			buffer.add(msg);
 		}
 
@@ -104,12 +108,52 @@ public class BufferTest {
 		Thread.sleep(2000);
 	}
 
-//	private String[] GetItems(int count, int size) {
-//		String[] items = new String[count];
-//		for (int i = 0; i < count; i++)
-//			items[i] = this.GetItem(size);
-//		return items;
-//	}
+	@Test
+	public void nio_buffer_position_test() {
+		byte[] buffer = new byte[1024];
+		ByteBuffer byteBuffer = ByteBuffer.wrap(buffer);
+		assertEquals(buffer, byteBuffer.array());
+		
+		assertEquals(0, byteBuffer.arrayOffset());
+		assertEquals(0, byteBuffer.position());
+		assertEquals(1024, byteBuffer.capacity());
+		assertEquals(1024, byteBuffer.limit());
+		
+		byteBuffer.putInt(100);
+		assertEquals(4, byteBuffer.position());
+		
+	}
+
+	@Test
+	public void nio_buffer_position_slice_test() {
+		byte[] buffer = new byte[1024];
+		//new wrapper
+		ByteBuffer byteBuffer = ByteBuffer.wrap(buffer, 10, 30).slice();
+
+		assertEquals(10, byteBuffer.arrayOffset());
+		assertEquals(0, byteBuffer.position());
+		assertEquals(30, byteBuffer.capacity());
+		assertEquals(30, byteBuffer.limit());
+		
+		byteBuffer.putInt(100);
+		assertEquals(10, byteBuffer.arrayOffset());
+		assertEquals(4, byteBuffer.position());
+		assertEquals(30, byteBuffer.capacity());
+		assertEquals(30, byteBuffer.limit());
+		
+		byteBuffer.position(0);
+		assertEquals(10, byteBuffer.arrayOffset());
+		assertEquals(0, byteBuffer.position());
+		assertEquals(30, byteBuffer.capacity());
+		assertEquals(30, byteBuffer.limit());
+	}
+
+	// private String[] GetItems(int count, int size) {
+	// String[] items = new String[count];
+	// for (int i = 0; i < count; i++)
+	// items[i] = this.GetItem(size);
+	// return items;
+	// }
 
 	private String GetItem(int size) {
 		String string = "";

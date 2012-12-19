@@ -14,9 +14,10 @@ public abstract class Message {
 	// the message after it has been delivered to the current subscribers
 	// public boolean retain;
 
-	// message body payload
+	// remaining length exclude head(messageType)
 	public int messageSize;
 
+	// 8byte
 	// target client id
 	public String to;
 
