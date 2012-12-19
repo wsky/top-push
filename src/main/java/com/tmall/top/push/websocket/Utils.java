@@ -1,4 +1,4 @@
-package com.tmall.top.websocket;
+package com.tmall.top.push.websocket;
 
 import java.util.Enumeration;
 import java.util.Hashtable;

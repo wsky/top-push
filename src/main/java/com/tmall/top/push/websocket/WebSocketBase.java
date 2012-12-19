@@ -1,4 +1,4 @@
-package com.tmall.top.websocket;
+package com.tmall.top.push.websocket;
 
 import org.eclipse.jetty.websocket.WebSocket;
 
@@ -46,19 +46,21 @@ public class WebSocketBase implements WebSocket.OnTextMessage,
 	@Override
 	public boolean onControl(byte arg0, byte[] arg1, int arg2, int arg3) {
 		if (this.frameConnection.isPing(arg0)) {
-			this.clientConnection.ReceivePing();
+			this.receivePing();
 		}
 		return false;
 	}
 
 	@Override
 	public void onMessage(String arg0) {
+		this.receivePing();
 		// Text-oriented protocol can use this way
 		this.client.pendingMessage(this.clientConnection.parse(arg0));
 	}
 
 	@Override
 	public void onMessage(byte[] data, int offset, int length) {
+		this.receivePing();
 		// TODO: jetty not support subprotocol friendly, then, will course
 		// unnecessary copy
 		try {
@@ -73,6 +75,12 @@ public class WebSocketBase implements WebSocket.OnTextMessage,
 	@Override
 	public boolean onFrame(byte arg0, byte arg1, byte[] arg2, int arg3, int arg4) {
 		return false;
+	}
+
+	// telling client is alive
+	private void receivePing() {
+		this.clientConnection.receivePing();
+		this.client.receivePing();
 	}
 
 	private void release() {

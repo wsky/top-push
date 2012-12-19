@@ -1,4 +1,4 @@
-package com.tmall.top.websocket;
+package com.tmall.top.push.websocket;
 
 import com.tmall.top.push.Pool;
 

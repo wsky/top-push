@@ -3,6 +3,8 @@ package com.tmall.top.push;
 import java.nio.ByteBuffer;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import com.tmall.top.push.messages.Message;
+import com.tmall.top.push.messages.MessageType;
 import com.tmall.top.push.messages.PublishConfirmMessage;
 import com.tmall.top.push.messages.PublishConfirmMessagePool;
 import com.tmall.top.push.messages.PublishMessage;
@@ -93,26 +95,67 @@ public class Receiver {
 		this.confirmMessagePool.release(msg);
 	}
 
-	// public void receive(PublishMessage value) {
-	// this.publishMessageQueue.add(value);
-	// }
-	//
-	// public void receive(PublishConfirmMessage value) {
-	// this.confirmMessageQueue.add(value);
-	// }
-	//
-	// public PublishMessage pollPublishMessage() {
-	// return this.publishMessageQueue.poll();
-	// }
-	//
-	// public PublishConfirmMessage pollConfirmMessage() {
-	// return this.confirmMessageQueue.poll();
-	// }
+	public Message parseMessage(String protocol, byte[] message, int offset,
+			int length) throws messageTooLongException {
+		// TODO:multi-protocol support
+		// using our custom protocol currently
+		int messageType = this.parseMessageType(message[offset]);
+
+		Message msg = null;
+		ByteBuffer buffer = null;
+
+		if (messageType == MessageType.PUBLISH) {
+			buffer = this.getPublishBuffer(length);
+			msg = this.acquirePublishMessage();
+		} else if (messageType == MessageType.PUBCONFIRM) {
+			buffer = this.getConfirmBuffer(length);
+			msg = this.acquireConfirmMessage();
+		}
+
+		if (msg == null) {
+			System.out.println(String.format(
+					"not support message: messageType=%s", messageType));
+		} else if (buffer != null) {
+			buffer.put(message, offset, length);
+			msg = this.parse(msg, buffer);
+		} else {
+			System.out.println(String.format(
+					"no buffer! drop message: messageType=%s", messageType));
+		}
+		return msg;
+	}
+
+	public byte[] parseMessage(String protocol, Message message) {
+		// TODO:parse message to bytes
+		return null;
+	}
 
 	private void fillBufferQueue(ConcurrentLinkedQueue<ByteBuffer> bufferQueue,
 			byte[] buffer, int size, int count) {
 		for (int i = 0; i < count; i++) {
 			bufferQueue.add(ByteBuffer.wrap(buffer, i * size, size));
 		}
+	}
+
+	// TODO: fill message from buffer by custom protocol
+	private Message parse(Message msg, ByteBuffer buffer) {
+		msg.messageType = 0;
+		msg.messageSize = 1024;
+		msg.to = "";
+		msg.body = buffer;
+
+		if (msg instanceof PublishMessage) {
+			PublishMessage publishMessage = (PublishMessage) msg;
+			publishMessage.id = "12345";
+		} else if (msg instanceof PublishConfirmMessage) {
+			PublishConfirmMessage confirmMessage = (PublishConfirmMessage) msg;
+			confirmMessage.confirmId = "1,2,3";
+		}
+
+		return msg;
+	}
+
+	private int parseMessageType(byte headerByte) {
+		return (headerByte & 240) >> 4;
 	}
 }

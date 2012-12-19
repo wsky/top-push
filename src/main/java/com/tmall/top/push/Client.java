@@ -1,5 +1,7 @@
 package com.tmall.top.push;
 
+import java.util.Date;
+import java.util.LinkedList;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import com.tmall.top.push.messages.Message;
@@ -7,12 +9,17 @@ import com.tmall.top.push.messages.Message;
 public class Client {
 	private final static int MAX_FLUSH_COUNT = 100000;
 	private String id;
-	private ConcurrentLinkedQueue<ClientConnection> connections;
+	// ping from any connection
+	protected Date lastPingTime;
+	private LinkedList<ClientConnection> connections;
+	private ConcurrentLinkedQueue<ClientConnection> connectionQueue;
 	private ConcurrentLinkedQueue<Message> pendingMessages;
 
 	public Client(String id) {
 		this.id = id;
-		this.connections = new ConcurrentLinkedQueue<ClientConnection>();
+		this.receivePing();
+		this.connections = new LinkedList<ClientConnection>();
+		this.connectionQueue = new ConcurrentLinkedQueue<ClientConnection>();
 		this.pendingMessages = new ConcurrentLinkedQueue<Message>();
 	}
 
@@ -24,18 +31,36 @@ public class Client {
 		return this.pendingMessages.size();
 	}
 
+	public int getConnectionsCount() {
+		return this.connections.size();
+	}
+
+	public Date getLastPingTime() {
+		return this.lastPingTime;
+	}
+
 	public void AddConnection(ClientConnection conn) {
-		this.connections.add(conn);
+		synchronized (this.connections) {
+			this.connections.add(conn);
+		}
+		this.connectionQueue.add(conn);
 		System.out.println(String.format(
 				"client#%s add new connection from %s", this.getId(),
 				conn.getOrigin()));
 	}
 
 	public void RemoveConnection(ClientConnection conn) {
-		this.connections.remove(conn);
+		synchronized (this.connections) {
+			this.connections.remove(conn);
+		}
+		this.connectionQueue.remove(conn);
 		System.out.println(String.format(
 				"client#%s remove a connection from %s", this.getId(),
 				conn.getOrigin()));
+	}
+
+	public void receivePing() {
+		this.lastPingTime = new Date();
 	}
 
 	public void pendingMessage(Message msg) {
@@ -65,7 +90,7 @@ public class Client {
 	protected void SendMessage(Message msg) {
 		// FIFO queue for easy load-balance
 		while (true) {
-			ClientConnection connection = this.connections.poll();
+			ClientConnection connection = this.connectionQueue.poll();
 			if (connection == null)
 				break;
 			if (!connection.isOpen()) {

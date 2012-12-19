@@ -40,14 +40,14 @@ public abstract class ClientConnection {
 	}
 
 	public void init(Hashtable<String, String> headers, PushManager manager) {
-		this.ReceivePing();
+		this.receivePing();
 		this.headers = headers;
 		this.manager = manager;
 		this.receiver=this.manager.getReceiver();
 		this.initHeaders();
 	}
 
-	public void ReceivePing() {
+	public void receivePing() {
 		this.lastPingTime = new Date();
 	}
 

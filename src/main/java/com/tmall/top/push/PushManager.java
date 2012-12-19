@@ -24,12 +24,15 @@ public final class PushManager {
 
 	// easy find client by id
 	private HashMap<String, Client> clients;
-	// hold clients which having pending messages
+	// hold clients which having pending messages and in processing
 	// not immediately
 	private ConcurrentLinkedQueue<Client> pendingClients;
 	// hold clients which do not having pending messages and not in processing
 	// not immediately
 	private LinkedHashMap<String, Client> idleClients;
+	// hold clients which do not having any active connections
+	// not immediately
+	private LinkedHashMap<String, Client> offlineClients;
 
 	private Receiver receiver;
 	private HashMap<Sender, Thread> senders;
@@ -43,6 +46,7 @@ public final class PushManager {
 		this.clients = new HashMap<String, Client>(1000);
 		this.pendingClients = new ConcurrentLinkedQueue<Client>();
 		this.idleClients = new LinkedHashMap<String, Client>();
+		this.offlineClients = new LinkedHashMap<String, Client>();
 
 		this.receiver = new Receiver(publishMessageSize, confirmMessageSize,
 				publishMessageBufferCount, confirmMessageBufferCount);
@@ -80,6 +84,10 @@ public final class PushManager {
 		return this.idleClients.containsKey(id);
 	}
 
+	public boolean isOfflineClient(String id) {
+		return this.offlineClients.containsKey(id);
+	}
+
 	public Client pollPendingClient() {
 		return this.pendingClients.poll();
 	}
@@ -105,22 +113,41 @@ public final class PushManager {
 						System.out.println(String.format(
 								"sender#%s is broken!", entry.getKey()));
 				}
-				// build pending/idle clients queue
-				boolean noPending = pendingClients.isEmpty();
-				for (Client client : clients.values()) {
-					boolean pending = client.getPendingMessagesCount() > 0;
-					if (noPending && pending) {
-						pendingClients.add(client);
-						idleClients.remove(client.getId());
-					} else if (!idleClients.containsKey(client.getId())) {
-						idleClients.put(client.getId(), client);
-					}
-				}
-				System.out.println(String.format("total %s clients,%s is idle",
-						clients.size(), idleClients.size()));
+
+				rebuildClientsState();
+				System.out.println(String.format(
+						"total %s clients, %s is idle, %s is offline",
+						clients.size(), idleClients.size(),
+						offlineClients.size()));
 			}
 		};
 		Timer timer = new Timer(true);
 		timer.schedule(task, new Date(), 1000);
+	}
+
+	// build pending/idle clients queue
+	private void rebuildClientsState() {
+		// still have pending clients in processing
+		boolean noPending = pendingClients.isEmpty();
+		boolean offline, pending;
+		
+		for (Client client : clients.values()) {
+			offline = client.getConnectionsCount() == 0;
+			pending = client.getPendingMessagesCount() > 0;
+
+			if (noPending && pending && !offline) {
+				pendingClients.add(client);
+				idleClients.remove(client.getId());
+				offlineClients.remove(client.getId());
+			} else if (!pending && !offline) {
+				idleClients.put(client.getId(), client);
+				offlineClients.remove(client.getId());
+			} else if (offline) {
+				// TODO:clear pending messages of offline client after
+				// a long time
+				offlineClients.put(client.getId(), client);
+				idleClients.remove(client.getId());
+			}
+		}
 	}
 }

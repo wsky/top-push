@@ -1,4 +1,4 @@
-package com.tmall.top.websocket;
+package com.tmall.top.push.websocket;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -11,7 +11,7 @@ public class InitServlet extends HttpServlet {
 	public void init(ServletConfig config) throws ServletException {
 		Utils.initClientConnectionPool(100000);
 		PushManager
-				.current(new PushManager(1024, 1024, 100000, 100000, 4, 1000));
+				.current(new PushManager(1024, 1024, 100000, 100000, 4, 2000));
 		super.init(config);
 	}
 }
