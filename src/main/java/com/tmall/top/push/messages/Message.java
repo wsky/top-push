@@ -14,10 +14,13 @@ public abstract class Message {
 	// the message after it has been delivered to the current subscribers
 	// public boolean retain;
 
+	public int remainingLength;
 	// full length include head(messageType)/to
-	public int messageSize;
+	public int fullMessageSize;
 
-	// 8byte
+	// message from client id
+	// need be filled when receiving
+	public String from;
 	// target client id
 	public String to;
 
@@ -25,7 +28,9 @@ public abstract class Message {
 
 	public void clear() {
 		this.messageType = 0;
-		this.messageSize = 0;
+		this.remainingLength = 0;
+		this.fullMessageSize = 0;
+		this.from = null;
 		this.to = null;
 		this.body = null;
 		this.internalClear();

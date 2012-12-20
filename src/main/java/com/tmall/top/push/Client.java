@@ -100,6 +100,8 @@ public class Client {
 			if (connection == null)
 				break;
 			if (!connection.isOpen()) {
+				// FIXME:release connection object here? or websocketbase always
+				// do this?
 				System.out.println(String.format(
 						"connection#%s[%s] is closed, remove it",
 						connection.getId(), connection.getOrigin()));

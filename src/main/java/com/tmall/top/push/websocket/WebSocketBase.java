@@ -4,7 +4,9 @@ import org.eclipse.jetty.websocket.WebSocket;
 
 import com.tmall.top.push.Client;
 import com.tmall.top.push.PushManager;
-import com.tmall.top.push.messageTooLongException;
+import com.tmall.top.push.MessageTooLongException;
+import com.tmall.top.push.MessageTypeNotSupportException;
+import com.tmall.top.push.NoMessageBufferException;
 import com.tmall.top.push.messages.Message;
 
 public class WebSocketBase implements WebSocket.OnTextMessage,
@@ -62,13 +64,20 @@ public class WebSocketBase implements WebSocket.OnTextMessage,
 
 	@Override
 	public void onMessage(byte[] data, int offset, int length) {
+		// any message use as ping
 		this.receivePing();
-		// TODO: jetty not support subprotocol friendly, then, will course
-		// unnecessary copy?
+
 		try {
 			Message msg = this.clientConnection.parse(data, offset, length);
+			// deliver to target client
 			this.manager.getClient(msg.to).pendingMessage(msg);
-		} catch (messageTooLongException e) {
+		} catch (MessageTooLongException e) {
+			e.printStackTrace();
+			this.frameConnection.close(400, e.getMessage());
+		} catch (MessageTypeNotSupportException e) {
+			e.printStackTrace();
+			this.frameConnection.close(400, e.getMessage());
+		} catch (NoMessageBufferException e) {
 			e.printStackTrace();
 			this.frameConnection.close(400, e.getMessage());
 		}

@@ -9,10 +9,10 @@ import java.util.TimerTask;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public final class PushManager {
-	// TODO: use IOC managing life cycle
 	private static Object lock = new Object();
 	private static PushManager current;
 
+	// TODO: use IOC managing life cycle
 	public static void current(PushManager manager) {
 		if (current == null)
 			current = manager;
@@ -22,7 +22,9 @@ public final class PushManager {
 		return current;
 	}
 
+	// all connections whatever from any client
 	private int totalConnections;
+	private int totalPendingMessages;
 	// easy find client by id
 	private HashMap<String, Client> clients;
 	// hold clients which having pending messages and in processing
@@ -119,12 +121,14 @@ public final class PushManager {
 				}
 				try {
 					rebuildClientsState();
-					System.out
-							.println(String
-									.format("total %s connections, total %s clients, %s is idle, %s is offline",
-											totalConnections, clients.size(),
-											idleClients.size(),
-											offlineClients.size()));
+					System.out.println(String.format(
+							"total %s pending messages, "
+									+ "total %s connections, "
+									+ "total %s clients, "
+									+ "%s is idle, %s is offline",
+							totalPendingMessages, totalConnections,
+							clients.size(), idleClients.size(),
+							offlineClients.size()));
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -137,16 +141,18 @@ public final class PushManager {
 	// build pending/idle clients queue
 	private void rebuildClientsState() {
 		this.totalConnections = 0;
-		int connCount;
+		int connCount, pendingCount;
 		// still have pending clients in processing
 		boolean noPending = pendingClients.isEmpty();
 		boolean offline, pending;
 
 		for (Client client : clients.values()) {
 			connCount = client.getConnectionsCount();
+			pendingCount = client.getPendingMessagesCount();
 			this.totalConnections += connCount;
+			this.totalPendingMessages += pendingCount;
 			offline = connCount == 0;
-			pending = client.getPendingMessagesCount() > 0;
+			pending = pendingCount > 0;
 
 			if (noPending && pending && !offline) {
 				pendingClients.add(client);

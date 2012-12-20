@@ -1,6 +1,5 @@
 package com.tmall.top.push;
 
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -22,14 +21,14 @@ public class Receiver {
 	private ConcurrentLinkedQueue<ByteBuffer> publishBufferQueue;
 	private ConcurrentLinkedQueue<ByteBuffer> confirmBufferQueue;
 
-	// provide message receiving buffer and improvement
+	// provide message parser, receiving-buffer and improvement
 	public Receiver(int publishMessageSize, int confirmMessageSize,
 			int publishMessageBufferCount, int confirmMessageBufferCount) {
 		// message size
 		this.publishMessageSize = publishMessageSize;
 		this.confirmMessageSize = confirmMessageSize;
 		// object pool
-		// is it necessary?
+		// is it necessary ?
 		this.publishMessagePool = new PublishMessagePool(
 				publishMessageBufferCount / 2);
 		this.confirmMessagePool = new PublishConfirmMessagePool(
@@ -61,11 +60,13 @@ public class Receiver {
 			this.confirmMessagePool.release((PublishConfirmMessage) msg);
 	}
 
+	// for receiving message from lower buffer
 	public Message parseMessage(String protocol, byte[] message, int offset,
-			int length) throws messageTooLongException {
+			int length) throws MessageTooLongException,
+			MessageTypeNotSupportException, NoMessageBufferException {
 		// TODO:multi-protocol support, design parser factory
 		// using our custom protocol currently
-		int messageType = this.parseMessageType(message[offset]);
+		int messageType = MessageIO.parseMessageType(message[offset]);
 
 		Message msg = null;
 		ByteBuffer buffer = null;
@@ -79,22 +80,19 @@ public class Receiver {
 		}
 
 		if (msg == null) {
-			System.out.println(String.format(
-					"not support message: messageType=%s", messageType));
+			throw new MessageTypeNotSupportException();
 		} else if (buffer != null) {
 			buffer.put(message, offset, length);
-			msg = this.parse(msg, buffer);
+			msg = MessageIO.parseServerReceiving(msg, buffer);
 		} else {
-			System.out.println(String.format(
-					"no buffer! drop message: messageType=%s", messageType));
+			throw new NoMessageBufferException();
 		}
 		return msg;
 	}
 
+	// for send message to lower buffer
 	public ByteBuffer parseMessage(String protocol, Message message) {
-		// TODO:parse message to bytes
-		// should add remaining length
-		return (ByteBuffer) message.body;
+		return MessageIO.parseServerSending(message, (ByteBuffer) message.body);
 	}
 
 	private PublishMessage acquirePublishMessage() {
@@ -106,9 +104,9 @@ public class Receiver {
 	}
 
 	private ByteBuffer getPublishBuffer(int length)
-			throws messageTooLongException {
+			throws MessageTooLongException {
 		if (length > this.publishMessageSize)
-			throw new messageTooLongException();
+			throw new MessageTooLongException();
 		ByteBuffer buffer = this.publishBufferQueue.poll();
 		if (buffer != null)
 			buffer.position(0);
@@ -116,9 +114,9 @@ public class Receiver {
 	}
 
 	private ByteBuffer getConfirmBuffer(int length)
-			throws messageTooLongException {
+			throws MessageTooLongException {
 		if (length > this.confirmMessageSize)
-			throw new messageTooLongException();
+			throw new MessageTooLongException();
 		ByteBuffer buffer = this.confirmBufferQueue.poll();
 		if (buffer != null)
 			buffer.position(0);
@@ -130,34 +128,5 @@ public class Receiver {
 		for (int i = 0; i < count; i++) {
 			bufferQueue.add(ByteBuffer.wrap(buffer, i * size, size).slice());
 		}
-	}
-
-	private Message parse(Message msg, ByteBuffer buffer) {
-		msg.messageType = buffer.get();
-		msg.to = this.getTo(buffer);
-		// TODO:do message size should include header length?
-		msg.messageSize = buffer.getInt() + 1 + 8;
-		msg.body = buffer;
-		// server do not need convert more body, useless
-		// if (msg instanceof PublishMessage) {
-		// PublishMessage publishMessage = (PublishMessage) msg;
-		// publishMessage.id = "12345";
-		// } else if (msg instanceof PublishConfirmMessage) {
-		// PublishConfirmMessage confirmMessage = (PublishConfirmMessage) msg;
-		// confirmMessage.confirmId = "1,2,3";
-		// }
-		return msg;
-	}
-
-	private int parseMessageType(byte headerByte) {
-		return headerByte;
-		// return (headerByte & 240) >> 4;
-	}
-
-	private String getTo(ByteBuffer buffer) {
-		String to = "";
-		for (int i = 0; i < 8; i++)
-			to += buffer.getChar();
-		return to;
 	}
 }

@@ -7,7 +7,9 @@ import org.eclipse.jetty.websocket.WebSocket.Connection;
 import org.eclipse.jetty.websocket.WebSocket.FrameConnection;
 
 import com.tmall.top.push.ClientConnection;
-import com.tmall.top.push.messageTooLongException;
+import com.tmall.top.push.MessageTooLongException;
+import com.tmall.top.push.MessageTypeNotSupportException;
+import com.tmall.top.push.NoMessageBufferException;
 import com.tmall.top.push.messages.Message;
 
 public class WebSocketClientConnection extends ClientConnection {
@@ -35,13 +37,13 @@ public class WebSocketClientConnection extends ClientConnection {
 	}
 
 	public Message parse(byte[] message, int offset, int length)
-			throws messageTooLongException {
-		return this.receiver.parseMessage(this.protocol, message, offset,
-				length);
-	}
-
-	public Message parse(String message) {
-		return null;
+			throws MessageTooLongException, MessageTypeNotSupportException,
+			NoMessageBufferException {
+		Message msg = this.receiver.parseMessage(this.protocol, message,
+				offset, length);
+		// must tell who send it
+		msg.from = this.getId();
+		return msg;
 	}
 
 	@Override
@@ -65,6 +67,6 @@ public class WebSocketClientConnection extends ClientConnection {
 	public void sendMessage(Message message) throws Exception {
 		ByteBuffer buffer = this.receiver.parseMessage(this.protocol, message);
 		this.connection.sendMessage(buffer.array(), buffer.arrayOffset(),
-				message.messageSize);
+				message.fullMessageSize);
 	}
 }
