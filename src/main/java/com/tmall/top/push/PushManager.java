@@ -44,7 +44,7 @@ public final class PushManager {
 
 	public PushManager(int publishMessageSize, int confirmMessageSize,
 			int publishMessageBufferCount, int confirmMessageBufferCount,
-			int senderCount, int senderIdle) {
+			int senderCount, int senderIdle, int stateBuilderIdle) {
 		// client management
 		this.clients = new HashMap<String, Client>(1000);
 		this.pendingClients = new ConcurrentLinkedQueue<Client>();
@@ -56,7 +56,7 @@ public final class PushManager {
 
 		this.token = new CancellationToken();
 		this.prepareSenders(senderCount, senderIdle);
-		this.prepareChecker();
+		this.prepareChecker(stateBuilderIdle);
 	}
 
 	// cancel all current job
@@ -105,7 +105,7 @@ public final class PushManager {
 		}
 	}
 
-	private void prepareChecker() {
+	private void prepareChecker(int stateBuilderIdle) {
 		// timer check
 		TimerTask task = new TimerTask() {
 			public void run() {
@@ -135,7 +135,7 @@ public final class PushManager {
 			}
 		};
 		Timer timer = new Timer(true);
-		timer.schedule(task, new Date(), 1000);
+		timer.schedule(task, new Date(), stateBuilderIdle);
 	}
 
 	// build pending/idle clients queue
@@ -146,6 +146,7 @@ public final class PushManager {
 		boolean noPending = pendingClients.isEmpty();
 		boolean offline, pending;
 
+		// TODO:not thread-safe
 		for (Client client : clients.values()) {
 			connCount = client.getConnectionsCount();
 			pendingCount = client.getPendingMessagesCount();

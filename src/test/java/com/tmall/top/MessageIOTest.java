@@ -52,7 +52,6 @@ public class MessageIOTest {
 		msg.clear();
 		
 		MessageIO.parseServerReceiving(msg, buffer);
-		System.out.println(msg.to);
 		assertEquals(MessageType.PUBLISH, msg.messageType);
 		assertEquals("abc", msg.to);
 		assertEquals(100, msg.remainingLength);
@@ -60,6 +59,19 @@ public class MessageIOTest {
 
 	@Test
 	public void server_to_client_parse_test() {
+		ByteBuffer buffer = ByteBuffer.allocateDirect(1024);
+		PublishMessage msg = new PublishMessage();
+		msg.messageType = MessageType.PUBLISH;
+		msg.from = "abc";
+		msg.remainingLength = 100;
 
+		MessageIO.parseServerSending(msg, buffer);
+		msg.clear();
+		
+		MessageIO.parseClientReceiving(msg, buffer);
+		System.out.println(msg.to);
+		assertEquals(MessageType.PUBLISH, msg.messageType);
+		assertEquals("abc", msg.from);
+		assertEquals(100, msg.remainingLength);
 	}
 }

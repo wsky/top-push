@@ -60,13 +60,14 @@ public class WebSocketClientConnection extends ClientConnection {
 
 	@Override
 	public boolean isOpen() {
-		return this.connection.isOpen();
+		return this.connection != null && this.connection.isOpen();
 	}
 
 	@Override
 	public void sendMessage(Message message) throws Exception {
+		int length = message.fullMessageSize;
 		ByteBuffer buffer = this.receiver.parseMessage(this.protocol, message);
 		this.connection.sendMessage(buffer.array(), buffer.arrayOffset(),
-				message.fullMessageSize);
+				length);
 	}
 }
