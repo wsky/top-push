@@ -43,12 +43,6 @@
       <version>2.2</version>
     </dependency>
 
-    <dependency>  
-      <groupId>com.alibaba</groupId>  
-      <artifactId>fastjson</artifactId>  
-      <version>1.1.9</version>  
-    </dependency>
-
     <!--jetty-->
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
@@ -60,21 +54,6 @@
       <artifactId>javax.servlet</artifactId>
       <version>${javax.servlet.version}</version>
     </dependency>
-    <!--<dependency>
-      <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-server</artifactId>
-      <version>${jetty.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-webapp</artifactId>
-      <version>${jetty.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-servlets</artifactId>
-      <version>${jetty.version}</version>
-    </dependency>-->
                         
     <dependency>
       <groupId>io.netty</groupId>
@@ -99,7 +78,7 @@
             <connector implementation="org.eclipse.jetty.server.nio.SelectChannelConnector">
               <port>8080</port>
               <maxIdleTime>60000</maxIdleTime>
-              <acceptors>6</acceptors>
+              <acceptors>2</acceptors>
               <!--default 4k
               <headerBufferSize>65536</headerBufferSize>-->
               <!--default 8192-->
@@ -109,7 +88,7 @@
           </connectors>
         </configuration>
       </plugin>
-      <!--maven-jar--> 
+      <!--maven-jar 
       <plugin>  
         <groupId>org.apache.maven.plugins</groupId>  
         <artifactId>maven-jar-plugin</artifactId>  
@@ -120,7 +99,7 @@
             </manifest>  
           </archive>  
         </configuration>  
-      </plugin>  
+      </plugin>-->
     </plugins>
 
     <pluginManagement>

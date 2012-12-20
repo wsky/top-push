@@ -1,4 +1,4 @@
-package com.tmall.top;
+package com.tmall.top.push;
 
 import java.io.IOException;
 import java.net.URI;
@@ -10,28 +10,30 @@ import java.util.concurrent.TimeoutException;
 import org.eclipse.jetty.websocket.WebSocket;
 import org.eclipse.jetty.websocket.WebSocketClient;
 import org.eclipse.jetty.websocket.WebSocketClientFactory;
+import org.junit.Test;
 
 //send and receive all
-public class SimpleClientTest {
+public class PushServerTest {
 	public static String msg = "";
 	public static int total;
 	public static int size = 1024 * 64;
 
-	public static void main(String[] args) throws Exception {
-//		for (int i = 0; i < size; i++)
-//			msg += "i";
-//
-//		// args
-//		String uri = "ws://localhost:8080/simple";
-//		total = 10 * 10000;
-//		int count_connect = 20000;
-//
-//		WebSocketClientFactory factory = new WebSocketClientFactory();
-//		factory.setBufferSize(1024 * 1024);
-//		factory.start();
-//
-//		for (int i = 0; i < count_connect; i++)
-//			Connect(factory, uri);
+	@Test
+	public void test() {
+		// for (int i = 0; i < size; i++)
+		// msg += "i";
+		//
+		// // args
+		// String uri = "ws://localhost:8080/simple";
+		// total = 10 * 10000;
+		// int count_connect = 20000;
+		//
+		// WebSocketClientFactory factory = new WebSocketClientFactory();
+		// factory.setBufferSize(1024 * 1024);
+		// factory.start();
+		//
+		// for (int i = 0; i < count_connect; i++)
+		// Connect(factory, uri);
 	}
 
 	static void Connect(WebSocketClientFactory factory, String uri)

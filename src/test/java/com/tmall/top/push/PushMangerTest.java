@@ -1,4 +1,4 @@
-package com.tmall.top;
+package com.tmall.top.push;
 
 import static org.junit.Assert.*;
 
