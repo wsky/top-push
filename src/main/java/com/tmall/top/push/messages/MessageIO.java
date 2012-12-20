@@ -1,8 +1,7 @@
-package com.tmall.top.push;
+package com.tmall.top.push.messages;
 
 import java.nio.ByteBuffer;
 
-import com.tmall.top.push.messages.Message;
 
 // parse message using default protocol
 public final class MessageIO {

@@ -10,6 +10,8 @@ import com.tmall.top.push.PushManager;
 
 public class BackendServlet extends WebSocketServlet {
 
+	private static final long serialVersionUID = 3431855312865710986L;
+
 	@Override
 	public WebSocket doWebSocketConnect(HttpServletRequest arg0, String arg1) {
 		PushManager manager = PushManager.current();

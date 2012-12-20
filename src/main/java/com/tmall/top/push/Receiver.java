@@ -4,6 +4,7 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import com.tmall.top.push.messages.Message;
+import com.tmall.top.push.messages.MessageIO;
 import com.tmall.top.push.messages.MessageType;
 import com.tmall.top.push.messages.PublishConfirmMessage;
 import com.tmall.top.push.messages.PublishConfirmMessagePool;

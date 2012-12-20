@@ -6,7 +6,7 @@ import java.nio.ByteBuffer;
 
 import org.junit.Test;
 
-import com.tmall.top.push.MessageIO;
+import com.tmall.top.push.messages.MessageIO;
 import com.tmall.top.push.messages.MessageType;
 import com.tmall.top.push.messages.PublishMessage;
 
