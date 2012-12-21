@@ -1,4 +1,4 @@
-package com.tmall.top.push;
+package com.tmall.top.push.websocket;
 
 import java.io.IOException;
 import java.net.URI;
@@ -13,7 +13,7 @@ import org.eclipse.jetty.websocket.WebSocketClientFactory;
 import org.junit.Test;
 
 //send and receive all
-public class PushServerTest {
+public class WebSocketPushServerTest {
 	public static String msg = "";
 	public static int total;
 	public static int size = 1024 * 64;

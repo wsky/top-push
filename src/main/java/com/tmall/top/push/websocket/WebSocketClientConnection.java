@@ -49,6 +49,7 @@ public class WebSocketClientConnection extends ClientConnection {
 	@Override
 	protected void initHeaders() {
 		this.id = this.headers.get(ID);
+		// TODO:ignore upper/lower case of header
 		this.protocol = this.headers.get(PROTOCOL);
 		this.origin = this.headers.get(ORIGIN);
 	}

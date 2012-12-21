@@ -1,4 +1,4 @@
-package com.tmall.top.push;
+package com.tmall.top.push.messages;
 
 import static org.junit.Assert.*;
 

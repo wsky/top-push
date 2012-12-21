@@ -10,7 +10,9 @@ public class Client {
 	private final static int MAX_FLUSH_COUNT = 100000;
 	private String id;
 	// ping from any connection
-	protected Date lastPingTime;
+	private Date lastPingTime;
+	private int totalSendMessageCount;
+
 	private LinkedList<ClientConnection> connections;
 	private ConcurrentLinkedQueue<ClientConnection> connectionQueue;
 	private ConcurrentLinkedQueue<Message> pendingMessages;
@@ -36,6 +38,10 @@ public class Client {
 
 	public int getConnectionsCount() {
 		return this.connections.size();
+	}
+
+	public int getConnectionQueueSize() {
+		return this.connectionQueue.size();
 	}
 
 	public Date getLastPingTime() {
@@ -86,12 +92,14 @@ public class Client {
 			this.SendMessage(token, msg);
 			temp++;
 		}
+		this.totalSendMessageCount += temp;
 		if (temp > 0)
-			System.out.println(String.format("flush %s messages to client#%s ",
-					temp, this.getId()));
+			System.out.println(String.format(
+					"flush %s messages to client#%s, totalSendMessageCount=%s",
+					temp, this.getId(), this.totalSendMessageCount));
 	}
 
-	protected void SendMessage(CancellationToken token, Message msg) {
+	private void SendMessage(CancellationToken token, Message msg) {
 		// FIFO queue for easy load-balance
 		while (true) {
 			if (token.isCancelling())
@@ -112,9 +120,10 @@ public class Client {
 			} catch (Exception e) {
 				e.printStackTrace();
 			} finally {
-				// FIXME:maybe course dead-loop
-				this.AddConnection(connection);
+				// FIXME:
+				this.connectionQueue.add(connection);
 			}
+			// only send once whatever exception occur
 			break;
 		}
 		// release message object always
