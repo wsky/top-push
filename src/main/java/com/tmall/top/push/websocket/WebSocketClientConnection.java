@@ -15,8 +15,9 @@ import com.tmall.top.push.messages.Message;
 
 public class WebSocketClientConnection extends ClientConnection {
 	private final static String ID = "id";
-	private final static String ORIGIN = "Origin";
-	private final static String PROTOCOL = "Sec-WebSocket-Protocol";
+	private final static String ORIGIN = "origin";
+	// always lower case
+	private final static String PROTOCOL = "sec-websocket-protocol";
 
 	private Connection connection;
 
@@ -48,7 +49,6 @@ public class WebSocketClientConnection extends ClientConnection {
 	@Override
 	protected void initHeaders() {
 		this.id = this.headers.get(ID);
-		// TODO:ignore upper/lower case of header
 		this.protocol = this.headers.get(PROTOCOL);
 		this.origin = this.headers.get(ORIGIN);
 	}

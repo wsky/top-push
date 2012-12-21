@@ -1,13 +1,13 @@
 package com.tmall.top.push;
 
 import java.util.Date;
-import java.util.Hashtable;
+import java.util.HashMap;
 
 import com.tmall.top.push.messages.Message;
 
 public abstract class ClientConnection {
 	protected Date lastPingTime;
-	protected Hashtable<String, String> headers;
+	protected HashMap<String, String> headers;
 	protected String id;
 	protected String origin;
 	protected String protocol;
@@ -39,7 +39,7 @@ public abstract class ClientConnection {
 		this.internalClear();
 	}
 
-	public void init(Hashtable<String, String> headers, PushManager manager) {
+	public void init(HashMap<String, String> headers, PushManager manager) {
 		this.receivePing();
 		this.headers = headers;
 		this.manager = manager;

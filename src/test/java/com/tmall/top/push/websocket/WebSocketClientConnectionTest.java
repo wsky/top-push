@@ -2,7 +2,7 @@ package com.tmall.top.push.websocket;
 
 import static org.junit.Assert.*;
 
-import java.util.Hashtable;
+import java.util.HashMap;
 
 import org.junit.Test;
 
@@ -24,12 +24,12 @@ public class WebSocketClientConnectionTest {
 	@Test
 	public void init_header_test() {
 		WebSocketClientConnection connection = this.getConnection();
-		Hashtable<String, String> headers = new Hashtable<String, String>();
+		HashMap<String, String> headers = new HashMap<String, String>();
 		headers.put("id", "abc");
 		headers.put("Origin", "localhost");
 		connection.init(headers, this.getManager());
 		assertEquals(headers.get("id"), connection.getId());
-		assertEquals(headers.get("Origin"), connection.getOrigin());
+		assertEquals(headers.get("origin"), connection.getOrigin());
 
 		assertFalse(connection.isOpen());
 	}
@@ -37,7 +37,7 @@ public class WebSocketClientConnectionTest {
 	@Test(expected = UnauthorizedException.class)
 	public void verify_header_test() throws UnauthorizedException {
 		WebSocketClientConnection connection = this.getConnection();
-		Hashtable<String, String> headers = new Hashtable<String, String>();
+		HashMap<String, String> headers = new HashMap<String, String>();
 		connection.init(headers, this.getManager());
 		connection.verifyHeaders();
 	}
