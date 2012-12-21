@@ -4,6 +4,8 @@ Push Server via websocket(jetty implementation).
 
 By the way, It was designed to be extensible, you can easily replace the transport, message protocol.
 
+[![Build Status](https://travis-ci.org/wsky/top-push.png?branch=master)](https://travis-ci.org/wsky/top-push)
+
 ## Build
 
 ```bash
