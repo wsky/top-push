@@ -2,18 +2,13 @@ package com.tmall.top;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.Socket;
 import java.nio.*;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
-import java.nio.channels.spi.SelectorProvider;
 import java.nio.charset.Charset;
 import java.util.Iterator;
-import java.util.Set;
-
-import com.sun.org.apache.bcel.internal.generic.NEW;
 
 public class Server implements Runnable {
 	

@@ -1,15 +1,12 @@
 package com.tmall.top;
 
 import java.io.IOException;
-import java.util.Date;
 
 import javax.servlet.http.HttpServletRequest;
 import org.eclipse.jetty.websocket.WebSocket;
 import org.eclipse.jetty.websocket.WebSocket.OnBinaryMessage;
 import org.eclipse.jetty.websocket.WebSocket.OnTextMessage;
 import org.eclipse.jetty.websocket.WebSocketServlet;
-
-import com.sun.org.apache.bcel.internal.generic.NEW;
 
 /*
  * directky send counted messages in websocket handler
