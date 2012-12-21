@@ -108,7 +108,7 @@ public class Client {
 			if (connection == null)
 				break;
 			if (!connection.isOpen()) {
-				// FIXME:release connection object here? or websocketbase always
+				// TODO:release connection object here? or websocketbase always
 				// do this?
 				System.out.println(String.format(
 						"connection#%s[%s] is closed, remove it",
@@ -120,7 +120,6 @@ public class Client {
 			} catch (Exception e) {
 				e.printStackTrace();
 			} finally {
-				// FIXME:
 				this.connectionQueue.add(connection);
 			}
 			// only send once whatever exception occur

@@ -26,8 +26,10 @@ public class ClientTest {
 		client.AddConnection(c1);
 		client.AddConnection(c2);
 		assertEquals(2, client.getConnectionsCount());
+		assertEquals(2, client.getConnectionQueueSize());
 		client.RemoveConnection(c1);
 		assertEquals(1, client.getConnectionsCount());
+		assertEquals(1, client.getConnectionQueueSize());
 	}
 
 	@Test
@@ -104,7 +106,7 @@ public class ClientTest {
 	}
 
 	private PushManager getManager() {
-		return new PushManager(1024, 1024, 1, 1, 0, 1000, 10000);
+		return new PushManager(10, 1024, 1024, 1, 1, 0, 1000, 10000);
 	}
 
 	public class TestConnection extends ClientConnection {
@@ -137,7 +139,7 @@ public class ClientTest {
 		@Override
 		public void sendMessage(Message msg) throws java.lang.Exception {
 			if (!this.canSend)
-				throw new java.lang.Exception();
+				throw new java.lang.Exception("send message exception mock!");
 			this.sendCount++;
 			ClientTest.sendCount++;
 		}

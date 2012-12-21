@@ -7,6 +7,7 @@ import com.tmall.top.push.PushManager;
 import com.tmall.top.push.MessageTooLongException;
 import com.tmall.top.push.MessageTypeNotSupportException;
 import com.tmall.top.push.NoMessageBufferException;
+import com.tmall.top.push.UnauthorizedException;
 import com.tmall.top.push.messages.Message;
 
 public class WebSocketBase implements WebSocket.OnTextMessage,
@@ -31,14 +32,22 @@ public class WebSocketBase implements WebSocket.OnTextMessage,
 	}
 
 	@Override
-	public void onHandshake(FrameConnection arg0) {
-		int statusCode = this.clientConnection.verifyHeaders();
-		if (statusCode != 101) {
-			arg0.close(statusCode, "invalid header");
+	public void onHandshake(FrameConnection frameConnection) {
+		try {
+			this.clientConnection.verifyHeaders();
+		} catch (UnauthorizedException e) {
 			this.release();
+			frameConnection.close(401, "invalid header");
 			return;
 		}
-		this.frameConnection = arg0;
+		
+		if (this.manager.isReachMaxConnectionCount()) {
+			this.release();
+			frameConnection.close(403, "reach max connections");
+			return;
+		}
+		
+		this.frameConnection = frameConnection;
 		this.clientConnection.init(this.frameConnection);
 		this.client.AddConnection(this.clientConnection);
 	}

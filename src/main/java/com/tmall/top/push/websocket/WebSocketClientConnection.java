@@ -10,6 +10,7 @@ import com.tmall.top.push.ClientConnection;
 import com.tmall.top.push.MessageTooLongException;
 import com.tmall.top.push.MessageTypeNotSupportException;
 import com.tmall.top.push.NoMessageBufferException;
+import com.tmall.top.push.UnauthorizedException;
 import com.tmall.top.push.messages.Message;
 
 public class WebSocketClientConnection extends ClientConnection {
@@ -28,12 +29,10 @@ public class WebSocketClientConnection extends ClientConnection {
 		this.connection = connection;
 	}
 
-	public int verifyHeaders() {
-		// TODO:authentication here
-		// TODO:define error code
+	public void verifyHeaders() throws UnauthorizedException {
+		// FIXME:authentication here
 		if (StringUtils.isEmpty(this.id))
-			return 401;
-		return 101;
+			throw new UnauthorizedException();
 	}
 
 	public Message parse(byte[] message, int offset, int length)

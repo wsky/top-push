@@ -7,6 +7,7 @@ import java.util.Hashtable;
 import org.junit.Test;
 
 import com.tmall.top.push.PushManager;
+import com.tmall.top.push.UnauthorizedException;
 import com.tmall.top.push.websocket.WebSocketClientConnection;
 import com.tmall.top.push.websocket.WebSocketClientConnectionPool;
 
@@ -29,22 +30,16 @@ public class WebSocketClientConnectionTest {
 		connection.init(headers, this.getManager());
 		assertEquals(headers.get("id"), connection.getId());
 		assertEquals(headers.get("Origin"), connection.getOrigin());
-		
+
 		assertFalse(connection.isOpen());
 	}
 
-	@Test
-	public void verify_header_test() {
+	@Test(expected = UnauthorizedException.class)
+	public void verify_header_test() throws UnauthorizedException {
 		WebSocketClientConnection connection = this.getConnection();
-		
 		Hashtable<String, String> headers = new Hashtable<String, String>();
 		connection.init(headers, this.getManager());
-		assertEquals(401, connection.verifyHeaders());
-
-		connection.clear();
-		headers.put("id", "abc");
-		connection.init(headers, this.getManager());
-		assertEquals(101, connection.verifyHeaders());
+		connection.verifyHeaders();
 	}
 
 	private WebSocketClientConnection getConnection() {
@@ -53,7 +48,7 @@ public class WebSocketClientConnectionTest {
 	}
 
 	private PushManager getManager() {
-		return new PushManager(1024, 1024, 1, 1, 0, 1000, 10000);
+		return new PushManager(10, 1024, 1024, 1, 1, 0, 1000, 10000);
 	}
 
 	private WebSocketClientConnectionPool getPool() {

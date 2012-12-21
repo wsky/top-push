@@ -6,7 +6,7 @@ public abstract class Message {
 	// PUBLISH/... message
 	// public boolean duplicate;
 
-	// TODO: if qos implement here, top-mq with retry features should be
+	// if qos implement here, top-mq with retry features should be
 	// included as broker storage
 	// public Qos qos;
 	// This flag is only used on PUBLISH messages. When a client sends a PUBLISH

@@ -22,6 +22,8 @@ public final class PushManager {
 		return current;
 	}
 
+	private int maxConnectionCount;
+
 	// all connections whatever from any client
 	private int totalConnections;
 	private int totalPendingMessages;
@@ -42,9 +44,12 @@ public final class PushManager {
 	// for managing some worker state
 	private CancellationToken token;
 
-	public PushManager(int publishMessageSize, int confirmMessageSize,
-			int publishMessageBufferCount, int confirmMessageBufferCount,
-			int senderCount, int senderIdle, int stateBuilderIdle) {
+	public PushManager(int maxConnectionCount, int publishMessageSize,
+			int confirmMessageSize, int publishMessageBufferCount,
+			int confirmMessageBufferCount, int senderCount, int senderIdle,
+			int stateBuilderIdle) {
+		this.maxConnectionCount = maxConnectionCount;
+
 		// client management
 		this.clients = new HashMap<String, Client>(1000);
 		this.pendingClients = new ConcurrentLinkedQueue<Client>();
@@ -54,6 +59,7 @@ public final class PushManager {
 		this.receiver = new Receiver(publishMessageSize, confirmMessageSize,
 				publishMessageBufferCount, confirmMessageBufferCount);
 
+		// TODO:move to start and support start/stop/restart
 		this.token = new CancellationToken();
 		this.prepareSenders(senderCount, senderIdle);
 		this.prepareChecker(stateBuilderIdle);
@@ -89,6 +95,10 @@ public final class PushManager {
 
 	public boolean isOfflineClient(String id) {
 		return this.offlineClients.containsKey(id);
+	}
+
+	public boolean isReachMaxConnectionCount() {
+		return this.totalConnections >= this.maxConnectionCount;
 	}
 
 	public Client pollPendingClient() {
@@ -140,7 +150,8 @@ public final class PushManager {
 
 	// build pending/idle clients queue
 	private void rebuildClientsState() {
-		this.totalConnections = 0;
+		int totalConn = 0;
+		int totalPending = 0;
 		int connCount, pendingCount;
 		// still have pending clients in processing
 		boolean noPending = pendingClients.isEmpty();
@@ -150,8 +161,8 @@ public final class PushManager {
 		for (Client client : clients.values()) {
 			connCount = client.getConnectionsCount();
 			pendingCount = client.getPendingMessagesCount();
-			this.totalConnections += connCount;
-			this.totalPendingMessages += pendingCount;
+			totalConn += connCount;
+			totalPending += pendingCount;
 			offline = connCount == 0;
 			pending = pendingCount > 0;
 
@@ -169,5 +180,7 @@ public final class PushManager {
 				idleClients.remove(client.getId());
 			}
 		}
+		this.totalConnections = totalConn;
+		this.totalPendingMessages = totalPending;
 	}
 }
