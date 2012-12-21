@@ -9,7 +9,6 @@ import java.util.TimerTask;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public final class PushManager {
-	private static Object lock = new Object();
 	private static PushManager current;
 
 	// TODO: use IOC managing life cycle
@@ -22,6 +21,7 @@ public final class PushManager {
 		return current;
 	}
 
+	private Object clientLock = new Object();
 	private int maxConnectionCount;
 
 	// all connections whatever from any client
@@ -80,13 +80,13 @@ public final class PushManager {
 	}
 
 	public Client getClient(String id) {
-		if (!clients.containsKey(id)) {
-			synchronized (lock) {
-				if (!clients.containsKey(id))
-					clients.put(id, new Client(id, this));
+		if (!this.clients.containsKey(id)) {
+			synchronized (this.clientLock) {
+				if (!this.clients.containsKey(id))
+					this.clients.put(id, new Client(id, this));
 			}
 		}
-		return clients.get(id);
+		return this.clients.get(id);
 	}
 
 	public boolean isIdleClient(String id) {
@@ -154,30 +154,40 @@ public final class PushManager {
 		int totalPending = 0;
 		int connCount, pendingCount;
 		// still have pending clients in processing
-		boolean noPending = pendingClients.isEmpty();
+		boolean noPending = this.pendingClients.isEmpty();
 		boolean offline, pending;
 
-		// TODO:not thread-safe
-		for (Client client : clients.values()) {
+		Object[] keys = null;
+		// is there a better way? avoid array create
+		synchronized (this.clientLock) {
+			keys = this.clients.keySet().toArray();
+		}
+		for (int i = 0; i < keys.length; i++) {
+			Client client = this.clients.get(keys[i]);
+			if (client == null)
+				continue;
+
 			connCount = client.getConnectionsCount();
 			pendingCount = client.getPendingMessagesCount();
+
 			totalConn += connCount;
 			totalPending += pendingCount;
+
 			offline = connCount == 0;
 			pending = pendingCount > 0;
 
 			if (noPending && pending && !offline) {
-				pendingClients.add(client);
-				idleClients.remove(client.getId());
-				offlineClients.remove(client.getId());
+				this.pendingClients.add(client);
+				this.idleClients.remove(client.getId());
+				this.offlineClients.remove(client.getId());
 			} else if (!pending && !offline) {
-				idleClients.put(client.getId(), client);
-				offlineClients.remove(client.getId());
+				this.idleClients.put(client.getId(), client);
+				this.offlineClients.remove(client.getId());
 			} else if (offline) {
 				// TODO:clear pending messages of offline client after
 				// a long time
-				offlineClients.put(client.getId(), client);
-				idleClients.remove(client.getId());
+				this.offlineClients.put(client.getId(), client);
+				this.idleClients.remove(client.getId());
 			}
 		}
 		this.totalConnections = totalConn;
