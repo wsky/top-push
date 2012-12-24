@@ -2,13 +2,26 @@ package com.tmall.top.push.messages;
 
 import java.nio.ByteBuffer;
 
-
 // parse message using default protocol
 public final class MessageIO {
+	
 	/*
+	 * 1byte MessageType, or extend to 8bit usage, 
+	 * 		DUP Flag, 
+	 * 		Body Formatter, 
+	 * 		RETAIN
 	 * 
+	 * 8byte from(receiving)/to(sending) id, support front<-->forward<-->back.
 	 * 
+	 * 4byte remainingLength int32, do not need support longer message.
 	 * 
+	 * ...	 body/content, maybe serialized by json/protobuf/msgpack/...
+	 * 
+	 * body example, just resolve/parse by client:
+	 * - publish message:
+	 * 		{ MessageId:"20121221000000001", Content:"hello world!" }		
+	 * - confirm message:
+	 * 		["20121221000000001", "20121221000000002"]
 	 */
 	
 	// server send: server -> client, write "from"
