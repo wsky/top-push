@@ -18,6 +18,7 @@ public class MessageType {
 	// server->subscriber
 	public final static int PUBLISH = 1;
 	// one pub, one acknowledge
+	// public final static int PUBACK = 2;
 	// PUBACK,
 	// batch pub and batch confirm
 	public final static int PUBCONFIRM = 2;

@@ -1,10 +1,13 @@
 package com.tmall.top.push.websocket;
 
+import java.io.IOException;
+
 import javax.servlet.http.HttpServletRequest;
 
 import org.eclipse.jetty.websocket.WebSocket;
 import org.eclipse.jetty.websocket.WebSocketServlet;
 
+import com.alibaba.fastjson.JSON;
 import com.tmall.top.push.Client;
 import com.tmall.top.push.PushManager;
 
@@ -30,12 +33,15 @@ public class BackendServlet extends WebSocketServlet {
 			super(manager, client, clientConnection);
 		}
 
-		// TODO: implement an easy RPC for publisher
-		/*
-		 * publish(to, msgs){ //conns is FIFO queue with easy loadbalance
-		 * for(var i=0;i<conns.length;i++){ if(conns[i].isConnected(to)) {
-		 * conns[i].sendMesage(msg); } } } or client.getConn(id).send(msg);
-		 */
+		@Override
+		public void onMessage(String arg0) {
+			try {
+				this.connection.sendMessage(JSON.toJSONString(Utils
+						.processRequest(arg0, this.manager)));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 
 	}
 }

@@ -8,7 +8,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-public final class PushManager {
+public class PushManager {
 	private static PushManager current;
 
 	// TODO: use IOC managing life cycle
@@ -95,6 +95,10 @@ public final class PushManager {
 
 	public boolean isOfflineClient(String id) {
 		return this.offlineClients.containsKey(id);
+	}
+
+	public boolean isOnlineClient(String id) {
+		return this.getClient(id).getConnectionsCount() > 0;
 	}
 
 	public boolean isReachMaxConnectionCount() {

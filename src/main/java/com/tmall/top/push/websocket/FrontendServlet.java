@@ -31,6 +31,10 @@ public class FrontendServlet extends WebSocketServlet {
 			super(manager, client, clientConnection);
 		}
 
+		@Override
+		public void onMessage(String arg0) {
+		}
+
 	}
 
 }

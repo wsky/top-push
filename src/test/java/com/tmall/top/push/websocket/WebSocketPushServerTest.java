@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
+import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -23,6 +24,7 @@ import org.eclipse.jetty.websocket.WebSocketClient;
 import org.eclipse.jetty.websocket.WebSocketClientFactory;
 import org.junit.Test;
 
+import com.alibaba.fastjson.JSON;
 import com.tmall.top.push.PushManager;
 import com.tmall.top.push.messages.MessageIO;
 import com.tmall.top.push.messages.MessageType;
@@ -57,6 +59,7 @@ public class WebSocketPushServerTest {
 		// front-end client like a subscriber
 		String frontId = "front";
 		final PublishMessage publishMessage = new PublishMessage();
+		final Object waitFront = new Object();
 		Connection front = this.connect(factory, "ws://localhost:9001/front",
 				frontId, "mqtt", new WebSocket.OnBinaryMessage() {
 
@@ -80,12 +83,16 @@ public class WebSocketPushServerTest {
 						MessageIO.parseClientReceiving(publishMessage, buffer);
 						System.out
 								.println("---- [frontend] receiving publish-message from server");
+						synchronized (waitFront) {
+							waitFront.notifyAll();
+						}
 					}
 				});
 
 		// back-end client like a publisher
 		String backId = "back";
 		final PublishConfirmMessage confirmMessage = new PublishConfirmMessage();
+		final Object waitBack = new Object();
 		Connection back = this.connect(factory, "ws://localhost:9002/back",
 				backId, "mqtt", new WebSocket.OnBinaryMessage() {
 
@@ -109,6 +116,9 @@ public class WebSocketPushServerTest {
 						MessageIO.parseClientReceiving(confirmMessage, buffer);
 						System.out
 								.println("---- [backend] receiving confirm-message from server");
+						synchronized (waitBack) {
+							waitBack.notifyAll();
+						}
 					}
 				});
 
@@ -117,18 +127,19 @@ public class WebSocketPushServerTest {
 		back.sendMessage(publish.array(), 0, publish.limit());
 
 		// receive publish
-		Thread.sleep(1000);
-		// front.wait();//java.lang.IllegalMonitorStateException
+		synchronized (waitFront) {
+			waitFront.wait();
+		}
 		assertEquals(backId, publishMessage.from);
-		// TODO:more assert, id, body...
 
 		// send confirm
 		ByteBuffer confirm = this.createConfirmMessage(publishMessage);
 		front.sendMessage(confirm.array(), 0, confirm.limit());
 
 		// receive confirm
-		Thread.sleep(1000);
-		// back.wait();
+		synchronized (waitBack) {
+			waitBack.wait();
+		}
 		assertEquals(frontId, confirmMessage.from);
 
 		front.close();
@@ -167,6 +178,51 @@ public class WebSocketPushServerTest {
 		while (!PushManager.current().isIdleClient("front")) {
 			Thread.sleep(1000);
 		}
+
+		server.stop();
+	}
+
+	@Test
+	public void rcp_test() throws Exception {
+		Server server = this.initServer(9005, 9006);
+		server.start();
+
+		WebSocketClientFactory factory = new WebSocketClientFactory();
+		factory.start();
+
+		final Response response = new Response();
+		this.connect(factory, "ws://localhost:9005/front", "front", "mqtt",
+				null);
+		final String waitObject = new String("abc");
+		Connection back = this.connect(factory, "ws://localhost:9006/back",
+				"back", "mqtt", new WebSocket.OnTextMessage() {
+					public void onOpen(Connection connection) {
+					}
+
+					public void onClose(int closeCode, String message) {
+					}
+
+					public void onMessage(String data) {
+						Response temp = JSON.parseObject(data, Response.class);
+						response.IsError = temp.IsError;
+						response.ErrorPhrase = temp.ErrorPhrase;
+						response.Result = temp.Result;
+						synchronized (waitObject) {
+							waitObject.notify();
+						}
+					}
+				});
+		Request request = new Request();
+		request.Target = "isonline";
+		request.Arguments = new HashMap<String, String>();
+		request.Arguments.put("id", "front");
+		back.sendMessage(JSON.toJSONString(request));
+		synchronized (waitObject) {
+			waitObject.wait();
+		}
+		assertFalse(response.IsError);
+		assertEquals("true", response.Result);
+
 		server.stop();
 	}
 
@@ -192,10 +248,9 @@ public class WebSocketPushServerTest {
 	}
 
 	private WebSocket.Connection connect(WebSocketClientFactory factory,
-			String uri, String origin, String protocol,
-			WebSocket.OnBinaryMessage handler) throws InterruptedException,
-			ExecutionException, TimeoutException, IOException,
-			URISyntaxException {
+			String uri, String origin, String protocol, WebSocket handler)
+			throws InterruptedException, ExecutionException, TimeoutException,
+			IOException, URISyntaxException {
 		WebSocketClient client = factory.newWebSocketClient();
 		client.setProtocol(protocol);
 		client.setOrigin(origin);

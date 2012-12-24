@@ -10,14 +10,15 @@ import com.tmall.top.push.NoMessageBufferException;
 import com.tmall.top.push.UnauthorizedException;
 import com.tmall.top.push.messages.Message;
 
-public class WebSocketBase implements WebSocket.OnTextMessage,
+public abstract class WebSocketBase implements WebSocket.OnTextMessage,
 		WebSocket.OnBinaryMessage, WebSocket.OnControl, WebSocket.OnFrame {
 
-	private FrameConnection frameConnection;
+	protected FrameConnection frameConnection;
+	protected Connection connection;
 
-	private PushManager manager;
-	private Client client;
-	private WebSocketClientConnection clientConnection;
+	protected PushManager manager;
+	protected Client client;
+	protected WebSocketClientConnection clientConnection;
 
 	public WebSocketBase(PushManager manager, Client client,
 			WebSocketClientConnection clientConnection) {
@@ -27,7 +28,7 @@ public class WebSocketBase implements WebSocket.OnTextMessage,
 	}
 
 	@Override
-	public void onClose(int arg0, String arg1) {
+	public void onClose(int closeCode, String message) {
 		this.release();
 	}
 
@@ -40,22 +41,22 @@ public class WebSocketBase implements WebSocket.OnTextMessage,
 			frameConnection.close(401, "invalid header");
 			return;
 		}
-		
+
 		if (this.manager.isReachMaxConnectionCount()) {
 			this.release();
 			frameConnection.close(403, "reach max connections");
 			return;
 		}
-		
+
 		this.frameConnection = frameConnection;
 		this.clientConnection.init(this.frameConnection);
 		this.client.AddConnection(this.clientConnection);
 	}
 
 	@Override
-	public void onOpen(Connection arg0) {
-		this.clientConnection.init(arg0);
-
+	public void onOpen(Connection connection) {
+		this.connection = connection;
+		this.clientConnection.init(connection);
 	}
 
 	@Override
@@ -67,9 +68,7 @@ public class WebSocketBase implements WebSocket.OnTextMessage,
 	}
 
 	@Override
-	public void onMessage(String arg0) {
-		this.receivePing();
-	}
+	public abstract void onMessage(String message);
 
 	@Override
 	public void onMessage(byte[] data, int offset, int length) {
