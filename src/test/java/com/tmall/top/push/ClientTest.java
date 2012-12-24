@@ -51,7 +51,7 @@ public class ClientTest {
 	}
 
 	@Test
-	public void flush_fifo_test() {
+	public void flush_LRU_test() {
 		Client client = new Client("abc", this.getManager());
 		TestConnection c1 = new TestConnection();
 		TestConnection c2 = new TestConnection();

@@ -67,6 +67,38 @@
 		<servlet-name>init</servlet-name>
 		<servlet-class>com.tmall.top.push.websocket.InitServlet</servlet-class>
 		<load-on-startup>0</load-on-startup>
+		<init-param>
+			<param-name>maxConnectionCount</param-name>
+			<param-value>100000</param-value>
+		</init-param>
+		<init-param>
+			<param-name>publishMessageSize</param-name>
+			<param-value>1024</param-value>
+		</init-param>
+		<init-param>
+			<param-name>confirmMessageSize</param-name>
+			<param-value>1024</param-value>
+		</init-param>
+		<init-param>
+			<param-name>publishMessageBufferCount</param-name>
+			<param-value>100000</param-value>
+		</init-param>
+		<init-param>
+			<param-name>confirmMessageBufferCount</param-name>
+			<param-value>100000</param-value>
+		</init-param>
+		<init-param>
+			<param-name>senderCount</param-name>
+			<param-value>4</param-value>
+		</init-param>
+		<init-param>
+			<param-name>senderIdle</param-name>
+			<param-value>1000</param-value>
+		</init-param>
+		<init-param>
+			<param-name>stateBuilderIdle</param-name>
+			<param-value>5000</param-value>
+		</init-param>
 	</servlet>
 	<servlet>
 		<servlet-name>frontend</servlet-name>

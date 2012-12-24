@@ -17,7 +17,6 @@
   </properties>
 
   <dependencies>
-
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
@@ -46,6 +45,18 @@
       <groupId>org.eclipse.jetty.orbit</groupId>
       <artifactId>javax.servlet</artifactId>
       <version>${javax.servlet.version}</version>
+    </dependency>
+    <dependency>
+	    <groupId>org.eclipse.jetty</groupId>
+	    <artifactId>jetty-server</artifactId>
+	    <version>${jetty.version}</version>
+	    <scope>test</scope>
+   	</dependency>
+    <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-servlet</artifactId>
+      <version>${jetty.version}</version>
+      <scope>test</scope>
     </dependency>
                         
     <dependency>
@@ -81,18 +92,6 @@
           </connectors>
         </configuration>
       </plugin>
-      <!--maven-jar 
-      <plugin>  
-        <groupId>org.apache.maven.plugins</groupId>  
-        <artifactId>maven-jar-plugin</artifactId>  
-        <configuration> 
-          <archive>  
-            <manifest>  
-              <mainClass>Program</mainClass>  
-            </manifest>  
-          </archive>  
-        </configuration>  
-      </plugin>-->
     </plugins>
 
     <pluginManagement>
@@ -106,10 +105,6 @@
             <target>1.6</target>
             <encoding>UTF-8</encoding>
             <showWarnings>true</showWarnings>
-            <!--<compilerArguments>
-              <verbose />
-              <bootclasspath>${java.home}/lib/rt.jar</bootclasspath>
-            </compilerArguments>-->
           </configuration>
         </plugin>
       </plugins>

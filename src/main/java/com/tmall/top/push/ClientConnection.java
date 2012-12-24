@@ -34,8 +34,11 @@ public abstract class ClientConnection {
 	public void clear() {
 		this.lastPingTime = null;
 		this.headers = null;
+		this.id = null;
+		this.origin = null;
+		this.protocol = null;
 		this.manager = null;
-		this.receiver=null;
+		this.receiver = null;
 		this.internalClear();
 	}
 
@@ -43,7 +46,7 @@ public abstract class ClientConnection {
 		this.receivePing();
 		this.headers = headers;
 		this.manager = manager;
-		this.receiver=this.manager.getReceiver();
+		this.receiver = this.manager.getReceiver();
 		this.initHeaders();
 	}
 

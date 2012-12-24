@@ -100,7 +100,7 @@ public class Client {
 	}
 
 	private void SendMessage(CancellationToken token, Message msg) {
-		// FIFO queue for easy load-balance
+		// FIFO queue for LRU load-balance
 		while (true) {
 			if (token.isCancelling())
 				break;

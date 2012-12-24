@@ -13,8 +13,19 @@ public class InitServlet extends HttpServlet {
 	@Override
 	public void init(ServletConfig config) throws ServletException {
 		Utils.initClientConnectionPool(100000);
-		PushManager.current(new PushManager(50000, 1024, 1024, 100000, 100000,
-				4, 2000, 1000));
+		PushManager.current(new PushManager(
+				this.get(config, "maxConnectionCount"),
+				this.get(config, "publishMessageSize"),
+				this.get(config, "confirmMessageSize"),
+				this.get(config, "publishMessageBufferCount"),
+				this.get(config, "confirmMessageBufferCount"),
+				this.get(config, "senderCount"),
+				this.get(config, "senderIdle"),
+				this.get(config, "stateBuilderIdle")));
 		super.init(config);
+	}
+
+	private int get(ServletConfig config, String k) {
+		return Integer.parseInt(config.getInitParameter(k));
 	}
 }

@@ -37,7 +37,7 @@ public final class MessageIO {
 		writeMessageType(buffer, message.messageType);
 		writeClientId(buffer, message.to);
 		buffer.putInt(message.remainingLength);
-		// TODO: body serialize to buffer
+		// TODO: body serialize to buffer, if client
 		// do not care on server, just process at client
 		return buffer;
 	}

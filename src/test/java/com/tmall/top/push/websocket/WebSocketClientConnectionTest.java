@@ -2,12 +2,20 @@ package com.tmall.top.push.websocket;
 
 import static org.junit.Assert.*;
 
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 
 import org.junit.Test;
 
+import com.tmall.top.push.MessageTooLongException;
+import com.tmall.top.push.MessageTypeNotSupportException;
+import com.tmall.top.push.NoMessageBufferException;
 import com.tmall.top.push.PushManager;
 import com.tmall.top.push.UnauthorizedException;
+import com.tmall.top.push.messages.Message;
+import com.tmall.top.push.messages.MessageIO;
+import com.tmall.top.push.messages.MessageType;
+import com.tmall.top.push.messages.PublishMessage;
 import com.tmall.top.push.websocket.WebSocketClientConnection;
 import com.tmall.top.push.websocket.WebSocketClientConnectionPool;
 
@@ -25,12 +33,13 @@ public class WebSocketClientConnectionTest {
 	public void init_header_test() {
 		WebSocketClientConnection connection = this.getConnection();
 		HashMap<String, String> headers = new HashMap<String, String>();
-		headers.put("id", "abc");
-		headers.put("Origin", "localhost");
+		//headers.put("id", "abc");
+		headers.put("origin", "abc");
+		
 		connection.init(headers, this.getManager());
-		assertEquals(headers.get("id"), connection.getId());
 		assertEquals(headers.get("origin"), connection.getOrigin());
-
+		assertEquals(headers.get("origin"), connection.getId());
+		
 		assertFalse(connection.isOpen());
 	}
 
@@ -40,6 +49,28 @@ public class WebSocketClientConnectionTest {
 		HashMap<String, String> headers = new HashMap<String, String>();
 		connection.init(headers, this.getManager());
 		connection.verifyHeaders();
+	}
+
+	@Test
+	public void parse_test() throws MessageTooLongException,
+			MessageTypeNotSupportException, NoMessageBufferException {
+		WebSocketClientConnection connection = this.getConnection();
+		HashMap<String, String> headers = new HashMap<String, String>();
+		headers.put("id", "abc");
+		connection.init(headers, this.getManager());
+
+		byte[] bytes = new byte[1024];
+		ByteBuffer buffer = ByteBuffer.wrap(bytes);
+		PublishMessage msgPublish = new PublishMessage();
+		msgPublish.messageType = MessageType.PUBLISH;
+		msgPublish.to = "abc";
+		msgPublish.remainingLength = 100;
+		MessageIO.parseClientSending(msgPublish, buffer);
+
+		Message msg = connection.parse(bytes, 0, 1024);
+		assertEquals(PublishMessage.class, msg.getClass());
+		// message from must be fill after connection received
+		assertEquals(connection.getId(), msg.from);
 	}
 
 	private WebSocketClientConnection getConnection() {

@@ -108,6 +108,7 @@ public class Receiver {
 			throws MessageTooLongException {
 		if (length > this.publishMessageSize)
 			throw new MessageTooLongException();
+		// TODO: if no buffer, retry twice with lock-free?
 		ByteBuffer buffer = this.publishBufferQueue.poll();
 		if (buffer != null)
 			buffer.position(0);
