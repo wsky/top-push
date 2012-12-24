@@ -5,6 +5,12 @@ import java.nio.ByteBuffer;
 
 // parse message using default protocol
 public final class MessageIO {
+	/*
+	 * 
+	 * 
+	 * 
+	 */
+	
 	// server send: server -> client, write "from"
 	// server receive: server <- client, read "to"
 

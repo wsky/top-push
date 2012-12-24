@@ -41,29 +41,30 @@ public class PushMangerTest {
 	@Test
 	public void state_test() throws SecurityException, NoSuchMethodException,
 			InterruptedException {
-		PushManager manager = new PushManager(2, 1024, 1024, 10, 10, 1, 1000,
+		// senderCount should be 0
+		PushManager manager = new PushManager(2, 1024, 1024, 10, 10, 0, 1000,
 				100);
 		Client c1 = manager.getClient("1");
 		Client c2 = manager.getClient("2");
-		Thread.sleep(500);
+		Thread.sleep(1000);
 		assertTrue(manager.isOfflineClient(c1.getId()));
 		assertTrue(manager.isOfflineClient(c2.getId()));
 		assertNull(manager.pollPendingClient());
 
 		c1.AddConnection(new WebSocketClientConnection());
-		Thread.sleep(500);
+		Thread.sleep(1000);
 		assertTrue(manager.isIdleClient(c1.getId()));
 		assertTrue(manager.isOfflineClient(c2.getId()));
 		assertNull(manager.pollPendingClient());
 		assertFalse(manager.isReachMaxConnectionCount());
 
 		c1.pendingMessage(new PublishMessage());
-		Thread.sleep(500);
+		Thread.sleep(1000);
 		assertFalse(manager.isIdleClient(c1.getId()));
 		assertNotNull(manager.pollPendingClient());
 
 		c1.AddConnection(new WebSocketClientConnection());
-		Thread.sleep(500);
+		Thread.sleep(1000);
 		assertTrue(manager.isReachMaxConnectionCount());
 	}
 }
