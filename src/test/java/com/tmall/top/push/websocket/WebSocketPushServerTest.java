@@ -131,7 +131,14 @@ public class WebSocketPushServerTest {
 			waitFront.wait();
 		}
 		assertEquals(backId, publishMessage.from);
-
+		// assert body is expected
+		assertEquals('a', (char) ((ByteBuffer) publishMessage.body).get());
+		assertEquals('b', (char) ((ByteBuffer) publishMessage.body).get());
+		assertEquals('c', (char) ((ByteBuffer) publishMessage.body).get());
+		assertEquals('d', (char) ((ByteBuffer) publishMessage.body).get());
+		assertEquals('e', (char) ((ByteBuffer) publishMessage.body).get());
+		assertEquals('f', (char) ((ByteBuffer) publishMessage.body).get());
+		assertEquals('g', (char) ((ByteBuffer) publishMessage.body).get());
 		// send confirm
 		ByteBuffer confirm = this.createConfirmMessage(publishMessage);
 		front.sendMessage(confirm.array(), 0, confirm.limit());
@@ -213,7 +220,7 @@ public class WebSocketPushServerTest {
 					}
 				});
 		Request request = new Request();
-		request.Target = "isonline";
+		request.Command = "isonline";
 		request.Arguments = new HashMap<String, String>();
 		request.Arguments.put("id", "front");
 		back.sendMessage(JSON.toJSONString(request));
@@ -231,7 +238,15 @@ public class WebSocketPushServerTest {
 		ByteBuffer buffer = ByteBuffer.wrap(bytes);
 		PublishMessage msg = new PublishMessage();
 		msg.to = to;
-		msg.remainingLength = 100;
+		msg.remainingLength = 7;
+		buffer.position(13);
+		buffer.put((byte) 'a');
+		buffer.put((byte) 'b');
+		buffer.put((byte) 'c');
+		buffer.put((byte) 'd');
+		buffer.put((byte) 'e');
+		buffer.put((byte) 'f');
+		buffer.put((byte) 'g');
 		MessageIO.parseClientSending(msg, buffer);
 		return buffer;
 	}

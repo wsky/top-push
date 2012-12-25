@@ -38,7 +38,7 @@ public class Utils {
 		Response response = null;
 		Exception exception = null;
 
-		if (request.Target.equalsIgnoreCase("isOnline")) {
+		if (request.Command.equalsIgnoreCase("isOnline")) {
 			response = new Response();
 			try {
 				response.Result = JSON.toJSONString(manager
@@ -51,7 +51,7 @@ public class Utils {
 		if (response == null) {
 			response = new Response();
 			response.IsError = true;
-			response.ErrorPhrase = "invalid request:" + request.Target;
+			response.ErrorPhrase = "invalid request:" + request.Command;
 		}
 		if (exception != null) {
 			response.IsError = true;

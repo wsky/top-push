@@ -4,26 +4,22 @@ import java.nio.ByteBuffer;
 
 // parse message using default protocol
 public final class MessageIO {
-	
+
 	/*
-	 * 1byte MessageType, or extend to 8bit usage, 
-	 * 		DUP Flag, 
-	 * 		Body Formatter, 
-	 * 		RETAIN
+	 * 1byte MessageType, or extend to 8bit usage, DUP Flag, Body Formatter,
+	 * RETAIN
 	 * 
 	 * 8byte from(receiving)/to(sending) id, support front<-->forward<-->back.
 	 * 
 	 * 4byte remainingLength int32, do not need support longer message.
 	 * 
-	 * ...	 body/content, maybe serialized by json/protobuf/msgpack/...
+	 * ... body/content, maybe serialized by json/protobuf/msgpack/...
 	 * 
-	 * body example, just resolve/parse by client:
-	 * - publish message:
-	 * 		{ MessageId:"20121221000000001", Content:"hello world!" }		
-	 * - confirm message:
-	 * 		["20121221000000001", "20121221000000002"]
+	 * body example, just resolve/parse by client: - publish message: {
+	 * MessageId:"20121221000000001", Content:"hello world!" } - confirm
+	 * message: ["20121221000000001", "20121221000000002"]
 	 */
-	
+
 	// server send: server -> client, write "from"
 	// server receive: server <- client, read "to"
 
@@ -112,7 +108,7 @@ public final class MessageIO {
 	}
 
 	private static int getFullMessageSize(int remainingLength) {
-		return remainingLength + 1 + 8;
+		return remainingLength + 1 + 8 + 4;
 	}
 
 }
