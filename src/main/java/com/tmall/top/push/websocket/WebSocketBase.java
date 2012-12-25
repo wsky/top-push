@@ -79,9 +79,6 @@ public abstract class WebSocketBase implements WebSocket.OnTextMessage,
 			Message msg = this.clientConnection.parse(data, offset, length);
 			// deliver to target client
 			this.manager.getClient(msg.to).pendingMessage(msg);
-			System.out.println(String.format(
-					"client#%s got an pending message(%s) from %s %s %s", msg.to,
-					msg, msg.from, msg.remainingLength,msg.fullMessageSize));
 		} catch (MessageTooLongException e) {
 			e.printStackTrace();
 			this.frameConnection.close(400, e.getMessage());
