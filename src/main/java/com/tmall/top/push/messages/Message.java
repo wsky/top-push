@@ -35,6 +35,14 @@ public abstract class Message {
 		this.body = null;
 		this.internalClear();
 	}
+	
+	public String getTo() {
+		return null;
+	}
+	
+	public String getFrom() {
+		return null;
+	}
 
 	protected abstract void internalClear();
 }
