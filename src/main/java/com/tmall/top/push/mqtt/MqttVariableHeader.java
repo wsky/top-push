@@ -11,6 +11,7 @@ public class MqttVariableHeader {
 	public short KeepAlive;
 
 	public int ReturnCode;
+	// topic will use as client identiy
 	public String TopicName;
 	public short MessageIdentifier;
 
