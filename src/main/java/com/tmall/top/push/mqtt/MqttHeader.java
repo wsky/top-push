@@ -17,4 +17,7 @@ public class MqttHeader {
 
 	// Backing storage for the payload size.
 	public int RemainingLength;
+	
+	// full header cost bytes
+	public int Length;
 }

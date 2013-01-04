@@ -1,6 +1,6 @@
 package com.tmall.top.push.mqtt;
 
-public class MqttPublishMessage {
+public class MqttPublishMessage extends MqttMessage {
 	// http://public.dhe.ibm.com/software/dw/webservices/ws-mqtt/mqtt-v3r1.html#publish
 	// A PUBLISH message is sent by a client to a server for distribution to
 	// interested subscribers. Each PUBLISH message is associated with a topic

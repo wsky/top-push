@@ -3,29 +3,100 @@ package com.tmall.top.push.mqtt;
 import java.nio.ByteBuffer;
 
 import com.tmall.top.push.messages.Message;
+import com.tmall.top.push.messages.MessageType;
 import com.tmall.top.push.mqtt.MqttVariableHeader.ReadWriteFlags;
 
-public class MessageIO {
+public class MqttMessageIO {
 
+	/*
+	 * 
+	 * 1byte Fixed Header: MessageType/DUP/QOS/RETAIN RETAIN
+	 * 
+	 * 1-4byte Remaining length, max 256 MB
+	 * 
+	 * 
+	 * PUBLISH
+	 * 
+	 * Variable Header: Topic Name/QoS level/Message ID
+	 * 
+	 * Payload:
+	 * 
+	 * PUBACK:
+	 * 
+	 * Variable Header: Message ID
+	 */
+
+	// server send: server -> client, write "from"
+	// server receive: server <- client, read "to"
+
+	// client send: client -> server, write "to"
+	// client receive: client <- server, read "from"
+
+	//todo:add outgoing id mapping?
+	
 	public static ByteBuffer parseServerSending(Message message,
 			ByteBuffer buffer) {
 		buffer.position(0);
-		// writeMessageType(buffer, message.messageType);
-		// writeClientId(buffer, message.from);
-		buffer.putInt(message.remainingLength);
+		/*
+		MqttPublishMessage pub = new MqttPublishMessage();
+		pub.Header.MessageType = MqttMessageType.Publish;
+		pub.Header.Qos = MqttQos.AtMostOnce;
+		pub.Header.Duplicate = false;
+		pub.Header.Retain = false;
+		writeHeader(pub.Header, buffer);
+		pub.VariableHeader.TopicName = message.from;
+		writeVariableHeader(pub.VariableHeader, buffer);*/
+		
 		return buffer;
 	}
 
 	public static Message parseServerReceiving(Message message,
 			ByteBuffer buffer) {
 		buffer.position(0);
-		// message.messageType = readMessageType(buffer);
-		// message.to = readClientId(buffer);
-		message.remainingLength = buffer.getInt();
-		// message.fullMessageSize =
-		// getFullMessageSize(message.remainingLength);
+		MqttPublishMessage pub = new MqttPublishMessage();
+		readHeader(pub.Header, buffer);
+		readVariableHeader(pub.VariableHeader, buffer);
+		message.messageType = MessageType.PUBLISH;
+		message.to = pub.VariableHeader.TopicName;
+		message.fullMessageSize = pub.Header.Length
+				+ pub.Header.RemainingLength;
 		message.body = buffer;
 		return message;
+	}
+
+	public static ByteBuffer parseClientSending(MqttMessage message,
+			ByteBuffer buffer) {
+		buffer.position(0);
+		// fixed header + remaining length
+		writeHeader(message.Header, buffer);
+		// variable header
+		// //topic=to qos=0 messageid=1
+		message.VariableHeader.TopicName = message.to;
+		// message.VariableHeader.ConnectFlags.WillQos=MqttQos.AtMostOnce;
+		// message.VariableHeader.MessageIdentifier=1;
+		writeVariableHeader(message.VariableHeader, buffer);
+		// payload
+		return buffer;
+	}
+
+	public static Message parseClientReceiving(MqttMessage message,
+			ByteBuffer buffer) {
+		buffer.position(0);
+		readHeader(message.Header, buffer);
+		// message.messageType = readMessageType(buffer);
+		readVariableHeader(message.VariableHeader, buffer);
+		// message.from = message.VariableHeader.TopicName;
+		// message.remainingLength =
+		message.fullMessageSize = message.Header.Length
+				+ message.Header.RemainingLength; // getFullMessageSize(message.Header.RemainingLength);
+		message.body = buffer;
+		return message;
+	}
+
+	// MQTT parser simple implement
+
+	public static int parseMessageType(byte b) {
+		return (int) ((b & 240) >> 4);
 	}
 
 	public static MqttHeader readHeader(MqttHeader header,
@@ -35,7 +106,8 @@ public class MessageIO {
 		header.Qos = (int) ((firstHeaderByte & 6) >> 1);
 		header.Duplicate = (((firstHeaderByte & 8) >> 3) == 1 ? true : false);
 		header.MessageType = (int) ((firstHeaderByte & 240) >> 4);
-		header.RemainingLength = readRemainingLength(headerStream);
+		header.Length = 1;
+		readRemainingLength(header, headerStream);
 		return header;
 	}
 
@@ -52,7 +124,7 @@ public class MessageIO {
 		writeRemainingLength(header.RemainingLength, buffer);
 	}
 
-	public static int readRemainingLength(ByteBuffer buffer) {
+	public static void readRemainingLength(MqttHeader header, ByteBuffer buffer) {
 		int remainingLength = 0;
 		int multiplier = 1;
 		byte sizeByte;
@@ -63,7 +135,8 @@ public class MessageIO {
 			remainingLength += (sizeByte & 0x7f) * multiplier;
 			multiplier *= 0x80;
 		} while (++byteCount <= 4 && (sizeByte & 0x80) == 0x80);
-		return remainingLength;
+		header.RemainingLength = remainingLength;
+		header.Length += byteCount;
 	}
 
 	public static void writeRemainingLength(int length, ByteBuffer buffer) {
@@ -81,18 +154,18 @@ public class MessageIO {
 			ByteBuffer buffer) {
 		int WriteFlags = header.getWriteFlags();
 		if ((WriteFlags & ReadWriteFlags.ProtocolName) == ReadWriteFlags.ProtocolName)
-			MessageIO.writeMqttString(buffer, header.ProtocolName);
+			MqttMessageIO.writeMqttString(buffer, header.ProtocolName);
 		if ((WriteFlags & ReadWriteFlags.ProtocolVersion) == ReadWriteFlags.ProtocolVersion)
 			buffer.put(header.ProtocolVersion);
 		if ((WriteFlags & ReadWriteFlags.ConnectFlags) == ReadWriteFlags.ConnectFlags)
-			MessageIO.writeConnectFlags(header.ConnectFlags, buffer);
+			MqttMessageIO.writeConnectFlags(header.ConnectFlags, buffer);
 		if ((WriteFlags & ReadWriteFlags.KeepAlive) == ReadWriteFlags.KeepAlive)
 			buffer.putShort(header.KeepAlive);
 		if ((WriteFlags & ReadWriteFlags.ReturnCode) == ReadWriteFlags.ReturnCode)
 			buffer.put((byte) header.ReturnCode);
 		if ((WriteFlags & ReadWriteFlags.TopicName) == ReadWriteFlags.TopicName)
 
-			MessageIO.writeMqttString(buffer, header.TopicName);
+			MqttMessageIO.writeMqttString(buffer, header.TopicName);
 		if ((WriteFlags & ReadWriteFlags.MessageIdentifier) == ReadWriteFlags.MessageIdentifier)
 			buffer.putShort(header.MessageIdentifier);
 	}
@@ -101,7 +174,7 @@ public class MessageIO {
 			ByteBuffer buffer) {
 		int ReadFlags = header.getReadFlags();
 		if ((ReadFlags & ReadWriteFlags.ProtocolName) == ReadWriteFlags.ProtocolName) {
-			header.ProtocolName = MessageIO.readMqttString(buffer);
+			header.ProtocolName = MqttMessageIO.readMqttString(buffer);
 			header.Length += header.ProtocolName.length() + 2;
 		}
 		if ((ReadFlags & ReadWriteFlags.ProtocolVersion) == ReadWriteFlags.ProtocolVersion) {
@@ -109,7 +182,7 @@ public class MessageIO {
 			header.Length++;
 		}
 		if ((ReadFlags & ReadWriteFlags.ConnectFlags) == ReadWriteFlags.ConnectFlags) {
-			MessageIO.readConnectFlags(header.ConnectFlags, buffer);
+			MqttMessageIO.readConnectFlags(header.ConnectFlags, buffer);
 			header.Length += 1;
 		}
 		if ((ReadFlags & ReadWriteFlags.KeepAlive) == ReadWriteFlags.KeepAlive) {
@@ -121,7 +194,7 @@ public class MessageIO {
 			header.Length++;
 		}
 		if ((ReadFlags & ReadWriteFlags.TopicName) == ReadWriteFlags.TopicName) {
-			header.TopicName = MessageIO.readMqttString(buffer);
+			header.TopicName = MqttMessageIO.readMqttString(buffer);
 			header.Length += header.TopicName.length() + 2;
 		}
 		if ((ReadFlags & ReadWriteFlags.MessageIdentifier) == ReadWriteFlags.MessageIdentifier) {
@@ -134,17 +207,17 @@ public class MessageIO {
 		int headerLength = 0;
 		int WriteFlags = header.getWriteFlags();
 		if ((WriteFlags & ReadWriteFlags.ProtocolName) == ReadWriteFlags.ProtocolName)
-			headerLength += MessageIO.getByteCount(header.ProtocolName);
+			headerLength += MqttMessageIO.getByteCount(header.ProtocolName);
 		if ((WriteFlags & ReadWriteFlags.ProtocolVersion) == ReadWriteFlags.ProtocolVersion)
 			headerLength += 1;
 		if ((WriteFlags & ReadWriteFlags.ConnectFlags) == ReadWriteFlags.ConnectFlags)
-			headerLength += MessageIO.getConnectFlagsLength();
+			headerLength += MqttMessageIO.getConnectFlagsLength();
 		if ((WriteFlags & ReadWriteFlags.KeepAlive) == ReadWriteFlags.KeepAlive)
 			headerLength += 2;
 		if ((WriteFlags & ReadWriteFlags.ReturnCode) == ReadWriteFlags.ReturnCode)
 			headerLength += 1;
 		if ((WriteFlags & ReadWriteFlags.TopicName) == ReadWriteFlags.TopicName)
-			headerLength += MessageIO.getByteCount(header.TopicName);
+			headerLength += MqttMessageIO.getByteCount(header.TopicName);
 		if ((WriteFlags & ReadWriteFlags.MessageIdentifier) == ReadWriteFlags.MessageIdentifier)
 			headerLength += 2;
 		return headerLength;

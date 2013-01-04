@@ -10,6 +10,8 @@ import com.tmall.top.push.messages.PublishConfirmMessage;
 import com.tmall.top.push.messages.PublishConfirmMessagePool;
 import com.tmall.top.push.messages.PublishMessage;
 import com.tmall.top.push.messages.PublishMessagePool;
+import com.tmall.top.push.mqtt.MqttMessage;
+import com.tmall.top.push.mqtt.MqttMessageIO;
 
 public class Receiver {
 	private int publishMessageSize;
@@ -19,6 +21,7 @@ public class Receiver {
 	private PublishConfirmMessagePool confirmMessagePool;
 	private byte[] publishBuffer;
 	private byte[] confirmBuffer;
+	// TODO: remove pub/sub abstract for push-server self
 	private ConcurrentLinkedQueue<ByteBuffer> publishBufferQueue;
 	private ConcurrentLinkedQueue<ByteBuffer> confirmBufferQueue;
 
@@ -49,26 +52,23 @@ public class Receiver {
 	}
 
 	// must be called after send
-	public synchronized void release(Message msg) {
+	public synchronized void release(Message message) {
 		// return buffer for reusing
-		if (msg.body != null && msg.body instanceof ByteBuffer) {
-			this.publishBufferQueue.add((ByteBuffer) msg.body);
+		if (message.body != null && message.body instanceof ByteBuffer) {
+			this.publishBufferQueue.add((ByteBuffer) message.body);
 		}
-		msg.clear();
-		if (msg instanceof PublishMessage)
-			this.publishMessagePool.release((PublishMessage) msg);
-		if (msg instanceof PublishConfirmMessage)
-			this.confirmMessagePool.release((PublishConfirmMessage) msg);
+		message.clear();
+		if (message instanceof PublishMessage)
+			this.publishMessagePool.release((PublishMessage) message);
+		if (message instanceof PublishConfirmMessage)
+			this.confirmMessagePool.release((PublishConfirmMessage) message);
 	}
 
 	// for receiving message from lower buffer
 	public Message parseMessage(String protocol, byte[] message, int offset,
 			int length) throws MessageTooLongException,
 			MessageTypeNotSupportException, NoMessageBufferException {
-		// TODO:multi-protocol support, design parser factory
-		// using our custom protocol currently
-		int messageType = MessageIO.parseMessageType(message[offset]);
-
+		int messageType = this.parseMessageType(protocol, message[offset]);
 		Message msg = null;
 		ByteBuffer buffer = null;
 
@@ -84,7 +84,7 @@ public class Receiver {
 			throw new MessageTypeNotSupportException();
 		} else if (buffer != null) {
 			buffer.put(message, offset, length);
-			msg = MessageIO.parseServerReceiving(msg, buffer);
+			this.parseMessage(protocol, msg, buffer);
 		} else {
 			throw new NoMessageBufferException();
 		}
@@ -93,7 +93,30 @@ public class Receiver {
 
 	// for send message to lower buffer
 	public ByteBuffer parseMessage(String protocol, Message message) {
-		return MessageIO.parseServerSending(message, (ByteBuffer) message.body);
+		if (protocol.equalsIgnoreCase("mqtt")) {
+			return MqttMessageIO.parseServerSending((MqttMessage)message,
+					(ByteBuffer) message.body);
+		} else {
+			return MessageIO.parseServerSending(message,
+					(ByteBuffer) message.body);
+		}
+	}
+
+	private int parseMessageType(String protocol, byte b) {
+		if (protocol.equalsIgnoreCase("mqtt")) {
+			return MqttMessageIO.parseMessageType(b);
+		} else {
+			return MessageIO.parseMessageType(b);
+		}
+	}
+
+	private void parseMessage(String protocol, Message message,
+			ByteBuffer buffer) {
+		if (protocol.equalsIgnoreCase("mqtt")) {
+			MqttMessageIO.parseServerReceiving(message, buffer);
+		} else {
+			MessageIO.parseServerReceiving(message, buffer);
+		}
 	}
 
 	private PublishMessage acquirePublishMessage() {
