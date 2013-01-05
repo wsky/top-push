@@ -12,6 +12,7 @@
   <url>http://open.taobao.com</url>
 
   <properties>
+  	<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <jetty.version>8.1.7.v20120910</jetty.version>
     <javax.servlet.version>3.0.0.v201112011016</javax.servlet.version>
   </properties>
