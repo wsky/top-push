@@ -1,5 +1,6 @@
 package com.tmall.top.push.messages;
 
+@Deprecated
 public class PublishConfirmMessage extends Message {
 	// support batch
 	// "1,2,3"
@@ -9,9 +10,9 @@ public class PublishConfirmMessage extends Message {
 		this.messageType = MessageType.PUBCONFIRM;
 	}
 
-	@Override
-	protected void internalClear() {
-		this.messageType = MessageType.PUBCONFIRM;
-		this.confirmId = null;
-	}
+	// @Override
+	// protected void internalClear() {
+	// this.messageType = MessageType.PUBCONFIRM;
+	// this.confirmId = null;
+	// }
 }

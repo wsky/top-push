@@ -3,14 +3,17 @@ package com.tmall.top.push.mqtt;
 import java.nio.ByteBuffer;
 
 import com.tmall.top.push.messages.Message;
-import com.tmall.top.push.messages.MessageType;
+import com.tmall.top.push.messages.MessageIO;
 import com.tmall.top.push.mqtt.MqttVariableHeader.ReadWriteFlags;
+import com.tmall.top.push.mqtt.publish.MqttPublishMessage;
 
 public class MqttMessageIO {
 
 	/*
 	 * 
-	 * 1byte Fixed Header: MessageType/DUP/QOS/RETAIN RETAIN
+	 * 1byte Fixed Header:
+	 * 
+	 * MessageType/DUP/QOS/RETAIN RETAIN
 	 * 
 	 * 1-4byte Remaining length, max 256 MB
 	 * 
@@ -19,12 +22,17 @@ public class MqttMessageIO {
 	 * 
 	 * Variable Header: Topic Name/QoS level/Message ID
 	 * 
-	 * Payload:
+	 * Payload:position=Fix-Header.length+Variable-Header.length
 	 * 
-	 * PUBACK:
+	 * 8byte from(receiving)/to(sending) id, support front<-->forward<-->back.
+	 * 
+	 * 
+	 * [X]PUBACK:
 	 * 
 	 * Variable Header: Message ID
 	 */
+
+	// payload act forward
 
 	// server send: server -> client, write "from"
 	// server receive: server <- client, read "to"
@@ -32,65 +40,64 @@ public class MqttMessageIO {
 	// client send: client -> server, write "to"
 	// client receive: client <- server, read "from"
 
-	//todo:add outgoing id mapping?
-	
-	public static ByteBuffer parseServerSending(Message message,
+	public static ByteBuffer parseServerSending(MqttMessage message,
 			ByteBuffer buffer) {
+		MqttPublishMessage pub = (MqttPublishMessage) message;
 		buffer.position(0);
-		/*
-		MqttPublishMessage pub = new MqttPublishMessage();
-		pub.Header.MessageType = MqttMessageType.Publish;
-		pub.Header.Qos = MqttQos.AtMostOnce;
-		pub.Header.Duplicate = false;
-		pub.Header.Retain = false;
-		writeHeader(pub.Header, buffer);
-		pub.VariableHeader.TopicName = message.from;
-		writeVariableHeader(pub.VariableHeader, buffer);*/
 		
+		writeHeader(message.Header, buffer);
+		writeVariableHeader(pub.VariableHeader, buffer);
+
+		MessageIO.writeClientId(buffer, message.from);
+
 		return buffer;
 	}
 
-	public static Message parseServerReceiving(Message message,
+	public static Message parseServerReceiving(MqttMessage message,
 			ByteBuffer buffer) {
+		MqttPublishMessage pub = (MqttPublishMessage) message;
 		buffer.position(0);
-		MqttPublishMessage pub = new MqttPublishMessage();
-		readHeader(pub.Header, buffer);
+		
+		readHeader(message.Header, buffer);
 		readVariableHeader(pub.VariableHeader, buffer);
-		message.messageType = MessageType.PUBLISH;
-		message.to = pub.VariableHeader.TopicName;
-		message.fullMessageSize = pub.Header.Length
-				+ pub.Header.RemainingLength;
+
+		message.to = MessageIO.readClientId(buffer);
+		message.fullMessageSize = getFullMessageSize(message);
 		message.body = buffer;
+
 		return message;
 	}
 
 	public static ByteBuffer parseClientSending(MqttMessage message,
 			ByteBuffer buffer) {
+		MqttPublishMessage pub = (MqttPublishMessage) message;
 		buffer.position(0);
-		// fixed header + remaining length
+		
 		writeHeader(message.Header, buffer);
-		// variable header
-		// //topic=to qos=0 messageid=1
-		message.VariableHeader.TopicName = message.to;
-		// message.VariableHeader.ConnectFlags.WillQos=MqttQos.AtMostOnce;
-		// message.VariableHeader.MessageIdentifier=1;
-		writeVariableHeader(message.VariableHeader, buffer);
-		// payload
+		writeVariableHeader(pub.VariableHeader, buffer);
+
+		MessageIO.writeClientId(buffer, message.to);
+
 		return buffer;
 	}
 
 	public static Message parseClientReceiving(MqttMessage message,
 			ByteBuffer buffer) {
+		MqttPublishMessage pub = (MqttPublishMessage) message;
 		buffer.position(0);
+		
 		readHeader(message.Header, buffer);
-		// message.messageType = readMessageType(buffer);
-		readVariableHeader(message.VariableHeader, buffer);
-		// message.from = message.VariableHeader.TopicName;
-		// message.remainingLength =
-		message.fullMessageSize = message.Header.Length
-				+ message.Header.RemainingLength; // getFullMessageSize(message.Header.RemainingLength);
+		readVariableHeader(pub.VariableHeader, buffer);
+
+		message.from = MessageIO.readClientId(buffer);
+		message.fullMessageSize = getFullMessageSize(message);
 		message.body = buffer;
+
 		return message;
+	}
+
+	public static int getFullMessageSize(MqttMessage message) {
+		return message.Header.Length + message.Header.RemainingLength;
 	}
 
 	// MQTT parser simple implement

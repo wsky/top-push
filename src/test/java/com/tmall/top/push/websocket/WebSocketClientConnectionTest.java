@@ -8,14 +8,12 @@ import java.util.HashMap;
 import org.junit.Test;
 
 import com.tmall.top.push.MessageTooLongException;
-import com.tmall.top.push.MessageTypeNotSupportException;
 import com.tmall.top.push.NoMessageBufferException;
 import com.tmall.top.push.PushManager;
 import com.tmall.top.push.UnauthorizedException;
 import com.tmall.top.push.messages.Message;
 import com.tmall.top.push.messages.MessageIO;
 import com.tmall.top.push.messages.MessageType;
-import com.tmall.top.push.messages.PublishMessage;
 import com.tmall.top.push.websocket.WebSocketClientConnection;
 import com.tmall.top.push.websocket.WebSocketClientConnectionPool;
 
@@ -33,13 +31,13 @@ public class WebSocketClientConnectionTest {
 	public void init_header_test() {
 		WebSocketClientConnection connection = this.getConnection();
 		HashMap<String, String> headers = new HashMap<String, String>();
-		//headers.put("id", "abc");
+		// headers.put("id", "abc");
 		headers.put("origin", "abc");
-		
+
 		connection.init(headers, this.getManager());
 		assertEquals(headers.get("origin"), connection.getOrigin());
 		assertEquals(headers.get("origin"), connection.getId());
-		
+
 		assertFalse(connection.isOpen());
 	}
 
@@ -53,7 +51,7 @@ public class WebSocketClientConnectionTest {
 
 	@Test
 	public void parse_test() throws MessageTooLongException,
-			MessageTypeNotSupportException, NoMessageBufferException {
+			NoMessageBufferException {
 		WebSocketClientConnection connection = this.getConnection();
 		HashMap<String, String> headers = new HashMap<String, String>();
 		headers.put("id", "abc");
@@ -61,14 +59,14 @@ public class WebSocketClientConnectionTest {
 
 		byte[] bytes = new byte[1024];
 		ByteBuffer buffer = ByteBuffer.wrap(bytes);
-		PublishMessage msgPublish = new PublishMessage();
+		Message msgPublish = new Message();
 		msgPublish.messageType = MessageType.PUBLISH;
 		msgPublish.to = "abc";
 		msgPublish.remainingLength = 100;
 		MessageIO.parseClientSending(msgPublish, buffer);
 
 		Message msg = connection.parse(bytes, 0, 1024);
-		assertEquals(PublishMessage.class, msg.getClass());
+		assertEquals(Message.class, msg.getClass());
 		// message from must be fill after connection received
 		assertEquals(connection.getId(), msg.from);
 	}
@@ -79,7 +77,7 @@ public class WebSocketClientConnectionTest {
 	}
 
 	private PushManager getManager() {
-		return new PushManager(10, 1024, 1024, 1, 1, 0, 1000, 10000);
+		return new PushManager(10, 1024, 1, 0, 1000, 10000);
 	}
 
 	private WebSocketClientConnectionPool getPool() {

@@ -5,7 +5,6 @@ import static org.junit.Assert.*;
 import org.junit.Test;
 
 import com.tmall.top.push.messages.Message;
-import com.tmall.top.push.messages.PublishMessage;
 
 public class ClientTest {
 	static int sendCount = 0;
@@ -35,14 +34,14 @@ public class ClientTest {
 	@Test
 	public void pending_message_test() {
 		Client client = new Client("abc", this.getManager());
-		client.pendingMessage(new PublishMessage());
+		client.pendingMessage(new Message());
 		assertEquals(1, client.getPendingMessagesCount());
 	}
 
 	@Test
 	public void release_after_send_message_test() {
 		Client client = new Client("abc", this.getManager());
-		PublishMessage msg = new PublishMessage();
+		Message msg = new Message();
 		msg.body = new Object();
 		client.pendingMessage(msg);
 		client.flush(new CancellationToken(), 10);
@@ -62,7 +61,7 @@ public class ClientTest {
 
 		int count = 10;
 		for (int i = 0; i < count; i++) {
-			client.pendingMessage(new PublishMessage());
+			client.pendingMessage(new Message());
 		}
 
 		client.flush(new CancellationToken(), count);
@@ -80,7 +79,7 @@ public class ClientTest {
 		TestConnection c2 = new TestConnection();
 		client.AddConnection(c1);
 		client.AddConnection(c2);
-		client.pendingMessage(new PublishMessage());
+		client.pendingMessage(new Message());
 		client.flush(new CancellationToken(), 1);
 		assertEquals(0, c1.sendCount);
 		assertEquals(1, c2.sendCount);
@@ -96,7 +95,7 @@ public class ClientTest {
 		TestConnection c2 = new TestConnection();
 		client.AddConnection(c1);
 		client.AddConnection(c2);
-		client.pendingMessage(new PublishMessage());
+		client.pendingMessage(new Message());
 		client.flush(new CancellationToken(), 1);
 		assertEquals(0, c1.sendCount);
 		assertEquals(0, c2.sendCount);
@@ -106,7 +105,7 @@ public class ClientTest {
 	}
 
 	private PushManager getManager() {
-		return new PushManager(10, 1024, 1024, 1, 1, 0, 1000, 10000);
+		return new PushManager(10, 1024, 1, 0, 1000, 10000);
 	}
 
 	public class TestConnection extends ClientConnection {

@@ -1,4 +1,8 @@
-package com.tmall.top.push.mqtt;
+package com.tmall.top.push.mqtt.publish;
+
+import com.tmall.top.push.mqtt.MqttHeader;
+import com.tmall.top.push.mqtt.MqttMessage;
+import com.tmall.top.push.mqtt.MqttMessageType;
 
 public class MqttPublishMessage extends MqttMessage {
 	// http://public.dhe.ibm.com/software/dw/webservices/ws-mqtt/mqtt-v3r1.html#publish
@@ -11,4 +15,18 @@ public class MqttPublishMessage extends MqttMessage {
 
 	// If a client subscribes to one or more topics, any message published to
 	// those topics are sent by the server to the client as a PUBLISH message.
+
+	public MqttPublishVariableHeader VariableHeader;
+
+	public MqttPublishMessage() {
+		this.Header = new MqttHeader();
+		this.Header.MessageType = MqttMessageType.Publish;
+		this.VariableHeader = new MqttPublishVariableHeader(this.Header);
+	}
+
+	@Override
+	public void clear() {
+		super.clear();
+		// TODO:clear VariableHeader
+	}
 }

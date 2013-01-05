@@ -15,16 +15,13 @@ public class MqttMessage extends Message {
 
 	public MqttHeader Header;
 
-	public MqttVariableHeader VariableHeader;
-
 	public MqttMessage() {
 		this.Header = new MqttHeader();
-		this.VariableHeader = new MqttVariableHeader();
 	}
 
 	@Override
-	protected void internalClear() {
+	public void clear() {
+		super.clear();
 		// TODO:clear header
-		// TODO:clear more
 	}
 }

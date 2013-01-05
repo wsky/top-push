@@ -72,20 +72,12 @@
 			<param-value>100000</param-value>
 		</init-param>
 		<init-param>
-			<param-name>publishMessageSize</param-name>
+			<param-name>maxMessageSize</param-name>
 			<param-value>1024</param-value>
 		</init-param>
 		<init-param>
-			<param-name>confirmMessageSize</param-name>
-			<param-value>1024</param-value>
-		</init-param>
-		<init-param>
-			<param-name>publishMessageBufferCount</param-name>
-			<param-value>100000</param-value>
-		</init-param>
-		<init-param>
-			<param-name>confirmMessageBufferCount</param-name>
-			<param-value>100000</param-value>
+			<param-name>maxMessageBufferCount</param-name>
+			<param-value>200000</param-value>
 		</init-param>
 		<init-param>
 			<param-name>senderCount</param-name>

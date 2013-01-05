@@ -52,7 +52,7 @@ public final class MessageIO {
 		writeMessageType(buffer, message.messageType);
 		writeClientId(buffer, message.to);
 		buffer.putInt(message.remainingLength);
-		// TODO: body serialize to buffer, if client
+		// HACK: body serialize to buffer, if client
 		// do not care on server, just process at client
 		return buffer;
 	}
@@ -70,8 +70,6 @@ public final class MessageIO {
 
 	public static int parseMessageType(byte headerByte) {
 		return headerByte;
-		// MQTT is more extensive
-		// return (headerByte & 240) >> 4;
 	}
 
 	public static int readMessageType(ByteBuffer buffer) {

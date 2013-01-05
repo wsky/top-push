@@ -26,10 +26,9 @@ import org.junit.Test;
 
 import com.alibaba.fastjson.JSON;
 import com.tmall.top.push.PushManager;
+import com.tmall.top.push.messages.Message;
 import com.tmall.top.push.messages.MessageIO;
 import com.tmall.top.push.messages.MessageType;
-import com.tmall.top.push.messages.PublishConfirmMessage;
-import com.tmall.top.push.messages.PublishMessage;
 
 public class WebSocketPushServerTest {
 
@@ -58,10 +57,10 @@ public class WebSocketPushServerTest {
 
 		// front-end client like a subscriber
 		String frontId = "front";
-		final PublishMessage publishMessage = new PublishMessage();
+		final Message publishMessage = new Message();
 		final Object waitFront = new Object();
 		Connection front = this.connect(factory, "ws://localhost:9001/front",
-				frontId, "mqtt", new WebSocket.OnBinaryMessage() {
+				frontId, null, new WebSocket.OnBinaryMessage() {
 
 					@Override
 					public void onOpen(Connection arg0) {
@@ -91,10 +90,10 @@ public class WebSocketPushServerTest {
 
 		// back-end client like a publisher
 		String backId = "back";
-		final PublishConfirmMessage confirmMessage = new PublishConfirmMessage();
+		final Message confirmMessage = new Message();
 		final Object waitBack = new Object();
 		Connection back = this.connect(factory, "ws://localhost:9002/back",
-				backId, "mqtt", new WebSocket.OnBinaryMessage() {
+				backId, null, new WebSocket.OnBinaryMessage() {
 
 					@Override
 					public void onOpen(Connection arg0) {
@@ -156,6 +155,11 @@ public class WebSocketPushServerTest {
 	}
 
 	@Test
+	public void publish_confirm_mqtt_test() throws Exception {
+
+	}
+
+	@Test
 	public void publish_confirm_long_running_test() throws Exception {
 		Server server = this.initServer(9003, 9004);
 		server.start();
@@ -163,13 +167,11 @@ public class WebSocketPushServerTest {
 		WebSocketClientFactory factory = new WebSocketClientFactory();
 		factory.start();
 
-		this.connect(factory, "ws://localhost:9003/front", "front", "mqtt",
-				null);
-		this.connect(factory, "ws://localhost:9003/front", "front", "mqtt",
-				null);
+		this.connect(factory, "ws://localhost:9003/front", "front", null, null);
+		this.connect(factory, "ws://localhost:9003/front", "front", null, null);
 
 		Connection back = this.connect(factory, "ws://localhost:9004/back",
-				"back", "mqtt", null);
+				"back", null, null);
 		StopWatch watch = new StopWatch();
 		watch.start();
 		for (int i = 0; i < 10000; i++) {
@@ -190,7 +192,12 @@ public class WebSocketPushServerTest {
 	}
 
 	@Test
-	public void rcp_test() throws Exception {
+	public void publish_confirm_long_running_mqtt_test() throws Exception {
+
+	}
+
+	@Test
+	public void rpc_test() throws Exception {
 		Server server = this.initServer(9005, 9006);
 		server.start();
 
@@ -236,7 +243,8 @@ public class WebSocketPushServerTest {
 	private ByteBuffer createPublishMessage(String to) {
 		byte[] bytes = new byte[1024];
 		ByteBuffer buffer = ByteBuffer.wrap(bytes);
-		PublishMessage msg = new PublishMessage();
+		Message msg = new Message();
+		msg.messageType = MessageType.PUBLISH;
 		msg.to = to;
 		msg.remainingLength = 7;
 		buffer.position(13);
@@ -251,10 +259,11 @@ public class WebSocketPushServerTest {
 		return buffer;
 	}
 
-	private ByteBuffer createConfirmMessage(PublishMessage publishMessage) {
+	private ByteBuffer createConfirmMessage(Message publishMessage) {
 		byte[] bytes = new byte[1024];
 		ByteBuffer buffer = ByteBuffer.wrap(bytes);
-		PublishConfirmMessage msg = new PublishConfirmMessage();
+		Message msg = new Message();
+		msg.messageType = MessageType.PUBCONFIRM;
 		msg.to = publishMessage.from;
 		msg.remainingLength = 100;
 		MessageIO.parseClientSending(msg, buffer);
@@ -267,7 +276,8 @@ public class WebSocketPushServerTest {
 			throws InterruptedException, ExecutionException, TimeoutException,
 			IOException, URISyntaxException {
 		WebSocketClient client = factory.newWebSocketClient();
-		client.setProtocol(protocol);
+		if (protocol != null)
+			client.setProtocol(protocol);
 		client.setOrigin(origin);
 		return client.open(new URI(uri),
 				handler == null ? new WebSocket.OnTextMessage() {
@@ -307,10 +317,8 @@ public class WebSocketPushServerTest {
 		// init push server
 		ServletHolder initHolder = new ServletHolder(new InitServlet());
 		initHolder.setInitParameter("maxConnectionCount", "10");
-		initHolder.setInitParameter("publishMessageSize", "1024");
-		initHolder.setInitParameter("confirmMessageSize", "1024");
-		initHolder.setInitParameter("publishMessageBufferCount", "10000");
-		initHolder.setInitParameter("confirmMessageBufferCount", "10000");
+		initHolder.setInitParameter("maxMessageSize", "1024");
+		initHolder.setInitParameter("maxMessageBufferCount", "10000");
 		initHolder.setInitParameter("senderCount", "4");
 		initHolder.setInitParameter("senderIdle", "10");
 		initHolder.setInitParameter("stateBuilderIdle", "1000");

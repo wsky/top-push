@@ -48,15 +48,13 @@ public class RPCTest {
 
 	public class TestPushManager extends PushManager {
 		public TestPushManager() {
-			this(10, 1024, 1024, 10, 10, 0, 1000, 5000);
+			this(10, 1024, 10, 0, 1000, 5000);
 		}
 
-		public TestPushManager(int maxConnectionCount, int publishMessageSize,
-				int confirmMessageSize, int publishMessageBufferCount,
-				int confirmMessageBufferCount, int senderCount, int senderIdle,
+		public TestPushManager(int maxConnectionCount, int maxMessageSize,
+				int maxMessageBufferCount, int senderCount, int senderIdle,
 				int stateBuilderIdle) {
-			super(maxConnectionCount, publishMessageSize, confirmMessageSize,
-					publishMessageBufferCount, confirmMessageBufferCount,
+			super(maxConnectionCount, maxMessageSize, maxMessageBufferCount,
 					senderCount, senderIdle, stateBuilderIdle);
 		}
 

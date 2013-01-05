@@ -1,4 +1,4 @@
-package com.tmall.top.push.mqtt;
+package com.tmall.top.push.mqtt.connack;
 
 public class MqttConnectAckMessage {
 

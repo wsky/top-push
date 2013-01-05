@@ -44,20 +44,17 @@ public class PushManager {
 	// for managing some worker state
 	private CancellationToken token;
 
-	public PushManager(int maxConnectionCount, int publishMessageSize,
-			int confirmMessageSize, int publishMessageBufferCount,
-			int confirmMessageBufferCount, int senderCount, int senderIdle,
+	public PushManager(int maxConnectionCount, int maxMessageSize,
+			int maxMessageBufferCount, int senderCount, int senderIdle,
 			int stateBuilderIdle) {
 		this.maxConnectionCount = maxConnectionCount;
-
 		// client management
 		this.clients = new HashMap<String, Client>(1000);
 		this.pendingClients = new ConcurrentLinkedQueue<Client>();
 		this.idleClients = new LinkedHashMap<String, Client>();
 		this.offlineClients = new LinkedHashMap<String, Client>();
 
-		this.receiver = new Receiver(publishMessageSize, confirmMessageSize,
-				publishMessageBufferCount, confirmMessageBufferCount);
+		this.receiver = new Receiver(maxMessageSize, maxMessageBufferCount);
 
 		// TODO:move to start and support start/stop/restart
 		this.token = new CancellationToken();

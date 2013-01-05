@@ -1,4 +1,4 @@
-package com.tmall.top.push.mqtt;
+package com.tmall.top.push.mqtt.puback;
 
 public class MqttPublishAckMessage {
 	// http://public.dhe.ibm.com/software/dw/webservices/ws-mqtt/mqtt-v3r1.html#puback

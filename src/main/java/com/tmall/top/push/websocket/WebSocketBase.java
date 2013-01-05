@@ -5,7 +5,6 @@ import org.eclipse.jetty.websocket.WebSocket;
 import com.tmall.top.push.Client;
 import com.tmall.top.push.PushManager;
 import com.tmall.top.push.MessageTooLongException;
-import com.tmall.top.push.MessageTypeNotSupportException;
 import com.tmall.top.push.NoMessageBufferException;
 import com.tmall.top.push.UnauthorizedException;
 import com.tmall.top.push.messages.Message;
@@ -75,14 +74,12 @@ public abstract class WebSocketBase implements WebSocket.OnTextMessage,
 		// any message use as ping
 		this.receivePing();
 
+		// TODO:read messageType first and process more message type
 		try {
 			Message msg = this.clientConnection.parse(data, offset, length);
 			// deliver to target client
 			this.manager.getClient(msg.to).pendingMessage(msg);
 		} catch (MessageTooLongException e) {
-			e.printStackTrace();
-			this.frameConnection.close(400, e.getMessage());
-		} catch (MessageTypeNotSupportException e) {
 			e.printStackTrace();
 			this.frameConnection.close(400, e.getMessage());
 		} catch (NoMessageBufferException e) {

@@ -1,5 +1,6 @@
 package com.tmall.top.push.messages;
 
+@Deprecated
 public class PublishMessage extends Message {
 	public String id;
 
@@ -7,9 +8,9 @@ public class PublishMessage extends Message {
 		this.messageType = MessageType.PUBLISH;
 	}
 
-	@Override
-	protected void internalClear() {
-		this.messageType = MessageType.PUBLISH;
-		this.id = null;
-	}
+	// @Override
+	// protected void internalClear() {
+	// this.messageType = MessageType.PUBLISH;
+	// this.id = null;
+	// }
 }

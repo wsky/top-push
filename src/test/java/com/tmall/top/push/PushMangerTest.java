@@ -7,13 +7,13 @@ import org.junit.Test;
 
 import com.tmall.top.push.Client;
 import com.tmall.top.push.PushManager;
-import com.tmall.top.push.messages.PublishMessage;
+import com.tmall.top.push.messages.Message;
 import com.tmall.top.push.websocket.WebSocketClientConnection;
 
 public class PushMangerTest {
 	@Test
 	public void get_client_test() {
-		PushManager manager = new PushManager(10, 1024, 1024, 10, 10, 1, 1000,
+		PushManager manager = new PushManager(10, 1024, 10, 1, 1000,
 				100);
 		String id = "abc";
 		assertEquals(manager.getClient(id), manager.getClient(id));
@@ -42,7 +42,7 @@ public class PushMangerTest {
 	public void state_test() throws SecurityException, NoSuchMethodException,
 			InterruptedException {
 		// senderCount should be 0
-		PushManager manager = new PushManager(2, 1024, 1024, 10, 10, 0, 1000,
+		PushManager manager = new PushManager(2, 1024, 10, 0, 1000,
 				100);
 		Client c1 = manager.getClient("1");
 		Client c2 = manager.getClient("2");
@@ -58,7 +58,7 @@ public class PushMangerTest {
 		assertNull(manager.pollPendingClient());
 		assertFalse(manager.isReachMaxConnectionCount());
 
-		c1.pendingMessage(new PublishMessage());
+		c1.pendingMessage(new Message());
 		Thread.sleep(1000);
 		assertFalse(manager.isIdleClient(c1.getId()));
 		assertNotNull(manager.pollPendingClient());

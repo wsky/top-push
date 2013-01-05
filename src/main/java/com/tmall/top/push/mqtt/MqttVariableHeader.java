@@ -5,14 +5,17 @@ public class MqttVariableHeader {
 	public int Length;
 	
 	public String ProtocolName;
+	
 	public byte ProtocolVersion;
+	
 	public MqttConnectFlags ConnectFlags;
 
 	public short KeepAlive;
-
+	
 	public int ReturnCode;
-	// topic will use as client identiy
+	
 	public String TopicName;
+	
 	public short MessageIdentifier;
 
 	public MqttVariableHeader() {

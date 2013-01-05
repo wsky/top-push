@@ -8,7 +8,6 @@ import org.junit.Test;
 
 import com.tmall.top.push.messages.MessageIO;
 import com.tmall.top.push.messages.MessageType;
-import com.tmall.top.push.messages.PublishMessage;
 
 public class MessageIOTest {
 
@@ -43,7 +42,7 @@ public class MessageIOTest {
 	@Test
 	public void client_to_server_parse_test() {
 		ByteBuffer buffer = ByteBuffer.allocateDirect(1024);
-		PublishMessage msg = new PublishMessage();
+		Message msg = new Message();
 		msg.messageType = MessageType.PUBLISH;
 		msg.to = "abc";
 		msg.remainingLength = 100;
@@ -60,7 +59,7 @@ public class MessageIOTest {
 	@Test
 	public void server_to_client_parse_test() {
 		ByteBuffer buffer = ByteBuffer.allocateDirect(1024);
-		PublishMessage msg = new PublishMessage();
+		Message msg = new Message();
 		msg.messageType = MessageType.PUBLISH;
 		msg.from = "abc";
 		msg.remainingLength = 100;
