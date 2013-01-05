@@ -107,7 +107,7 @@ public class WebSocketPushServerTest {
 		publish_confirm_long_running_test(null);
 	}
 
-	@Test
+	//@Test
 	public void publish_confirm_long_running_mqtt_test() throws Exception {
 		publish_confirm_long_running_test("mqtt");
 	}
@@ -376,7 +376,7 @@ public class WebSocketPushServerTest {
 		initHolder.setInitParameter("maxMessageBufferCount", "10000");
 		initHolder.setInitParameter("senderCount", "4");
 		initHolder.setInitParameter("senderIdle", "10");
-		initHolder.setInitParameter("stateBuilderIdle", "1000");
+		initHolder.setInitParameter("stateBuilderIdle", "200");
 		context.addServlet(initHolder, "/init");
 		context.setContextPath("/");
 
