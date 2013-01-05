@@ -29,6 +29,8 @@ public abstract class WebSocketBase implements WebSocket.OnTextMessage,
 	@Override
 	public void onClose(int closeCode, String message) {
 		this.release();
+		System.out.println(String.format("websocket close: %s %s", closeCode,
+				message));
 	}
 
 	@Override
@@ -38,12 +40,16 @@ public abstract class WebSocketBase implements WebSocket.OnTextMessage,
 		} catch (UnauthorizedException e) {
 			this.release();
 			frameConnection.close(401, "invalid header");
+			System.out.println(String.format("websocket close: %s %s", 401,
+					"invalid header"));
 			return;
 		}
 
 		if (this.manager.isReachMaxConnectionCount()) {
 			this.release();
 			frameConnection.close(403, "reach max connections");
+			System.out.println(String.format("websocket close: %s %s", 403,
+					"reach max connections"));
 			return;
 		}
 

@@ -118,6 +118,7 @@ public class Client {
 			try {
 				connection.sendMessage(msg);
 			} catch (Exception e) {
+				System.out.println("send message error");
 				e.printStackTrace();
 			} finally {
 				this.connectionQueue.add(connection);

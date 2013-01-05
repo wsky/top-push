@@ -29,6 +29,8 @@ import com.tmall.top.push.PushManager;
 import com.tmall.top.push.messages.Message;
 import com.tmall.top.push.messages.MessageIO;
 import com.tmall.top.push.messages.MessageType;
+import com.tmall.top.push.mqtt.MqttMessageIO;
+import com.tmall.top.push.mqtt.publish.MqttPublishMessage;
 
 public class WebSocketPushServerTest {
 
@@ -48,155 +50,6 @@ public class WebSocketPushServerTest {
 	}
 
 	@Test
-	public void publish_confirm_test() throws Exception {
-		Server server = this.initServer(9001, 9002);
-		server.start();
-
-		WebSocketClientFactory factory = new WebSocketClientFactory();
-		factory.start();
-
-		// front-end client like a subscriber
-		String frontId = "front";
-		final Message publishMessage = new Message();
-		final Object waitFront = new Object();
-		Connection front = this.connect(factory, "ws://localhost:9001/front",
-				frontId, null, new WebSocket.OnBinaryMessage() {
-
-					@Override
-					public void onOpen(Connection arg0) {
-					}
-
-					@Override
-					public void onClose(int arg0, String arg1) {
-					}
-
-					@Override
-					public void onMessage(byte[] data, int offset, int length) {
-						int messageType = MessageIO
-								.parseMessageType(data[offset]);
-						assertEquals(MessageType.PUBLISH, messageType);
-
-						// receiving publish-message from server
-						ByteBuffer buffer = ByteBuffer.allocate(length);
-						buffer.put(data, offset, length);
-						MessageIO.parseClientReceiving(publishMessage, buffer);
-						System.out
-								.println("---- [frontend] receiving publish-message from server");
-						synchronized (waitFront) {
-							waitFront.notifyAll();
-						}
-					}
-				});
-
-		// back-end client like a publisher
-		String backId = "back";
-		final Message confirmMessage = new Message();
-		final Object waitBack = new Object();
-		Connection back = this.connect(factory, "ws://localhost:9002/back",
-				backId, null, new WebSocket.OnBinaryMessage() {
-
-					@Override
-					public void onOpen(Connection arg0) {
-					}
-
-					@Override
-					public void onClose(int arg0, String arg1) {
-					}
-
-					@Override
-					public void onMessage(byte[] data, int offset, int length) {
-						int messageType = MessageIO
-								.parseMessageType(data[offset]);
-						assertEquals(MessageType.PUBCONFIRM, messageType);
-
-						// receiving confirm-message from server
-						ByteBuffer buffer = ByteBuffer.allocate(length);
-						buffer.put(data, offset, length);
-						MessageIO.parseClientReceiving(confirmMessage, buffer);
-						System.out
-								.println("---- [backend] receiving confirm-message from server");
-						synchronized (waitBack) {
-							waitBack.notifyAll();
-						}
-					}
-				});
-
-		// send publish
-		ByteBuffer publish = this.createPublishMessage(frontId);
-		back.sendMessage(publish.array(), 0, publish.limit());
-
-		// receive publish
-		synchronized (waitFront) {
-			waitFront.wait();
-		}
-		assertEquals(backId, publishMessage.from);
-		// assert body is expected
-		assertEquals('a', (char) ((ByteBuffer) publishMessage.body).get());
-		assertEquals('b', (char) ((ByteBuffer) publishMessage.body).get());
-		assertEquals('c', (char) ((ByteBuffer) publishMessage.body).get());
-		assertEquals('d', (char) ((ByteBuffer) publishMessage.body).get());
-		assertEquals('e', (char) ((ByteBuffer) publishMessage.body).get());
-		assertEquals('f', (char) ((ByteBuffer) publishMessage.body).get());
-		assertEquals('g', (char) ((ByteBuffer) publishMessage.body).get());
-		// send confirm
-		ByteBuffer confirm = this.createConfirmMessage(publishMessage);
-		front.sendMessage(confirm.array(), 0, confirm.limit());
-
-		// receive confirm
-		synchronized (waitBack) {
-			waitBack.wait();
-		}
-		assertEquals(frontId, confirmMessage.from);
-
-		front.close();
-		back.close();
-		Thread.sleep(1000);
-		server.stop();
-	}
-
-	@Test
-	public void publish_confirm_mqtt_test() throws Exception {
-
-	}
-
-	@Test
-	public void publish_confirm_long_running_test() throws Exception {
-		Server server = this.initServer(9003, 9004);
-		server.start();
-
-		WebSocketClientFactory factory = new WebSocketClientFactory();
-		factory.start();
-
-		this.connect(factory, "ws://localhost:9003/front", "front", null, null);
-		this.connect(factory, "ws://localhost:9003/front", "front", null, null);
-
-		Connection back = this.connect(factory, "ws://localhost:9004/back",
-				"back", null, null);
-		StopWatch watch = new StopWatch();
-		watch.start();
-		for (int i = 0; i < 10000; i++) {
-			ByteBuffer publish = this.createPublishMessage("front");
-			back.sendMessage(publish.array(), 0, publish.limit());
-		}
-		watch.stop();
-		// jetty websocket client slower than nodejs impl
-		System.out.println(String.format("---- publish %s messages cost %sms",
-				10000, watch.getTime()));
-
-		Thread.sleep(2000);
-		while (!PushManager.current().isIdleClient("front")) {
-			Thread.sleep(1000);
-		}
-
-		server.stop();
-	}
-
-	@Test
-	public void publish_confirm_long_running_mqtt_test() throws Exception {
-
-	}
-
-	@Test
 	public void rpc_test() throws Exception {
 		Server server = this.initServer(9005, 9006);
 		server.start();
@@ -205,8 +58,7 @@ public class WebSocketPushServerTest {
 		factory.start();
 
 		final Response response = new Response();
-		this.connect(factory, "ws://localhost:9005/front", "front", "mqtt",
-				null);
+		this.connect(factory, "ws://localhost:9005/front", "front", null, null);
 		final String waitObject = new String("abc");
 		Connection back = this.connect(factory, "ws://localhost:9006/back",
 				"back", "mqtt", new WebSocket.OnTextMessage() {
@@ -240,14 +92,208 @@ public class WebSocketPushServerTest {
 		server.stop();
 	}
 
-	private ByteBuffer createPublishMessage(String to) {
+	@Test
+	public void publish_confirm_test() throws Exception {
+		publish_confirm_test(null);
+	}
+
+	@Test
+	public void publish_confirm_mqtt_test() throws Exception {
+		publish_confirm_test("mqtt");
+	}
+
+	@Test
+	public void publish_confirm_long_running_test() throws Exception {
+		publish_confirm_long_running_test(null);
+	}
+
+	@Test
+	public void publish_confirm_long_running_mqtt_test() throws Exception {
+		publish_confirm_long_running_test("mqtt");
+	}
+
+	private void publish_confirm_test(final String protocol) throws Exception {
+		Server server = this.initServer(9001, 9002);
+		server.start();
+
+		WebSocketClientFactory factory = new WebSocketClientFactory();
+		factory.start();
+
+		// front-end client like a subscriber
+		String frontId = "front";
+		final Message publishMessage = new Message();
+		final MqttPublishMessage mqttPublishMessage = new MqttPublishMessage();
+
+		final Object waitFront = new Object();
+		Connection front = this.connect(factory, "ws://localhost:9001/front",
+				frontId, protocol, new WebSocket.OnBinaryMessage() {
+
+					@Override
+					public void onOpen(Connection arg0) {
+					}
+
+					@Override
+					public void onClose(int arg0, String arg1) {
+					}
+
+					@Override
+					public void onMessage(byte[] data, int offset, int length) {
+						// receiving publish-message from server
+						ByteBuffer buffer = ByteBuffer.allocate(length);
+						buffer.put(data, offset, length);
+
+						if ("mqtt".equals(protocol)) {
+							MqttMessageIO.parseClientReceiving(
+									mqttPublishMessage, buffer);
+						} else {
+							int messageType = MessageIO
+									.parseMessageType(data[offset]);
+							assertEquals(MessageType.PUBLISH, messageType);
+							MessageIO.parseClientReceiving(publishMessage,
+									buffer);
+						}
+						System.out
+								.println("---- [frontend] receiving publish-message from server");
+						synchronized (waitFront) {
+							waitFront.notifyAll();
+						}
+					}
+				});
+
+		// back-end client like a publisher
+		String backId = "back";
+		final Message confirmMessage = new Message();
+		final MqttPublishMessage mqttConfirmMessage = new MqttPublishMessage();
+		final Object waitBack = new Object();
+		Connection back = this.connect(factory, "ws://localhost:9002/back",
+				backId, protocol, new WebSocket.OnBinaryMessage() {
+
+					@Override
+					public void onOpen(Connection arg0) {
+					}
+
+					@Override
+					public void onClose(int arg0, String arg1) {
+					}
+
+					@Override
+					public void onMessage(byte[] data, int offset, int length) {
+						// receiving confirm-message from server
+						ByteBuffer buffer = ByteBuffer.allocate(length);
+						buffer.put(data, offset, length);
+
+						if ("mqtt".equals(protocol)) {
+							MqttMessageIO.parseClientReceiving(
+									mqttConfirmMessage, buffer);
+						} else {
+							int messageType = MessageIO
+									.parseMessageType(data[offset]);
+							assertEquals(MessageType.PUBCONFIRM, messageType);
+							MessageIO.parseClientReceiving(confirmMessage,
+									buffer);
+						}
+
+						System.out
+								.println("---- [backend] receiving confirm-message from server");
+						synchronized (waitBack) {
+							waitBack.notifyAll();
+						}
+					}
+				});
+
+		// send publish
+		ByteBuffer publish = this.createPublishMessage(protocol, frontId);
+		back.sendMessage(publish.array(), 0, publish.limit());
+
+		// receive publish
+		synchronized (waitFront) {
+			waitFront.wait();
+		}
+
+		Message msg = "mqtt".equals(protocol) ? mqttPublishMessage
+				: publishMessage;
+		assertEquals(backId, msg.from);
+		// assert body is expected
+		assertEquals('a', (char) ((ByteBuffer) msg.body).get());
+		assertEquals('b', (char) ((ByteBuffer) msg.body).get());
+		assertEquals('c', (char) ((ByteBuffer) msg.body).get());
+		assertEquals('d', (char) ((ByteBuffer) msg.body).get());
+		assertEquals('e', (char) ((ByteBuffer) msg.body).get());
+		assertEquals('f', (char) ((ByteBuffer) msg.body).get());
+		assertEquals('g', (char) ((ByteBuffer) msg.body).get());
+		// send confirm
+		ByteBuffer confirm = this.createConfirmMessage(protocol, msg);
+		front.sendMessage(confirm.array(), 0, confirm.limit());
+
+		// receive confirm
+		synchronized (waitBack) {
+			waitBack.wait();
+		}
+
+		msg = "mqtt".equals(protocol) ? mqttConfirmMessage : confirmMessage;
+		assertEquals(frontId, msg.from);
+
+		front.close();
+		back.close();
+		Thread.sleep(1000);
+		server.stop();
+		Thread.sleep(1000);
+	}
+
+	private void publish_confirm_long_running_test(String protocol)
+			throws Exception {
+		Server server = this.initServer(9003, 9004);
+		server.start();
+
+		WebSocketClientFactory factory = new WebSocketClientFactory();
+		factory.start();
+
+		this.connect(factory, "ws://localhost:9003/front", "front", protocol,
+				null);
+		this.connect(factory, "ws://localhost:9003/front", "front", protocol,
+				null);
+
+		Connection back = this.connect(factory, "ws://localhost:9004/back",
+				"back", protocol, null);
+
+		int total = 10000;
+		StopWatch watch = new StopWatch();
+		watch.start();
+		for (int i = 0; i < total; i++) {
+			ByteBuffer publish = this.createPublishMessage(protocol, "front");
+			back.sendMessage(publish.array(), 0, publish.limit());
+		}
+		watch.stop();
+		// jetty websocket client slower than nodejs impl
+		System.out.println(String.format("---- publish %s messages cost %sms",
+				total, watch.getTime()));
+
+		Thread.sleep(2000);
+		while (!PushManager.current().isIdleClient("front")) {
+			Thread.sleep(1000);
+		}
+		server.stop();
+	}
+
+	private ByteBuffer createPublishMessage(String protocol, String to) {
 		byte[] bytes = new byte[1024];
 		ByteBuffer buffer = ByteBuffer.wrap(bytes);
-		Message msg = new Message();
-		msg.messageType = MessageType.PUBLISH;
-		msg.to = to;
-		msg.remainingLength = 7;
-		buffer.position(13);
+
+		if ("mqtt".equals(protocol)) {
+			MqttPublishMessage msg = new MqttPublishMessage();
+			msg.messageType = MessageType.PUBLISH;// 1
+			msg.to = to;// 8
+			msg.remainingLength = 7;// 4
+			MqttMessageIO.parseClientSending(msg, buffer);
+			// 1+8+4+7=20
+			// 20+4
+		} else {
+			Message msg = new Message();
+			msg.messageType = MessageType.PUBLISH;
+			msg.to = to;
+			msg.remainingLength = 7;
+			MessageIO.parseClientSending(msg, buffer);
+		}
 		buffer.put((byte) 'a');
 		buffer.put((byte) 'b');
 		buffer.put((byte) 'c');
@@ -255,20 +301,29 @@ public class WebSocketPushServerTest {
 		buffer.put((byte) 'e');
 		buffer.put((byte) 'f');
 		buffer.put((byte) 'g');
-		MessageIO.parseClientSending(msg, buffer);
 		return buffer;
 	}
 
-	private ByteBuffer createConfirmMessage(Message publishMessage) {
+	private ByteBuffer createConfirmMessage(String protocol,
+			Message publishMessage) {
 		byte[] bytes = new byte[1024];
 		ByteBuffer buffer = ByteBuffer.wrap(bytes);
-		Message msg = new Message();
-		msg.messageType = MessageType.PUBCONFIRM;
-		msg.to = publishMessage.from;
-		msg.remainingLength = 100;
-		MessageIO.parseClientSending(msg, buffer);
+
+		if ("mqtt".equals(protocol)) {
+			// also use MqttPublishMessage
+			MqttPublishMessage msg = new MqttPublishMessage();
+			msg.messageType = MessageType.PUBCONFIRM;
+			msg.to = publishMessage.from;
+			msg.remainingLength = 100;
+			MqttMessageIO.parseClientSending(msg, buffer);
+		} else {
+			Message msg = new Message();
+			msg.messageType = MessageType.PUBCONFIRM;
+			msg.to = publishMessage.from;
+			msg.remainingLength = 100;
+			MessageIO.parseClientSending(msg, buffer);
+		}
 		return buffer;
-		// TODO:message id formatter in MessageIO
 	}
 
 	private WebSocket.Connection connect(WebSocketClientFactory factory,

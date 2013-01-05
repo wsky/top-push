@@ -27,6 +27,7 @@ public class MqttPublishMessage extends MqttMessage {
 	@Override
 	public void clear() {
 		super.clear();
-		// TODO:clear VariableHeader
+		this.VariableHeader.MessageIdentifier = 0;
+		this.VariableHeader.TopicName = null;
 	}
 }

@@ -1,6 +1,8 @@
 package com.tmall.top.push.mqtt;
 
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 
 import com.tmall.top.push.messages.Message;
 import com.tmall.top.push.messages.MessageIO;
@@ -24,7 +26,8 @@ public class MqttMessageIO {
 	 * 
 	 * Payload:position=Fix-Header.length+Variable-Header.length
 	 * 
-	 * 8byte from(receiving)/to(sending) id, support front<-->forward<-->back.
+	 * 1byte MessageType 8byte from(receiving)/to(sending) id, support
+	 * front<-->forward<-->back.
 	 * 
 	 * 
 	 * [X]PUBACK:
@@ -44,11 +47,17 @@ public class MqttMessageIO {
 			ByteBuffer buffer) {
 		MqttPublishMessage pub = (MqttPublishMessage) message;
 		buffer.position(0);
-		
+
+		// TODO:avoid rewrite mqtt header at server
+		pub.Header.RemainingLength = MqttMessageIO
+				.getVariableHeaderWriteLength(pub.VariableHeader)
+				+ MessageIO.getFullMessageSize(pub.remainingLength);
 		writeHeader(message.Header, buffer);
 		writeVariableHeader(pub.VariableHeader, buffer);
 
+		MessageIO.writeMessageType(buffer, message.messageType);
 		MessageIO.writeClientId(buffer, message.from);
+		MessageIO.writeRemainingLength(buffer, message.remainingLength);
 
 		return buffer;
 	}
@@ -57,11 +66,13 @@ public class MqttMessageIO {
 			ByteBuffer buffer) {
 		MqttPublishMessage pub = (MqttPublishMessage) message;
 		buffer.position(0);
-		
+
 		readHeader(message.Header, buffer);
 		readVariableHeader(pub.VariableHeader, buffer);
 
+		message.messageType = MessageIO.readMessageType(buffer);
 		message.to = MessageIO.readClientId(buffer);
+		message.remainingLength = MessageIO.readRemainingLength(buffer);
 		message.fullMessageSize = getFullMessageSize(message);
 		message.body = buffer;
 
@@ -72,11 +83,17 @@ public class MqttMessageIO {
 			ByteBuffer buffer) {
 		MqttPublishMessage pub = (MqttPublishMessage) message;
 		buffer.position(0);
+
+		pub.Header.RemainingLength = MqttMessageIO
+				.getVariableHeaderWriteLength(pub.VariableHeader)
+				+ MessageIO.getFullMessageSize(pub.remainingLength);
 		
 		writeHeader(message.Header, buffer);
 		writeVariableHeader(pub.VariableHeader, buffer);
-
+		
+		MessageIO.writeMessageType(buffer, message.messageType);
 		MessageIO.writeClientId(buffer, message.to);
+		MessageIO.writeRemainingLength(buffer, message.remainingLength);
 
 		return buffer;
 	}
@@ -85,11 +102,13 @@ public class MqttMessageIO {
 			ByteBuffer buffer) {
 		MqttPublishMessage pub = (MqttPublishMessage) message;
 		buffer.position(0);
-		
+
 		readHeader(message.Header, buffer);
 		readVariableHeader(pub.VariableHeader, buffer);
 
+		message.messageType = MessageIO.readMessageType(buffer);
 		message.from = MessageIO.readClientId(buffer);
+		message.remainingLength = MessageIO.readRemainingLength(buffer);
 		message.fullMessageSize = getFullMessageSize(message);
 		message.body = buffer;
 
@@ -106,15 +125,14 @@ public class MqttMessageIO {
 		return (int) ((b & 240) >> 4);
 	}
 
-	public static MqttHeader readHeader(MqttHeader header,
-			ByteBuffer headerStream) {
-		int firstHeaderByte = headerStream.get();
+	public static MqttHeader readHeader(MqttHeader header, ByteBuffer buffer) {
+		int firstHeaderByte = buffer.get();
 		header.Retain = ((firstHeaderByte & 1) == 1 ? true : false);
 		header.Qos = (int) ((firstHeaderByte & 6) >> 1);
 		header.Duplicate = (((firstHeaderByte & 8) >> 3) == 1 ? true : false);
 		header.MessageType = (int) ((firstHeaderByte & 240) >> 4);
 		header.Length = 1;
-		readRemainingLength(header, headerStream);
+		readRemainingLength(header, buffer);
 		return header;
 	}
 
@@ -128,7 +146,8 @@ public class MqttMessageIO {
 		// (header.MessageType << 4)
 		// + ((header.Duplicate ? 1 : 0) << 3)
 		// + ((header.Qos << 1) + (header.Retain ? 1 : 0))));
-		writeRemainingLength(header.RemainingLength, buffer);
+		header.Length = 1;
+		writeRemainingLength(header, buffer);
 	}
 
 	public static void readRemainingLength(MqttHeader header, ByteBuffer buffer) {
@@ -146,7 +165,8 @@ public class MqttMessageIO {
 		header.Length += byteCount;
 	}
 
-	public static void writeRemainingLength(int length, ByteBuffer buffer) {
+	public static void writeRemainingLength(MqttHeader header, ByteBuffer buffer) {
+		int length = header.RemainingLength;
 		do {
 			int nextByteValue = length % 128;
 			length = length / 128;
@@ -154,6 +174,7 @@ public class MqttMessageIO {
 				nextByteValue = nextByteValue | 0x80;
 			}
 			buffer.put((byte) nextByteValue);
+			header.Length += 1;
 		} while (length > 0);
 	}
 
@@ -234,7 +255,7 @@ public class MqttMessageIO {
 		return 1;
 	}
 
-	private static void writeConnectFlags(MqttConnectFlags flags,
+	public static void writeConnectFlags(MqttConnectFlags flags,
 			ByteBuffer buffer) {
 		byte b = (byte) ((flags.Reserved1 ? 1 : 0)
 				| (flags.CleanStart ? 1 : 0) << 1
@@ -244,7 +265,7 @@ public class MqttMessageIO {
 		buffer.put(b);
 	}
 
-	private static MqttConnectFlags readConnectFlags(MqttConnectFlags flags,
+	public static MqttConnectFlags readConnectFlags(MqttConnectFlags flags,
 			ByteBuffer buffer) {
 		byte connectFlagsByte = buffer.get();
 		flags.Reserved1 = (connectFlagsByte & 1) == 1;
@@ -257,26 +278,43 @@ public class MqttMessageIO {
 		return flags;
 	}
 
-	private static String readMqttString(ByteBuffer buffer) {
-		byte[] lengthBytes = new byte[2];
-		buffer.get(lengthBytes, 0, 2);
-		short stringLength = (short) ((lengthBytes[0] << 8) + lengthBytes[1]);
-		byte[] stringBytes = new byte[stringLength];
-		buffer.get(stringBytes, 0, stringLength);
-		return new String(stringBytes); // "ASCII");
+	public static String readMqttString(ByteBuffer buffer) {
+		int l = (buffer.get() << 8) + buffer.get();
+		// int msb = buffer.get() & 0x00FF;
+		// int lsb = buffer.get() & 0x00FF;
+		// msb = (msb << 8) | lsb;
+		String str = new String(buffer.array(), buffer.position(), l,
+				Charset.forName("UTF-8"));
+		buffer.position(buffer.position() + l);
+		return str;
 	}
 
-	private static void writeMqttString(ByteBuffer buffer, String value) {
-		int l = value.length();
-		buffer.put((byte) (l >> 8));
-		buffer.put((byte) (l & 0xFF));
-		for (int i = 0; i < l; i++)
-			buffer.put((byte) value.charAt(i));
+	public static void writeMqttString(ByteBuffer buffer, String value) {
+		if (value == null || value == "") {
+			buffer.put((byte) (0 >> 8));
+			buffer.put((byte) (0 & 0xFF));
+			return;
+		}
+		try {
+			byte[] bytes = value.getBytes("UTF-8");
+			buffer.put((byte) (bytes.length >> 8));
+			buffer.put((byte) (bytes.length & 0xFF));
+			buffer.put(bytes);
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}
 	}
 
-	private static int getByteCount(String value) {
-		return value.length() + 2;
-		// FIXME: mqtt string encoding
-		// value.getBytes(Charset.forName(""))
+	public static int getByteCount(String value) {
+		if (value == null || value == "")
+			return 2;
+		// TODO: avoid getBytes create temp array
+		try {
+			return value.getBytes("UTF-8").length + 2;
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+			// ASCII
+			return value.length() + 2;
+		}
 	}
 }

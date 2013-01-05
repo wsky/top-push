@@ -22,6 +22,9 @@ public class MqttMessage extends Message {
 	@Override
 	public void clear() {
 		super.clear();
-		// TODO:clear header
+		this.Header.Duplicate = false;
+		this.Header.Length = 0;
+		this.Header.Qos = MqttQos.AtMostOnce;
+		this.Header.Retain = false;
 	}
 }

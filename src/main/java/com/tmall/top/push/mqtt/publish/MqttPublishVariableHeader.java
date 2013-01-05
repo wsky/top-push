@@ -16,10 +16,9 @@ public class MqttPublishVariableHeader extends MqttVariableHeader {
 	protected int getReadFlags() {
 		if (this.header.Qos == MqttQos.AtLeastOnce
 				|| this.header.Qos == MqttQos.ExactlyOnce) {
-			return MqttVariableHeader.ReadWriteFlags.TopicName
-					| MqttVariableHeader.ReadWriteFlags.MessageIdentifier;
+			return ReadWriteFlags.TopicName | ReadWriteFlags.MessageIdentifier;
 		} else {
-			return MqttVariableHeader.ReadWriteFlags.TopicName;
+			return ReadWriteFlags.TopicName;
 		}
 	}
 

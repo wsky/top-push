@@ -31,7 +31,7 @@ public final class MessageIO {
 		buffer.position(0);
 		writeMessageType(buffer, message.messageType);
 		writeClientId(buffer, message.from);
-		buffer.putInt(message.remainingLength);
+		writeRemainingLength(buffer, message.remainingLength);
 		return buffer;
 	}
 
@@ -40,7 +40,7 @@ public final class MessageIO {
 		buffer.position(0);
 		message.messageType = readMessageType(buffer);
 		message.to = readClientId(buffer);
-		message.remainingLength = buffer.getInt();
+		message.remainingLength = readRemainingLength(buffer);
 		message.fullMessageSize = getFullMessageSize(message.remainingLength);
 		message.body = buffer;
 		return message;
@@ -51,7 +51,7 @@ public final class MessageIO {
 		buffer.position(0);
 		writeMessageType(buffer, message.messageType);
 		writeClientId(buffer, message.to);
-		buffer.putInt(message.remainingLength);
+		writeRemainingLength(buffer, message.remainingLength);
 		// HACK: body serialize to buffer, if client
 		// do not care on server, just process at client
 		return buffer;
@@ -62,7 +62,7 @@ public final class MessageIO {
 		buffer.position(0);
 		message.messageType = readMessageType(buffer);
 		message.from = readClientId(buffer);
-		message.remainingLength = buffer.getInt();
+		message.remainingLength = readRemainingLength(buffer);
 		message.fullMessageSize = getFullMessageSize(message.remainingLength);
 		message.body = buffer;
 		return message;
@@ -88,6 +88,15 @@ public final class MessageIO {
 		writeString(buffer, padClientId(id));
 	}
 
+	public static int readRemainingLength(ByteBuffer buffer) {
+		return buffer.getInt();
+	}
+
+	public static void writeRemainingLength(ByteBuffer buffer,
+			int remainingLength) {
+		buffer.putInt(remainingLength);
+	}
+
 	// TODO:string encoding? a-zA-Z0-9 not necessary
 	public static String readString(ByteBuffer buffer, int length) {
 		String value = "";
@@ -105,7 +114,7 @@ public final class MessageIO {
 		return String.format("%8s", id);
 	}
 
-	private static int getFullMessageSize(int remainingLength) {
+	public static int getFullMessageSize(int remainingLength) {
 		return remainingLength + 1 + 8 + 4;
 	}
 

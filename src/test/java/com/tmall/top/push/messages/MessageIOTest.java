@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 
 import java.nio.ByteBuffer;
 
+import org.apache.commons.lang.time.StopWatch;
 import org.junit.Test;
 
 import com.tmall.top.push.messages.MessageIO;
@@ -72,5 +73,36 @@ public class MessageIOTest {
 		assertEquals(MessageType.PUBLISH, msg.messageType);
 		assertEquals("abc", msg.from);
 		assertEquals(100, msg.remainingLength);
+	}
+	
+	@Test
+	public void parse_perf() {
+		byte[] bytes = new byte[1024];
+		ByteBuffer buffer = ByteBuffer.wrap(bytes);
+
+		Message msg = new Message();
+		msg.messageType = MessageType.PUBLISH;
+		msg.from = "abc";
+		msg.to = "abc";
+		msg.remainingLength = 100;
+
+		StopWatch watch = new StopWatch();
+		watch.start();
+		for (int i = 0; i < 100000; i++)
+			MessageIO.parseServerSending(msg, buffer);
+		watch.stop();
+		System.out.println(String.format("---- write buffer %s cost %sms",
+				100000, watch.getTime()));
+		
+		MessageIO.parseClientSending(msg, buffer);
+		msg.clear();
+		watch.reset();
+		watch.start();
+		for (int i = 0; i < 100000; i++)
+			MessageIO.parseServerReceiving(msg, buffer);
+		watch.stop();
+		System.out.println(String.format("---- read buffer %s cost %sms",
+				100000, watch.getTime()));
+		
 	}
 }

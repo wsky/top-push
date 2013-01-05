@@ -46,7 +46,7 @@ public class WebSocketClientConnection extends ClientConnection {
 
 	@Override
 	protected void initHeaders() {
-		// TODO: how to get id? origin?
+		// TODO: how to get id? origin? use connect message instead?
 		this.id = this.headers.get(ORIGIN);
 		this.protocol = this.headers.get(PROTOCOL);
 		this.origin = this.headers.get(ORIGIN);
