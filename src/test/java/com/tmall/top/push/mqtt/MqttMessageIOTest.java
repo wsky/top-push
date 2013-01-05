@@ -141,7 +141,7 @@ public class MqttMessageIOTest {
 
 		assertEquals(120, msg.Header.RemainingLength);
 		assertEquals(122, MqttMessageIO.getFullMessageSize(msg));
-		
+
 		assertEquals("abc", msg.VariableHeader.TopicName);
 		assertEquals(10, msg.VariableHeader.MessageIdentifier);
 	}
@@ -162,7 +162,7 @@ public class MqttMessageIOTest {
 		MqttMessageIO.parseServerSending(msg, buffer);
 		assertEquals(120, msg.Header.RemainingLength);
 		assertEquals(122, MqttMessageIO.getFullMessageSize(msg));
-		
+
 		msg.clear();
 
 		MqttMessageIO.parseClientReceiving(msg, buffer);
@@ -195,18 +195,89 @@ public class MqttMessageIOTest {
 		for (int i = 0; i < 100000; i++)
 			MqttMessageIO.parseServerSending(msg, buffer);
 		watch.stop();
-		System.out.println(String.format("---- write buffer %s cost %sms",
-				100000, watch.getTime()));
-		
-		MqttMessageIO.parseClientSending(msg, buffer);
+		System.out.println(String.format(
+				"---- server write buffer %s cost %sms", 100000,
+				watch.getTime()));
+
+		watch.reset();
+		watch.start();
+		for (int i = 0; i < 100000; i++)
+			MqttMessageIO.parseClientReceiving(msg, buffer);
+		watch.stop();
+		System.out.println(String.format(
+				"---- client write buffer %s cost %sms", 100000,
+				watch.getTime()));
+
+		watch.reset();
+		watch.start();
+		for (int i = 0; i < 100000; i++)
+			MqttMessageIO.parseClientSending(msg, buffer);
+		watch.stop();
+		System.out.println(String.format(
+				"---- client write buffer %s cost %sms", 100000,
+				watch.getTime()));
+
 		msg.clear();
 		watch.reset();
 		watch.start();
 		for (int i = 0; i < 100000; i++)
 			MqttMessageIO.parseServerReceiving(msg, buffer);
 		watch.stop();
-		System.out.println(String.format("---- read buffer %s cost %sms",
-				100000, watch.getTime()));
-		
+		System.out
+				.println(String.format("---- server read buffer %s cost %sms",
+						100000, watch.getTime()));
+
 	}
+
+	@Test
+	public void write_variable_header_perf() throws Exception {
+		byte[] bytes = new byte[1024];
+		ByteBuffer buffer = ByteBuffer.wrap(bytes);
+		MqttHeader header = new MqttHeader();
+		header.Qos = MqttQos.AtLeastOnce;
+		MqttPublishVariableHeader vHeader1 = new MqttPublishVariableHeader(
+				header);
+		vHeader1.MessageIdentifier = 10;
+		vHeader1.TopicName = "abc中文";
+
+		int total = 10000000;
+		StopWatch watch = new StopWatch();
+		watch.start();
+		for (int i = 0; i < total; i++) {
+			buffer.position(0);
+			MqttMessageIO.writeVariableHeader(vHeader1, buffer);
+		}
+		watch.stop();
+		System.out
+				.println(String.format("---- writeVariableHeader %s cost %sms",
+						total, watch.getTime()));
+	}
+
+	@Test
+	public void read_variable_header_perf() throws Exception {
+		byte[] bytes = new byte[1024];
+		ByteBuffer buffer = ByteBuffer.wrap(bytes);
+		MqttHeader header = new MqttHeader();
+		header.Qos = MqttQos.AtLeastOnce;
+		MqttPublishVariableHeader vHeader1 = new MqttPublishVariableHeader(
+				header);
+		vHeader1.MessageIdentifier = 10;
+		vHeader1.TopicName = "abc中文";
+
+		MqttMessageIO.writeVariableHeader(vHeader1, buffer);
+
+		int total = 10000000;
+		StopWatch watch = new StopWatch();
+		watch.start();
+		for (int i = 0; i < total; i++) {
+			buffer.position(0);
+			MqttMessageIO.readVariableHeader(vHeader1, buffer);
+		}
+		watch.stop();
+		System.out
+				.println(String.format("---- readVariableHeader %s cost %sms",
+						total, watch.getTime()));
+
+	}
+
 }

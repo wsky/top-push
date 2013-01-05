@@ -30,6 +30,7 @@ import com.tmall.top.push.messages.Message;
 import com.tmall.top.push.messages.MessageIO;
 import com.tmall.top.push.messages.MessageType;
 import com.tmall.top.push.mqtt.MqttMessageIO;
+import com.tmall.top.push.mqtt.MqttQos;
 import com.tmall.top.push.mqtt.publish.MqttPublishMessage;
 
 public class WebSocketPushServerTest {
@@ -107,7 +108,7 @@ public class WebSocketPushServerTest {
 		publish_confirm_long_running_test(null);
 	}
 
-	//@Test
+	@Test
 	public void publish_confirm_long_running_mqtt_test() throws Exception {
 		publish_confirm_long_running_test("mqtt");
 	}
@@ -284,6 +285,11 @@ public class WebSocketPushServerTest {
 			msg.messageType = MessageType.PUBLISH;// 1
 			msg.to = to;// 8
 			msg.remainingLength = 7;// 4
+			
+			msg.Header.Qos = MqttQos.AtLeastOnce;
+			msg.VariableHeader.TopicName = "abc";
+			msg.VariableHeader.MessageIdentifier = 10;
+			
 			MqttMessageIO.parseClientSending(msg, buffer);
 			// 1+8+4+7=20
 			// 20+4

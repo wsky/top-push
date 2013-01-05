@@ -22,10 +22,9 @@ public class Receiver {
 	public Receiver(int maxMessageSize, int maxMessageBufferCount) {
 		this.maxMessageSize = maxMessageSize;
 		// object pool
-		this.defaultMessagePool = new DefaultMessagePool(
-				maxMessageBufferCount / 2);
+		this.defaultMessagePool = new DefaultMessagePool(maxMessageBufferCount);
 		this.mqttPublishMessagePool = new MqttPublishMessagePool(
-				maxMessageBufferCount / 2);
+				maxMessageBufferCount);
 		// buffer
 		this.bufferQueue = new ConcurrentLinkedQueue<ByteBuffer>();
 		this.buffer = new byte[this.maxMessageSize * maxMessageBufferCount];
@@ -54,7 +53,7 @@ public class Receiver {
 	public Message parseMessage(String protocol, byte[] message, int offset,
 			int length) throws MessageTooLongException,
 			NoMessageBufferException {
-		ByteBuffer buffer = this.getPublishBuffer(length);
+		ByteBuffer buffer = this.getBuffer(length);
 		Message msg = this.acquireMessage(protocol);
 
 		if (buffer != null) {
@@ -95,8 +94,7 @@ public class Receiver {
 		}
 	}
 
-	private ByteBuffer getPublishBuffer(int length)
-			throws MessageTooLongException {
+	private ByteBuffer getBuffer(int length) throws MessageTooLongException {
 		if (length > this.maxMessageSize)
 			throw new MessageTooLongException();
 		// TODO: if no buffer, retry twice with lock-free?

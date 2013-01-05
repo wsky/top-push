@@ -2,7 +2,11 @@ package com.tmall.top.push.mqtt;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CharsetEncoder;
+import java.nio.charset.CoderResult;
 
 import com.tmall.top.push.messages.Message;
 import com.tmall.top.push.messages.MessageIO;
@@ -87,10 +91,10 @@ public class MqttMessageIO {
 		pub.Header.RemainingLength = MqttMessageIO
 				.getVariableHeaderWriteLength(pub.VariableHeader)
 				+ MessageIO.getFullMessageSize(pub.remainingLength);
-		
+
 		writeHeader(message.Header, buffer);
 		writeVariableHeader(pub.VariableHeader, buffer);
-		
+
 		MessageIO.writeMessageType(buffer, message.messageType);
 		MessageIO.writeClientId(buffer, message.to);
 		MessageIO.writeRemainingLength(buffer, message.remainingLength);
@@ -192,7 +196,6 @@ public class MqttMessageIO {
 		if ((WriteFlags & ReadWriteFlags.ReturnCode) == ReadWriteFlags.ReturnCode)
 			buffer.put((byte) header.ReturnCode);
 		if ((WriteFlags & ReadWriteFlags.TopicName) == ReadWriteFlags.TopicName)
-
 			MqttMessageIO.writeMqttString(buffer, header.TopicName);
 		if ((WriteFlags & ReadWriteFlags.MessageIdentifier) == ReadWriteFlags.MessageIdentifier)
 			buffer.putShort(header.MessageIdentifier);
@@ -203,6 +206,7 @@ public class MqttMessageIO {
 		int ReadFlags = header.getReadFlags();
 		if ((ReadFlags & ReadWriteFlags.ProtocolName) == ReadWriteFlags.ProtocolName) {
 			header.ProtocolName = MqttMessageIO.readMqttString(buffer);
+			// not valid for chinese
 			header.Length += header.ProtocolName.length() + 2;
 		}
 		if ((ReadFlags & ReadWriteFlags.ProtocolVersion) == ReadWriteFlags.ProtocolVersion) {
@@ -223,6 +227,7 @@ public class MqttMessageIO {
 		}
 		if ((ReadFlags & ReadWriteFlags.TopicName) == ReadWriteFlags.TopicName) {
 			header.TopicName = MqttMessageIO.readMqttString(buffer);
+			// FIXME: bytes length?
 			header.Length += header.TopicName.length() + 2;
 		}
 		if ((ReadFlags & ReadWriteFlags.MessageIdentifier) == ReadWriteFlags.MessageIdentifier) {
@@ -278,15 +283,25 @@ public class MqttMessageIO {
 		return flags;
 	}
 
+	// private static byte[] lengthBytes = new byte[2];
+	// private static byte[] stringBytes = new byte[100];
+	private static Charset charset = Charset.forName("UTF-8");
+
 	public static String readMqttString(ByteBuffer buffer) {
-		int l = (buffer.get() << 8) + buffer.get();
-		// int msb = buffer.get() & 0x00FF;
-		// int lsb = buffer.get() & 0x00FF;
-		// msb = (msb << 8) | lsb;
-		String str = new String(buffer.array(), buffer.position(), l,
-				Charset.forName("UTF-8"));
-		buffer.position(buffer.position() + l);
-		return str;
+		 byte[] lengthBytes = new byte[2];
+		 buffer.get(lengthBytes, 0, 2);
+		 short stringLength = (short) ((lengthBytes[0] << 8) +
+		 lengthBytes[1]);
+		 byte[] stringBytes = new byte[stringLength];
+		 buffer.get(stringBytes, 0, stringLength);
+		 return new String(stringBytes, 0, stringLength,charset);
+
+//		int l = (buffer.get() << 8) + buffer.get();
+//		if (l == 0)
+//			return "";
+//		String str = new String(buffer.array(), buffer.position(), l, charset);
+//		buffer.position(buffer.position() + l);
+//		return str;
 	}
 
 	public static void writeMqttString(ByteBuffer buffer, String value) {
