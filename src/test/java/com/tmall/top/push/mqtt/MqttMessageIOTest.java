@@ -16,9 +16,9 @@ public class MqttMessageIOTest {
 	public void get_string_byte_count_test() {
 		assertEquals(5, MqttMessageIO.getByteCount("123"));
 		assertEquals(5, MqttMessageIO.getByteCount("abc"));
-		assertEquals(8, MqttMessageIO.getByteCount("中文"));
-		assertEquals(11, MqttMessageIO.getByteCount("123中文"));
-		assertEquals(14, MqttMessageIO.getByteCount("中文中文"));
+		assertEquals(8, MqttMessageIO.getByteCount("涓枃"));
+		assertEquals(11, MqttMessageIO.getByteCount("123涓枃"));
+		assertEquals(14, MqttMessageIO.getByteCount("涓枃涓枃"));
 	}
 
 	@Test
@@ -27,7 +27,7 @@ public class MqttMessageIOTest {
 		ByteBuffer buffer = ByteBuffer.wrap(bytes);
 		buffer.position(0);
 
-		String str = "abc-我们";
+		String str = "abc-涓枃";
 		MqttMessageIO.writeMqttString(buffer, str);
 		assertEquals(12, buffer.position());
 
@@ -99,7 +99,7 @@ public class MqttMessageIOTest {
 		MqttPublishVariableHeader vHeader1 = new MqttPublishVariableHeader(
 				header);
 		vHeader1.MessageIdentifier = 10;
-		vHeader1.TopicName = "abc中文";
+		vHeader1.TopicName = "abc锟斤拷锟斤拷";
 		MqttMessageIO.writeVariableHeader(vHeader1, buffer);
 
 		buffer.position(0);
