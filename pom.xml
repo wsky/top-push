@@ -36,6 +36,7 @@
       <version>2.2</version>
     </dependency>
 
+	<!--just for easy rpc-->
     <dependency>
       <groupId>com.alibaba</groupId>
       <artifactId>fastjson</artifactId>

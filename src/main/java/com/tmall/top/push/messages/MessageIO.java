@@ -112,7 +112,7 @@ public final class MessageIO {
 
 	public static String padClientId(String id) {
 		// HACK:8 is faster!
-		if (id.length() == 8)
+		if (id != null && id.length() == 8)
 			return id;
 		return String.format("%8s", id);// bad perf
 	}
