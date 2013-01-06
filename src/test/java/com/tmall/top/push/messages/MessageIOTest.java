@@ -50,7 +50,7 @@ public class MessageIOTest {
 
 		MessageIO.parseClientSending(msg, buffer);
 		msg.clear();
-		
+
 		MessageIO.parseServerReceiving(msg, buffer);
 		assertEquals(MessageType.PUBLISH, msg.messageType);
 		assertEquals("abc", msg.to);
@@ -67,42 +67,52 @@ public class MessageIOTest {
 
 		MessageIO.parseServerSending(msg, buffer);
 		msg.clear();
-		
+
 		MessageIO.parseClientReceiving(msg, buffer);
 		System.out.println(msg.to);
 		assertEquals(MessageType.PUBLISH, msg.messageType);
 		assertEquals("abc", msg.from);
 		assertEquals(100, msg.remainingLength);
 	}
-	
+
 	@Test
-	public void parse_perf() {
+	public void parse_less_than_target_max_perf() {
+		parse_perf("abc");
+	}
+
+	@Test
+	public void parse_equal_target_max_perf() {
+		parse_perf("abcdefgh");
+	}
+
+	private void parse_perf(String target) {
 		byte[] bytes = new byte[1024];
 		ByteBuffer buffer = ByteBuffer.wrap(bytes);
 
 		Message msg = new Message();
 		msg.messageType = MessageType.PUBLISH;
-		msg.from = "abc";
-		msg.to = "abc";
+		msg.from = target;// 8 is fast
+		msg.to = target;
 		msg.remainingLength = 100;
 
+		int total = 1000000;
 		StopWatch watch = new StopWatch();
 		watch.start();
-		for (int i = 0; i < 100000; i++)
+		for (int i = 0; i < total; i++)
 			MessageIO.parseServerSending(msg, buffer);
 		watch.stop();
 		System.out.println(String.format("---- write buffer %s cost %sms",
-				100000, watch.getTime()));
-		
+				total, watch.getTime()));
+
 		MessageIO.parseClientSending(msg, buffer);
 		msg.clear();
 		watch.reset();
 		watch.start();
-		for (int i = 0; i < 100000; i++)
+		for (int i = 0; i < total; i++)
 			MessageIO.parseServerReceiving(msg, buffer);
 		watch.stop();
 		System.out.println(String.format("---- read buffer %s cost %sms",
-				100000, watch.getTime()));
-		
+				total, watch.getTime()));
+
 	}
 }

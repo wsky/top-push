@@ -12,6 +12,9 @@ import com.tmall.top.push.mqtt.publish.MqttPublishMessage;
 import com.tmall.top.push.mqtt.publish.MqttPublishVariableHeader;
 
 public class MqttMessageIOTest {
+	
+	private int total=1000000;
+	
 	@Test
 	public void get_string_byte_count_test() {
 		assertEquals(5, MqttMessageIO.getByteCount("123"));
@@ -183,8 +186,8 @@ public class MqttMessageIOTest {
 
 		MqttPublishMessage msg = new MqttPublishMessage();
 		msg.messageType = MessageType.PUBLISH;
-		msg.from = "abc";
-		msg.to = "abc";
+		msg.from = "abcdefgh";// 8length ignore messageio effect abcdefgh
+		msg.to = "abcdefgh";
 		msg.remainingLength = 100;
 		msg.Header.Qos = MqttQos.AtLeastOnce;
 		msg.VariableHeader.TopicName = "abc";
@@ -192,41 +195,40 @@ public class MqttMessageIOTest {
 
 		StopWatch watch = new StopWatch();
 		watch.start();
-		for (int i = 0; i < 100000; i++)
+		for (int i = 0; i < total; i++)
 			MqttMessageIO.parseServerSending(msg, buffer);
 		watch.stop();
 		System.out.println(String.format(
-				"---- server write buffer %s cost %sms", 100000,
+				"---- server write buffer %s cost %sms", total,
 				watch.getTime()));
 
 		watch.reset();
 		watch.start();
-		for (int i = 0; i < 100000; i++)
+		for (int i = 0; i < total; i++)
 			MqttMessageIO.parseClientReceiving(msg, buffer);
 		watch.stop();
 		System.out.println(String.format(
-				"---- client write buffer %s cost %sms", 100000,
+				"---- client read buffer %s cost %sms", total,
 				watch.getTime()));
 
 		watch.reset();
 		watch.start();
-		for (int i = 0; i < 100000; i++)
+		for (int i = 0; i < total; i++)
 			MqttMessageIO.parseClientSending(msg, buffer);
 		watch.stop();
 		System.out.println(String.format(
-				"---- client write buffer %s cost %sms", 100000,
+				"---- client write buffer %s cost %sms", total,
 				watch.getTime()));
 
 		msg.clear();
 		watch.reset();
 		watch.start();
-		for (int i = 0; i < 100000; i++)
+		for (int i = 0; i < total; i++)
 			MqttMessageIO.parseServerReceiving(msg, buffer);
 		watch.stop();
 		System.out
 				.println(String.format("---- server read buffer %s cost %sms",
-						100000, watch.getTime()));
-
+						total, watch.getTime()));
 	}
 
 	@Test
@@ -240,7 +242,6 @@ public class MqttMessageIOTest {
 		vHeader1.MessageIdentifier = 10;
 		vHeader1.TopicName = "abc中文";
 
-		int total = 10000000;
 		StopWatch watch = new StopWatch();
 		watch.start();
 		for (int i = 0; i < total; i++) {
@@ -266,7 +267,6 @@ public class MqttMessageIOTest {
 
 		MqttMessageIO.writeVariableHeader(vHeader1, buffer);
 
-		int total = 10000000;
 		StopWatch watch = new StopWatch();
 		watch.start();
 		for (int i = 0; i < total; i++) {

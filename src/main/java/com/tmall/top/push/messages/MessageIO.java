@@ -97,12 +97,12 @@ public final class MessageIO {
 		buffer.putInt(remainingLength);
 	}
 
-	// TODO:string encoding? a-zA-Z0-9 not necessary
+	// HACK:string encoding? a-zA-Z0-9 not necessary
 	public static String readString(ByteBuffer buffer, int length) {
-		String value = "";
+		StringBuilder sb = new StringBuilder(length);
 		for (int i = 0; i < length; i++)
-			value += (char) buffer.get();
-		return value;
+			sb.append((char) buffer.get());
+		return sb.toString();
 	}
 
 	public static void writeString(ByteBuffer buffer, String value) {
@@ -111,7 +111,10 @@ public final class MessageIO {
 	}
 
 	public static String padClientId(String id) {
-		return String.format("%8s", id);
+		// HACK:8 is faster!
+		if (id.length() == 8)
+			return id;
+		return String.format("%8s", id);// bad perf
 	}
 
 	public static int getFullMessageSize(int remainingLength) {

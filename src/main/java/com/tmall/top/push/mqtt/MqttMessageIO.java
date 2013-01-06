@@ -2,12 +2,9 @@ package com.tmall.top.push.mqtt;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
 import java.nio.charset.Charset;
-import java.nio.charset.CharsetDecoder;
-import java.nio.charset.CharsetEncoder;
-import java.nio.charset.CoderResult;
 
+import com.tmall.top.push.Pool;
 import com.tmall.top.push.messages.Message;
 import com.tmall.top.push.messages.MessageIO;
 import com.tmall.top.push.mqtt.MqttVariableHeader.ReadWriteFlags;
@@ -53,9 +50,12 @@ public class MqttMessageIO {
 		buffer.position(0);
 
 		// TODO:avoid rewrite mqtt header at server
-		pub.Header.RemainingLength = MqttMessageIO
-				.getVariableHeaderWriteLength(pub.VariableHeader)
-				+ MessageIO.getFullMessageSize(pub.remainingLength);
+
+		// HACK: server only forward after receiving
+		if (pub.Header.RemainingLength <= 0)
+			pub.Header.RemainingLength = MqttMessageIO
+					.getVariableHeaderWriteLength(pub.VariableHeader)
+					+ MessageIO.getFullMessageSize(pub.remainingLength);
 		writeHeader(message.Header, buffer);
 		writeVariableHeader(pub.VariableHeader, buffer);
 
@@ -205,9 +205,7 @@ public class MqttMessageIO {
 			ByteBuffer buffer) {
 		int ReadFlags = header.getReadFlags();
 		if ((ReadFlags & ReadWriteFlags.ProtocolName) == ReadWriteFlags.ProtocolName) {
-			header.ProtocolName = MqttMessageIO.readMqttString(buffer);
-			// not valid for chinese
-			header.Length += header.ProtocolName.length() + 2;
+			header.ProtocolName = MqttMessageIO.readMqttString(buffer, header);
 		}
 		if ((ReadFlags & ReadWriteFlags.ProtocolVersion) == ReadWriteFlags.ProtocolVersion) {
 			header.ProtocolVersion = buffer.get();
@@ -226,9 +224,7 @@ public class MqttMessageIO {
 			header.Length++;
 		}
 		if ((ReadFlags & ReadWriteFlags.TopicName) == ReadWriteFlags.TopicName) {
-			header.TopicName = MqttMessageIO.readMqttString(buffer);
-			// FIXME: bytes length?
-			header.Length += header.TopicName.length() + 2;
+			header.TopicName = MqttMessageIO.readMqttString(buffer, header);
 		}
 		if ((ReadFlags & ReadWriteFlags.MessageIdentifier) == ReadWriteFlags.MessageIdentifier) {
 			header.MessageIdentifier = buffer.getShort();
@@ -283,25 +279,37 @@ public class MqttMessageIO {
 		return flags;
 	}
 
+	// private static StringLengthBufferPool strLengthBufferPool;
 	// private static byte[] lengthBytes = new byte[2];
 	// private static byte[] stringBytes = new byte[100];
 	private static Charset charset = Charset.forName("UTF-8");
 
 	public static String readMqttString(ByteBuffer buffer) {
-		 byte[] lengthBytes = new byte[2];
-		 buffer.get(lengthBytes, 0, 2);
-		 short stringLength = (short) ((lengthBytes[0] << 8) +
-		 lengthBytes[1]);
-		 byte[] stringBytes = new byte[stringLength];
-		 buffer.get(stringBytes, 0, stringLength);
-		 return new String(stringBytes, 0, stringLength,charset);
+		return readMqttString(buffer, null);
+	}
 
-//		int l = (buffer.get() << 8) + buffer.get();
-//		if (l == 0)
-//			return "";
-//		String str = new String(buffer.array(), buffer.position(), l, charset);
-//		buffer.position(buffer.position() + l);
-//		return str;
+	public static String readMqttString(ByteBuffer buffer,
+			MqttVariableHeader header) {
+		// TODO:improve readMqttString temp buffer usage
+		byte[] lengthBytes = new byte[2];
+		buffer.get(lengthBytes, 0, 2);
+		short stringLength = (short) ((lengthBytes[0] << 8) + lengthBytes[1]);
+		byte[] stringBytes = new byte[stringLength];
+		buffer.get(stringBytes, 0, stringLength);
+
+		if (header != null)
+			header.Length += 2 + stringLength;
+
+		return new String(stringBytes, 0, stringLength, charset);
+
+		// int l = (buffer.get() << 8) + buffer.get();
+		// if (l == 0)
+		// return "";
+		//
+		// String str = new String(buffer.array(), buffer.arrayOffset()
+		// + buffer.position(), l, charset);
+		// buffer.position(buffer.position() + l);
+		// return str;
 	}
 
 	public static void writeMqttString(ByteBuffer buffer, String value) {
@@ -330,6 +338,28 @@ public class MqttMessageIO {
 			e.printStackTrace();
 			// ASCII
 			return value.length() + 2;
+		}
+	}
+
+	public class StringLengthBufferPool extends Pool<byte[]> {
+		public StringLengthBufferPool(int poolSize) {
+			super(poolSize);
+		}
+
+		@Override
+		public byte[] createNew() {
+			return new byte[2];// short
+		}
+	}
+
+	public class StringBufferPool extends Pool<byte[]> {
+		public StringBufferPool(int poolSize) {
+			super(poolSize);
+		}
+
+		@Override
+		public byte[] createNew() {
+			return new byte[32768];// short
 		}
 	}
 }
