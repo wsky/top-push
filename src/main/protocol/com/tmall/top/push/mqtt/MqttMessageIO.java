@@ -4,7 +4,6 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 
-import com.tmall.top.push.Pool;
 import com.tmall.top.push.messages.Message;
 import com.tmall.top.push.messages.MessageIO;
 import com.tmall.top.push.mqtt.MqttVariableHeader.ReadWriteFlags;
@@ -341,25 +340,25 @@ public class MqttMessageIO {
 		}
 	}
 
-	public class StringLengthBufferPool extends Pool<byte[]> {
-		public StringLengthBufferPool(int poolSize) {
-			super(poolSize);
-		}
-
-		@Override
-		public byte[] createNew() {
-			return new byte[2];// short
-		}
-	}
-
-	public class StringBufferPool extends Pool<byte[]> {
-		public StringBufferPool(int poolSize) {
-			super(poolSize);
-		}
-
-		@Override
-		public byte[] createNew() {
-			return new byte[32768];// short
-		}
-	}
+	// public class StringLengthBufferPool extends Pool<byte[]> {
+	// public StringLengthBufferPool(int poolSize) {
+	// super(poolSize);
+	// }
+	//
+	// @Override
+	// public byte[] createNew() {
+	// return new byte[2];// short
+	// }
+	// }
+	//
+	// public class StringBufferPool extends Pool<byte[]> {
+	// public StringBufferPool(int poolSize) {
+	// super(poolSize);
+	// }
+	//
+	// @Override
+	// public byte[] createNew() {
+	// return new byte[32768];// short
+	// }
+	// }
 }
