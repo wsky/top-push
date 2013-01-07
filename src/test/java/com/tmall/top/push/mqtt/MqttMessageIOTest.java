@@ -12,9 +12,9 @@ import com.tmall.top.push.mqtt.publish.MqttPublishMessage;
 import com.tmall.top.push.mqtt.publish.MqttPublishVariableHeader;
 
 public class MqttMessageIOTest {
-	
-	private int total=1000000;
-	
+
+	private int total = 1000000;
+
 	@Test
 	public void get_string_byte_count_test() {
 		assertEquals(5, MqttMessageIO.getByteCount("123"));
@@ -121,6 +121,7 @@ public class MqttMessageIOTest {
 		MqttPublishMessage msg = new MqttPublishMessage();
 		msg.messageType = MessageType.PUBLISH;// 1
 		msg.to = "abc";// 8
+		msg.bodyFormat = 5;//1
 		msg.remainingLength = 100;
 
 		msg.Header.Qos = MqttQos.AtLeastOnce;
@@ -132,18 +133,19 @@ public class MqttMessageIOTest {
 		// + MessageIO.getFullMessageSize(msg.remainingLength);// 113
 
 		MqttMessageIO.parseClientSending(msg, buffer);
-		assertEquals(120, msg.Header.RemainingLength);
-		assertEquals(122, MqttMessageIO.getFullMessageSize(msg));
+		assertEquals(121, msg.Header.RemainingLength);
+		assertEquals(123, MqttMessageIO.getFullMessageSize(msg));
 
 		msg.clear();
 
 		MqttMessageIO.parseServerReceiving(msg, buffer);
 		assertEquals(MessageType.PUBLISH, msg.messageType);
 		assertEquals("abc", msg.to);
+		assertEquals(5, msg.bodyFormat);
 		assertEquals(100, msg.remainingLength);
 
-		assertEquals(120, msg.Header.RemainingLength);
-		assertEquals(122, MqttMessageIO.getFullMessageSize(msg));
+		assertEquals(121, msg.Header.RemainingLength);
+		assertEquals(123, MqttMessageIO.getFullMessageSize(msg));
 
 		assertEquals("abc", msg.VariableHeader.TopicName);
 		assertEquals(10, msg.VariableHeader.MessageIdentifier);
@@ -157,24 +159,26 @@ public class MqttMessageIOTest {
 		MqttPublishMessage msg = new MqttPublishMessage();
 		msg.messageType = MessageType.PUBLISH;
 		msg.from = "abc";
+		msg.bodyFormat = 5;
 		msg.remainingLength = 100;
 
 		msg.Header.Qos = MqttQos.AtLeastOnce;
 		msg.VariableHeader.TopicName = "abc";
 		msg.VariableHeader.MessageIdentifier = 10;
 		MqttMessageIO.parseServerSending(msg, buffer);
-		assertEquals(120, msg.Header.RemainingLength);
-		assertEquals(122, MqttMessageIO.getFullMessageSize(msg));
+		assertEquals(121, msg.Header.RemainingLength);
+		assertEquals(123, MqttMessageIO.getFullMessageSize(msg));
 
 		msg.clear();
 
 		MqttMessageIO.parseClientReceiving(msg, buffer);
 		assertEquals(MessageType.PUBLISH, msg.messageType);
 		assertEquals("abc", msg.from);
+		assertEquals(5, msg.bodyFormat);
 		assertEquals(100, msg.remainingLength);
 
-		assertEquals(120, msg.Header.RemainingLength);
-		assertEquals(122, MqttMessageIO.getFullMessageSize(msg));
+		assertEquals(121, msg.Header.RemainingLength);
+		assertEquals(123, MqttMessageIO.getFullMessageSize(msg));
 		assertEquals("abc", msg.VariableHeader.TopicName);
 		assertEquals(10, msg.VariableHeader.MessageIdentifier);
 	}
@@ -198,27 +202,27 @@ public class MqttMessageIOTest {
 		for (int i = 0; i < total; i++)
 			MqttMessageIO.parseServerSending(msg, buffer);
 		watch.stop();
-		System.out.println(String.format(
-				"---- server write buffer %s cost %sms", total,
-				watch.getTime()));
+		System.out
+				.println(String.format("---- server write buffer %s cost %sms",
+						total, watch.getTime()));
 
 		watch.reset();
 		watch.start();
 		for (int i = 0; i < total; i++)
 			MqttMessageIO.parseClientReceiving(msg, buffer);
 		watch.stop();
-		System.out.println(String.format(
-				"---- client read buffer %s cost %sms", total,
-				watch.getTime()));
+		System.out
+				.println(String.format("---- client read buffer %s cost %sms",
+						total, watch.getTime()));
 
 		watch.reset();
 		watch.start();
 		for (int i = 0; i < total; i++)
 			MqttMessageIO.parseClientSending(msg, buffer);
 		watch.stop();
-		System.out.println(String.format(
-				"---- client write buffer %s cost %sms", total,
-				watch.getTime()));
+		System.out
+				.println(String.format("---- client write buffer %s cost %sms",
+						total, watch.getTime()));
 
 		msg.clear();
 		watch.reset();

@@ -35,7 +35,7 @@ public class MqttMessageIO {
 	 * Variable Header: Message ID
 	 */
 
-	// payload act forward
+	// payload act forward(MessageIO)
 
 	// server send: server -> client, write "from"
 	// server receive: server <- client, read "to"
@@ -60,6 +60,7 @@ public class MqttMessageIO {
 
 		MessageIO.writeMessageType(buffer, message.messageType);
 		MessageIO.writeClientId(buffer, message.from);
+		MessageIO.writeBodyFormat(buffer, message.bodyFormat);
 		MessageIO.writeRemainingLength(buffer, message.remainingLength);
 
 		return buffer;
@@ -75,6 +76,7 @@ public class MqttMessageIO {
 
 		message.messageType = MessageIO.readMessageType(buffer);
 		message.to = MessageIO.readClientId(buffer);
+		message.bodyFormat = MessageIO.readBodyFormat(buffer);
 		message.remainingLength = MessageIO.readRemainingLength(buffer);
 		message.fullMessageSize = getFullMessageSize(message);
 		message.body = buffer;
@@ -96,6 +98,7 @@ public class MqttMessageIO {
 
 		MessageIO.writeMessageType(buffer, message.messageType);
 		MessageIO.writeClientId(buffer, message.to);
+		MessageIO.writeBodyFormat(buffer, message.bodyFormat);
 		MessageIO.writeRemainingLength(buffer, message.remainingLength);
 
 		return buffer;
@@ -111,6 +114,7 @@ public class MqttMessageIO {
 
 		message.messageType = MessageIO.readMessageType(buffer);
 		message.from = MessageIO.readClientId(buffer);
+		message.bodyFormat = MessageIO.readBodyFormat(buffer);
 		message.remainingLength = MessageIO.readRemainingLength(buffer);
 		message.fullMessageSize = getFullMessageSize(message);
 		message.body = buffer;

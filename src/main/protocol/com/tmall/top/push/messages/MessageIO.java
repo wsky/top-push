@@ -11,6 +11,8 @@ public final class MessageIO {
 	 * 
 	 * 8byte from(receiving)/to(sending) id, support front<-->forward<-->back.
 	 * 
+	 * 1byte Message body format flag
+	 * 
 	 * 4byte remainingLength int32, do not need support longer message.
 	 * 
 	 * ... body/content, maybe serialized by json/protobuf/msgpack/...
@@ -31,6 +33,7 @@ public final class MessageIO {
 		buffer.position(0);
 		writeMessageType(buffer, message.messageType);
 		writeClientId(buffer, message.from);
+		writeBodyFormat(buffer, message.bodyFormat);
 		writeRemainingLength(buffer, message.remainingLength);
 		return buffer;
 	}
@@ -40,6 +43,7 @@ public final class MessageIO {
 		buffer.position(0);
 		message.messageType = readMessageType(buffer);
 		message.to = readClientId(buffer);
+		message.bodyFormat = readBodyFormat(buffer);
 		message.remainingLength = readRemainingLength(buffer);
 		message.fullMessageSize = getFullMessageSize(message.remainingLength);
 		message.body = buffer;
@@ -51,6 +55,7 @@ public final class MessageIO {
 		buffer.position(0);
 		writeMessageType(buffer, message.messageType);
 		writeClientId(buffer, message.to);
+		writeBodyFormat(buffer, message.bodyFormat);
 		writeRemainingLength(buffer, message.remainingLength);
 		// HACK: body serialize to buffer, if client
 		// do not care on server, just process at client
@@ -62,6 +67,7 @@ public final class MessageIO {
 		buffer.position(0);
 		message.messageType = readMessageType(buffer);
 		message.from = readClientId(buffer);
+		message.bodyFormat = readBodyFormat(buffer);
 		message.remainingLength = readRemainingLength(buffer);
 		message.fullMessageSize = getFullMessageSize(message.remainingLength);
 		message.body = buffer;
@@ -86,6 +92,14 @@ public final class MessageIO {
 
 	public static void writeClientId(ByteBuffer buffer, String id) {
 		writeString(buffer, padClientId(id));
+	}
+
+	public static int readBodyFormat(ByteBuffer buffer) {
+		return buffer.get();
+	}
+
+	public static void writeBodyFormat(ByteBuffer buffer, int bodyFormat) {
+		buffer.put((byte) bodyFormat);
 	}
 
 	public static int readRemainingLength(ByteBuffer buffer) {
@@ -118,7 +132,7 @@ public final class MessageIO {
 	}
 
 	public static int getFullMessageSize(int remainingLength) {
-		return remainingLength + 1 + 8 + 4;
+		return remainingLength + 1 + 8 + 1 + 4;
 	}
 
 }

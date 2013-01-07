@@ -46,6 +46,7 @@ public class MessageIOTest {
 		Message msg = new Message();
 		msg.messageType = MessageType.PUBLISH;
 		msg.to = "abc";
+		msg.bodyFormat = 5;
 		msg.remainingLength = 100;
 
 		MessageIO.parseClientSending(msg, buffer);
@@ -54,6 +55,7 @@ public class MessageIOTest {
 		MessageIO.parseServerReceiving(msg, buffer);
 		assertEquals(MessageType.PUBLISH, msg.messageType);
 		assertEquals("abc", msg.to);
+		assertEquals(5, msg.bodyFormat);
 		assertEquals(100, msg.remainingLength);
 	}
 
@@ -63,6 +65,7 @@ public class MessageIOTest {
 		Message msg = new Message();
 		msg.messageType = MessageType.PUBLISH;
 		msg.from = "abc";
+		msg.bodyFormat = 5;
 		msg.remainingLength = 100;
 
 		MessageIO.parseServerSending(msg, buffer);
@@ -72,6 +75,7 @@ public class MessageIOTest {
 		System.out.println(msg.to);
 		assertEquals(MessageType.PUBLISH, msg.messageType);
 		assertEquals("abc", msg.from);
+		assertEquals(5, msg.bodyFormat);
 		assertEquals(100, msg.remainingLength);
 	}
 
@@ -93,6 +97,7 @@ public class MessageIOTest {
 		msg.messageType = MessageType.PUBLISH;
 		msg.from = target;// 8 is fast
 		msg.to = target;
+		msg.bodyFormat = 5;
 		msg.remainingLength = 100;
 
 		int total = 1000000;
