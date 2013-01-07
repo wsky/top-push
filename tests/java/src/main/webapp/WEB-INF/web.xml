@@ -1,0 +1,65 @@
+<?xml version="1.0"?>
+<web-app xmlns="http://java.sun.com/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
+	version="3.0">
+
+	<!-- <context-param> -->
+	<!-- <param-name>bufferSize</param-name> -->
+	<!-- <param-value>1048576</param-value> -->
+	<!-- </context-param> -->
+
+	<!--testing-->
+	<servlet>
+		<servlet-name>simple</servlet-name>
+		<servlet-class>com.tmall.top.SimpleWebSocketServlet</servlet-class>
+		<init-param>
+			<param-name>maxTextMessageSize</param-name>
+			<param-value>1048576</param-value>
+		</init-param>
+	</servlet>
+	<servlet>
+		<servlet-name>polling</servlet-name>
+		<servlet-class>com.tmall.top.PollingWebSocketServlet</servlet-class>
+		<init-param>
+			<param-name>maxTextMessageSize</param-name>
+			<param-value>1048576</param-value>
+		</init-param>
+	</servlet>
+	<servlet>
+		<servlet-name>front</servlet-name>
+		<servlet-class>com.tmall.top.FrontendWebSocketServlet</servlet-class>
+		<init-param>
+			<param-name>maxTextMessageSize</param-name>
+			<param-value>1048576</param-value>
+		</init-param>
+		<init-param>
+			<param-name>activePersent</param-name>
+			<param-value>20</param-value>
+		</init-param>
+	</servlet>
+	<servlet>
+		<servlet-name>back</servlet-name>
+		<servlet-class>com.tmall.top.BackendWebSocketServlet</servlet-class>
+		<init-param>
+			<param-name>maxTextMessageSize</param-name>
+			<param-value>1048576</param-value>
+		</init-param>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>simple</servlet-name>
+		<url-pattern>/simple</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>polling</servlet-name>
+		<url-pattern>/polling</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>front</servlet-name>
+		<url-pattern>/front</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>back</servlet-name>
+		<url-pattern>/back</url-pattern>
+	</servlet-mapping>
+</web-app>

@@ -2,7 +2,6 @@ package com.tmall.top.push.websocket;
 
 import java.nio.ByteBuffer;
 
-import org.apache.commons.lang.StringUtils;
 import org.eclipse.jetty.websocket.WebSocket.Connection;
 import org.eclipse.jetty.websocket.WebSocket.FrameConnection;
 
@@ -30,13 +29,12 @@ public class WebSocketClientConnection extends ClientConnection {
 
 	public void verifyHeaders() throws UnauthorizedException {
 		// FIXME:authentication here
-		if (StringUtils.isEmpty(this.id))
+		if (this.id == null || this.id == "")
 			throw new UnauthorizedException();
 	}
 
 	public Message parse(byte[] message, int offset, int length)
-			throws MessageTooLongException,
-			NoMessageBufferException {
+			throws MessageTooLongException, NoMessageBufferException {
 		Message msg = this.receiver.parseMessage(this.protocol, message,
 				offset, length);
 		// must tell who send it
