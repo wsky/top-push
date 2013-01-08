@@ -33,10 +33,10 @@ public class WebSocketClientConnection extends ClientConnection {
 			throw new UnauthorizedException();
 	}
 
-	public Message parse(byte[] message, int offset, int length)
+	public Message parse(byte[] data, int offset, int length)
 			throws MessageTooLongException, NoMessageBufferException {
-		Message msg = this.receiver.parseMessage(this.protocol, message,
-				offset, length);
+		Message msg = this.receiver.parseMessage(this.protocol, data, offset,
+				length);
 		// must tell who send it
 		msg.from = this.getId();
 		return msg;

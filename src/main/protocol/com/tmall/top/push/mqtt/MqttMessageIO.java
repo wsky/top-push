@@ -7,6 +7,9 @@ import java.nio.charset.Charset;
 import com.tmall.top.push.messages.Message;
 import com.tmall.top.push.messages.MessageIO;
 import com.tmall.top.push.mqtt.MqttVariableHeader.ReadWriteFlags;
+import com.tmall.top.push.mqtt.connack.MqttConnectAckMessage;
+import com.tmall.top.push.mqtt.connect.MqttConnectMessage;
+import com.tmall.top.push.mqtt.disconnect.MqttDisconnectMessage;
 import com.tmall.top.push.mqtt.publish.MqttPublishMessage;
 
 public class MqttMessageIO {
@@ -45,39 +48,55 @@ public class MqttMessageIO {
 
 	public static ByteBuffer parseServerSending(MqttMessage message,
 			ByteBuffer buffer) {
-		MqttPublishMessage pub = (MqttPublishMessage) message;
 		buffer.position(0);
 
-		// TODO:avoid rewrite mqtt header at server
+		if (message instanceof MqttPublishMessage) {
+			MqttPublishMessage pub = (MqttPublishMessage) message;
+			// HACK: server only forward after receiving
+			if (pub.Header.RemainingLength <= 0)
+				pub.Header.RemainingLength = MqttMessageIO
+						.getVariableHeaderWriteLength(pub.VariableHeader)
+						+ MessageIO.getFullMessageSize(pub.remainingLength);
+			writeHeader(message.Header, buffer);
+			writeVariableHeader(pub.VariableHeader, buffer);
 
-		// HACK: server only forward after receiving
-		if (pub.Header.RemainingLength <= 0)
-			pub.Header.RemainingLength = MqttMessageIO
-					.getVariableHeaderWriteLength(pub.VariableHeader)
-					+ MessageIO.getFullMessageSize(pub.remainingLength);
-		writeHeader(message.Header, buffer);
-		writeVariableHeader(pub.VariableHeader, buffer);
-
-		MessageIO.writeMessageType(buffer, message.messageType);
-		MessageIO.writeClientId(buffer, message.from);
-		MessageIO.writeBodyFormat(buffer, message.bodyFormat);
-		MessageIO.writeRemainingLength(buffer, message.remainingLength);
+			MessageIO.writeMessageType(buffer, message.messageType);
+			MessageIO.writeClientId(buffer, message.from);
+			MessageIO.writeBodyFormat(buffer, message.bodyFormat);
+			MessageIO.writeRemainingLength(buffer, message.remainingLength);
+		} else if (message instanceof MqttConnectAckMessage) {
+			MqttConnectAckMessage msg = (MqttConnectAckMessage) message;
+			msg.Header.RemainingLength = MqttMessageIO
+					.getVariableHeaderWriteLength(msg.VariableHeader);
+			writeHeader(message.Header, buffer);
+			writeVariableHeader(msg.VariableHeader, buffer);
+		}
 
 		return buffer;
 	}
 
 	public static Message parseServerReceiving(MqttMessage message,
 			ByteBuffer buffer) {
-		MqttPublishMessage pub = (MqttPublishMessage) message;
 		buffer.position(0);
 
-		readHeader(message.Header, buffer);
-		readVariableHeader(pub.VariableHeader, buffer);
+		if (message instanceof MqttPublishMessage) {
+			MqttPublishMessage pub = (MqttPublishMessage) message;
 
-		message.messageType = MessageIO.readMessageType(buffer);
-		message.to = MessageIO.readClientId(buffer);
-		message.bodyFormat = MessageIO.readBodyFormat(buffer);
-		message.remainingLength = MessageIO.readRemainingLength(buffer);
+			readHeader(message.Header, buffer);
+			readVariableHeader(pub.VariableHeader, buffer);
+
+			message.messageType = MessageIO.readMessageType(buffer);
+			message.to = MessageIO.readClientId(buffer);
+			message.bodyFormat = MessageIO.readBodyFormat(buffer);
+			message.remainingLength = MessageIO.readRemainingLength(buffer);
+		} else if (message instanceof MqttConnectMessage) {
+			MqttConnectMessage msg = (MqttConnectMessage) message;
+			readHeader(message.Header, buffer);
+			readVariableHeader(msg.VariableHeader, buffer);
+		} else if (message instanceof MqttDisconnectMessage) {
+			readHeader(message.Header, buffer);
+		}
+
 		message.fullMessageSize = getFullMessageSize(message);
 		message.body = buffer;
 
@@ -86,36 +105,55 @@ public class MqttMessageIO {
 
 	public static ByteBuffer parseClientSending(MqttMessage message,
 			ByteBuffer buffer) {
-		MqttPublishMessage pub = (MqttPublishMessage) message;
 		buffer.position(0);
 
-		pub.Header.RemainingLength = MqttMessageIO
-				.getVariableHeaderWriteLength(pub.VariableHeader)
-				+ MessageIO.getFullMessageSize(pub.remainingLength);
+		if (message instanceof MqttPublishMessage) {
+			MqttPublishMessage pub = (MqttPublishMessage) message;
+			pub.Header.RemainingLength = MqttMessageIO
+					.getVariableHeaderWriteLength(pub.VariableHeader)
+					+ MessageIO.getFullMessageSize(pub.remainingLength);
 
-		writeHeader(message.Header, buffer);
-		writeVariableHeader(pub.VariableHeader, buffer);
+			writeHeader(message.Header, buffer);
+			writeVariableHeader(pub.VariableHeader, buffer);
 
-		MessageIO.writeMessageType(buffer, message.messageType);
-		MessageIO.writeClientId(buffer, message.to);
-		MessageIO.writeBodyFormat(buffer, message.bodyFormat);
-		MessageIO.writeRemainingLength(buffer, message.remainingLength);
-
+			MessageIO.writeMessageType(buffer, message.messageType);
+			MessageIO.writeClientId(buffer, message.to);
+			MessageIO.writeBodyFormat(buffer, message.bodyFormat);
+			MessageIO.writeRemainingLength(buffer, message.remainingLength);
+		} else if (message instanceof MqttConnectMessage) {
+			MqttConnectMessage msg = (MqttConnectMessage) message;
+			msg.Header.RemainingLength = MqttMessageIO
+					.getVariableHeaderWriteLength(msg.VariableHeader);
+			writeHeader(message.Header, buffer);
+			writeVariableHeader(msg.VariableHeader, buffer);
+		} else if (message instanceof MqttDisconnectMessage) {
+			MqttDisconnectMessage msg = (MqttDisconnectMessage) message;
+			msg.Header.RemainingLength = 0;
+			writeHeader(message.Header, buffer);
+		}
 		return buffer;
 	}
 
 	public static Message parseClientReceiving(MqttMessage message,
 			ByteBuffer buffer) {
-		MqttPublishMessage pub = (MqttPublishMessage) message;
 		buffer.position(0);
 
-		readHeader(message.Header, buffer);
-		readVariableHeader(pub.VariableHeader, buffer);
+		if (message instanceof MqttPublishMessage) {
+			MqttPublishMessage pub = (MqttPublishMessage) message;
 
-		message.messageType = MessageIO.readMessageType(buffer);
-		message.from = MessageIO.readClientId(buffer);
-		message.bodyFormat = MessageIO.readBodyFormat(buffer);
-		message.remainingLength = MessageIO.readRemainingLength(buffer);
+			readHeader(message.Header, buffer);
+			readVariableHeader(pub.VariableHeader, buffer);
+
+			message.messageType = MessageIO.readMessageType(buffer);
+			message.from = MessageIO.readClientId(buffer);
+			message.bodyFormat = MessageIO.readBodyFormat(buffer);
+			message.remainingLength = MessageIO.readRemainingLength(buffer);
+		} else if (message instanceof MqttConnectAckMessage) {
+			MqttConnectAckMessage msg = (MqttConnectAckMessage) message;
+			readHeader(message.Header, buffer);
+			readVariableHeader(msg.VariableHeader, buffer);
+		}
+
 		message.fullMessageSize = getFullMessageSize(message);
 		message.body = buffer;
 

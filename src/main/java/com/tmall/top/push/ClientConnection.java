@@ -31,6 +31,10 @@ public abstract class ClientConnection {
 		return this.origin;
 	}
 
+	public String getProtocol() {
+		return this.protocol;
+	}
+
 	public void clear() {
 		this.lastPingTime = null;
 		this.headers = null;

@@ -1,7 +1,8 @@
 package com.tmall.top.push.messages;
 
-// it was known by client
 public class MessageType {
+	// following semantics was only known by client
+	
 	// publish message
 	// publisher->server
 	// server->subscriber

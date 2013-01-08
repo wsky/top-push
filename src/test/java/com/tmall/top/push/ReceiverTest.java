@@ -57,9 +57,4 @@ public class ReceiverTest {
 		Receiver receiver = new Receiver(10, 1);
 		receiver.parseMessage("", new byte[] { 1, 2, 2, 2 }, 0, 20);
 	}
-
-	@Test
-	public void parse_message_test() {
-
-	}
 }

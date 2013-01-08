@@ -40,6 +40,7 @@ public class PushManager {
 	private LinkedHashMap<String, Client> offlineClients;
 
 	private Receiver receiver;
+	private Processor processor;
 	private HashMap<Sender, Thread> senders;
 	// for managing some worker state
 	private CancellationToken token;
@@ -55,6 +56,8 @@ public class PushManager {
 		this.offlineClients = new LinkedHashMap<String, Client>();
 
 		this.receiver = new Receiver(maxMessageSize, maxMessageBufferCount);
+		// HACK:more message protocol process can extend it
+		this.processor = new Processor();
 
 		// TODO:move to start and support start/stop/restart
 		this.token = new CancellationToken();
@@ -74,6 +77,10 @@ public class PushManager {
 
 	public Receiver getReceiver() {
 		return this.receiver;
+	}
+	
+	public Processor getProcessor() {
+		return this.processor;
 	}
 
 	public Client getClient(String id) {

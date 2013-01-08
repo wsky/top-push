@@ -8,6 +8,9 @@ import org.apache.commons.lang.time.StopWatch;
 import org.junit.Test;
 
 import com.tmall.top.push.messages.MessageType;
+import com.tmall.top.push.mqtt.connack.MqttConnectAckMessage;
+import com.tmall.top.push.mqtt.connect.MqttConnectMessage;
+import com.tmall.top.push.mqtt.disconnect.MqttDisconnectMessage;
 import com.tmall.top.push.mqtt.publish.MqttPublishMessage;
 import com.tmall.top.push.mqtt.publish.MqttPublishVariableHeader;
 
@@ -121,7 +124,7 @@ public class MqttMessageIOTest {
 		MqttPublishMessage msg = new MqttPublishMessage();
 		msg.messageType = MessageType.PUBLISH;// 1
 		msg.to = "abc";// 8
-		msg.bodyFormat = 5;//1
+		msg.bodyFormat = 5;// 1
 		msg.remainingLength = 100;
 
 		msg.Header.Qos = MqttQos.AtLeastOnce;
@@ -181,6 +184,60 @@ public class MqttMessageIOTest {
 		assertEquals(123, MqttMessageIO.getFullMessageSize(msg));
 		assertEquals("abc", msg.VariableHeader.TopicName);
 		assertEquals(10, msg.VariableHeader.MessageIdentifier);
+	}
+
+	@Test
+	public void connect_parse_test() {
+		byte[] bytes = new byte[1024];
+		ByteBuffer buffer = ByteBuffer.wrap(bytes);
+
+		MqttConnectMessage msg = new MqttConnectMessage();
+		msg.VariableHeader.KeepAlive = 10;
+		msg.VariableHeader.ConnectFlags.CleanStart = true;
+		msg.VariableHeader.ConnectFlags.WillQos = MqttQos.ExactlyOnce;
+		msg.VariableHeader.ConnectFlags.WillRetain = true;
+		MqttMessageIO.parseClientSending(msg, buffer);
+		msg.clear();
+
+		assertEquals(MqttMessageType.Connect, MqttMessageIO.parseMessageType(buffer.get(0)));
+		
+		MqttMessageIO.parseServerReceiving(msg, buffer);
+		assertEquals(10, msg.VariableHeader.KeepAlive);
+		assertEquals(true, msg.VariableHeader.ConnectFlags.CleanStart);
+		assertEquals(MqttQos.ExactlyOnce,
+				msg.VariableHeader.ConnectFlags.WillQos);
+		assertEquals(true, msg.VariableHeader.ConnectFlags.WillRetain);
+	}
+
+	@Test
+	public void connack_parse_test() {
+		byte[] bytes = new byte[1024];
+		ByteBuffer buffer = ByteBuffer.wrap(bytes);
+
+		MqttConnectAckMessage msg = new MqttConnectAckMessage();
+		msg.VariableHeader.ReturnCode = MqttConnectReturnCode.IdentifierRejected;
+		MqttMessageIO.parseServerSending(msg, buffer);
+		msg.clear();
+
+		assertEquals(MqttMessageType.ConnectAck, MqttMessageIO.parseMessageType(buffer.get(0)));
+		
+		MqttMessageIO.parseClientReceiving(msg, buffer);
+		assertEquals(MqttConnectReturnCode.IdentifierRejected,
+				msg.VariableHeader.ReturnCode);
+	}
+
+	@Test
+	public void disconnect_parse_test() {
+		byte[] bytes = new byte[1024];
+		ByteBuffer buffer = ByteBuffer.wrap(bytes);
+
+		MqttDisconnectMessage msg = new MqttDisconnectMessage();
+		MqttMessageIO.parseClientSending(msg, buffer);
+		msg.clear();
+		
+		assertEquals(MqttMessageType.Disconnect, MqttMessageIO.parseMessageType(buffer.get(0)));
+		
+		MqttMessageIO.parseServerReceiving(msg, buffer);
 	}
 
 	@Test

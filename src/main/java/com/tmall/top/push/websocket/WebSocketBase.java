@@ -80,17 +80,26 @@ public abstract class WebSocketBase implements WebSocket.OnTextMessage,
 		// any message use as ping
 		this.receivePing();
 
-		// TODO:read messageType first and process more message type
 		try {
 			Message msg = this.clientConnection.parse(data, offset, length);
-			// deliver to target client
-			this.manager.getClient(msg.to).pendingMessage(msg);
+
+			// TODO:make this judgment understandably, command or not
+			if (msg.to == null || msg.to == "") {
+				// maybe command message like CONNECT/DISCONNECT
+				this.manager.getProcessor().process(msg, this.clientConnection);
+			} else {
+				// forward message
+				// deliver to target client
+				this.manager.getClient(msg.to).pendingMessage(msg);
+			}
 		} catch (MessageTooLongException e) {
 			e.printStackTrace();
 			this.frameConnection.close(400, e.getMessage());
 		} catch (NoMessageBufferException e) {
 			e.printStackTrace();
 			this.frameConnection.close(400, e.getMessage());
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
 

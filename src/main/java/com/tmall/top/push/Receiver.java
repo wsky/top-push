@@ -7,6 +7,9 @@ import com.tmall.top.push.messages.Message;
 import com.tmall.top.push.messages.MessageIO;
 import com.tmall.top.push.mqtt.MqttMessage;
 import com.tmall.top.push.mqtt.MqttMessageIO;
+import com.tmall.top.push.mqtt.MqttMessageType;
+import com.tmall.top.push.mqtt.connect.MqttConnectMessage;
+import com.tmall.top.push.mqtt.disconnect.MqttDisconnectMessage;
 import com.tmall.top.push.mqtt.publish.MqttPublishMessage;
 
 // provide message parser, receiving-buffer and improvement
@@ -50,14 +53,14 @@ public class Receiver {
 	}
 
 	// for receiving message from lower buffer
-	public Message parseMessage(String protocol, byte[] message, int offset,
+	public Message parseMessage(String protocol, byte[] data, int offset,
 			int length) throws MessageTooLongException,
 			NoMessageBufferException {
 		ByteBuffer buffer = this.getBuffer(length);
-		Message msg = this.acquireMessage(protocol);
+		Message msg = this.acquireMessage(protocol, data[offset]);
 
 		if (buffer != null) {
-			buffer.put(message, offset, length);
+			buffer.put(data, offset, length);
 			this.parseMessage(protocol, msg, buffer);
 		} else {
 			throw new NoMessageBufferException();
@@ -86,9 +89,15 @@ public class Receiver {
 		}
 	}
 
-	private Message acquireMessage(String protocol) {
+	private Message acquireMessage(String protocol, byte firstHeaderByte) {
 		if (MQTT.equalsIgnoreCase(protocol)) {
-			return this.mqttPublishMessagePool.acquire();
+			int messageType = MqttMessageIO.parseMessageType(firstHeaderByte);
+			if (messageType == MqttMessageType.Connect)
+				return new MqttConnectMessage();
+			else if (messageType == MqttMessageType.Disconnect)
+				return new MqttDisconnectMessage();
+			else
+				return this.mqttPublishMessagePool.acquire();
 		} else {
 			return this.defaultMessagePool.acquire();
 		}
@@ -132,6 +141,7 @@ public class Receiver {
 
 		@Override
 		public MqttPublishMessage createNew() {
+			// HACK:use Publish as forward message
 			return new MqttPublishMessage();
 		}
 
