@@ -4,6 +4,8 @@ import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 
+import com.tmall.top.push.Client;
+import com.tmall.top.push.ClientStateHandler;
 import com.tmall.top.push.PushManager;
 
 public class InitServlet extends HttpServlet {
@@ -20,6 +22,21 @@ public class InitServlet extends HttpServlet {
 				this.get(config, "senderCount"),
 				this.get(config, "senderIdle"),
 				this.get(config, "stateBuilderIdle")));
+		PushManager.current().setClientStateHandler(new ClientStateHandler() {
+
+			@Override
+			public void onClientPending(Client client) {
+			}
+
+			@Override
+			public void onClientOffline(Client client) {
+			}
+
+			@Override
+			public void onClientIdle(Client client) {
+			}
+		});
+
 		super.init(config);
 	}
 

@@ -45,8 +45,13 @@ public class PushManager {
 	// for managing some worker state
 	private CancellationToken token;
 
-	public PushManager(int maxConnectionCount, int maxMessageSize,
-			int maxMessageBufferCount, int senderCount, int senderIdle,
+	private ClientStateHandler stateHandler;
+
+	public PushManager(int maxConnectionCount,
+			int maxMessageSize,
+			int maxMessageBufferCount,
+			int senderCount,
+			int senderIdle,
 			int stateBuilderIdle) {
 		this.maxConnectionCount = maxConnectionCount;
 		// client management
@@ -65,6 +70,10 @@ public class PushManager {
 		this.prepareChecker(stateBuilderIdle);
 	}
 
+	public void setClientStateHandler(ClientStateHandler handler) {
+		this.stateHandler = handler;
+	}
+
 	// cancel all current job
 	public void cancelAll() {
 		this.token.setCancelling(true);
@@ -78,7 +87,7 @@ public class PushManager {
 	public Receiver getReceiver() {
 		return this.receiver;
 	}
-	
+
 	public Processor getProcessor() {
 		return this.processor;
 	}
@@ -131,8 +140,7 @@ public class PushManager {
 				try {
 					for (Map.Entry<Sender, Thread> entry : senders.entrySet()) {
 						if (!entry.getValue().isAlive())
-							System.out.println(String.format(
-									"sender#%s is broken!", entry.getKey()));
+							System.out.println(String.format("sender#%s is broken!", entry.getKey()));
 					}
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -140,12 +148,10 @@ public class PushManager {
 				try {
 					rebuildClientsState();
 					System.out.println(String.format(
-							"total %s pending messages, "
-									+ "total %s connections, "
-									+ "total %s clients, "
-									+ "%s is idle, %s is offline",
+							"total %s pending messages, total %s connections, total %s clients, %s is idle, %s is offline",
 							totalPendingMessages, totalConnections,
-							clients.size(), idleClients.size(),
+							clients.size(),
+							idleClients.size(),
 							offlineClients.size()));
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -184,21 +190,34 @@ public class PushManager {
 			offline = connCount == 0;
 			pending = pendingCount > 0;
 
-			if (noPending && pending && !offline) {
-				this.pendingClients.add(client);
-				this.idleClients.remove(client.getId());
-				this.offlineClients.remove(client.getId());
-			} else if (!pending && !offline) {
-				this.idleClients.put(client.getId(), client);
-				this.offlineClients.remove(client.getId());
-			} else if (offline) {
-				// TODO:clear pending messages of offline client after
-				// a long time
-				this.offlineClients.put(client.getId(), client);
-				this.idleClients.remove(client.getId());
+			try {
+				this.rebuildClientsState(client, noPending, pending, offline);
+			} catch (Exception e) {
+				System.err.println(String.format("error on rebuilding client#%s state", client.getId()));
+				e.printStackTrace();
 			}
 		}
 		this.totalConnections = totalConn;
 		this.totalPendingMessages = totalPending;
+	}
+
+	private void rebuildClientsState(Client client, boolean noPending,
+			boolean pending, boolean offline) {
+		if (noPending && pending && !offline) {
+			this.pendingClients.add(client);
+			this.idleClients.remove(client.getId());
+			this.offlineClients.remove(client.getId());
+			this.stateHandler.onClientPending(client);
+		} else if (!pending && !offline) {
+			this.idleClients.put(client.getId(), client);
+			this.offlineClients.remove(client.getId());
+			this.stateHandler.onClientIdle(client);
+		} else if (offline) {
+			// TODO:clear pending messages of offline client after
+			// a long time
+			this.offlineClients.put(client.getId(), client);
+			this.idleClients.remove(client.getId());
+			this.stateHandler.onClientOffline(client);
+		}
 	}
 }
