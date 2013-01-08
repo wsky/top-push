@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
-import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -24,7 +23,6 @@ import org.eclipse.jetty.websocket.WebSocketClient;
 import org.eclipse.jetty.websocket.WebSocketClientFactory;
 import org.junit.Test;
 
-import com.alibaba.fastjson.JSON;
 import com.tmall.top.push.PushManager;
 import com.tmall.top.push.messages.Message;
 import com.tmall.top.push.messages.MessageIO;
@@ -46,49 +44,6 @@ public class WebSocketPushServerTest {
 				"mqtt", null);
 		this.connect(factory, "ws://localhost:8002/back", "back-test", "mqtt",
 				null);
-
-		server.stop();
-	}
-
-	@Test
-	public void rpc_test() throws Exception {
-		Server server = this.initServer(9005, 9006);
-		server.start();
-
-		WebSocketClientFactory factory = new WebSocketClientFactory();
-		factory.start();
-
-		final Response response = new Response();
-		this.connect(factory, "ws://localhost:9005/front", "front", null, null);
-		final String waitObject = new String("abc");
-		Connection back = this.connect(factory, "ws://localhost:9006/back",
-				"back", "mqtt", new WebSocket.OnTextMessage() {
-					public void onOpen(Connection connection) {
-					}
-
-					public void onClose(int closeCode, String message) {
-					}
-
-					public void onMessage(String data) {
-						Response temp = JSON.parseObject(data, Response.class);
-						response.IsError = temp.IsError;
-						response.ErrorPhrase = temp.ErrorPhrase;
-						response.Result = temp.Result;
-						synchronized (waitObject) {
-							waitObject.notify();
-						}
-					}
-				});
-		Request request = new Request();
-		request.Command = "isonline";
-		request.Arguments = new HashMap<String, String>();
-		request.Arguments.put("id", "front");
-		back.sendMessage(JSON.toJSONString(request));
-		synchronized (waitObject) {
-			waitObject.wait();
-		}
-		assertFalse(response.IsError);
-		assertEquals("true", response.Result);
 
 		server.stop();
 	}

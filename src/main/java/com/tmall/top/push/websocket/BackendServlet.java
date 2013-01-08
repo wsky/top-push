@@ -1,13 +1,10 @@
 package com.tmall.top.push.websocket;
 
-import java.io.IOException;
-
 import javax.servlet.http.HttpServletRequest;
 
 import org.eclipse.jetty.websocket.WebSocket;
 import org.eclipse.jetty.websocket.WebSocketServlet;
 
-import com.alibaba.fastjson.JSON;
 import com.tmall.top.push.Client;
 import com.tmall.top.push.PushManager;
 
@@ -35,13 +32,6 @@ public class BackendServlet extends WebSocketServlet {
 
 		@Override
 		public void onMessage(String arg0) {
-			try {
-				this.connection.sendMessage(JSON.toJSONString(Utils
-						.processRequest(arg0, this.manager)));
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
 		}
-
 	}
 }
