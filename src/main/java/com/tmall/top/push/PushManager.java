@@ -8,6 +8,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import com.tmall.top.push.messages.Message;
+
 public class PushManager {
 	private static PushManager current;
 
@@ -102,6 +104,10 @@ public class PushManager {
 		return this.clients.get(id);
 	}
 
+	public boolean isReachMaxConnectionCount() {
+		return this.totalConnections >= this.maxConnectionCount;
+	}
+
 	public boolean isIdleClient(String id) {
 		return this.idleClients.containsKey(id);
 	}
@@ -110,16 +116,15 @@ public class PushManager {
 		return this.offlineClients.containsKey(id);
 	}
 
-	public boolean isOnlineClient(String id) {
-		return this.getClient(id).getConnectionsCount() > 0;
-	}
-
-	public boolean isReachMaxConnectionCount() {
-		return this.totalConnections >= this.maxConnectionCount;
-	}
-
 	public Client pollPendingClient() {
 		return this.pendingClients.poll();
+	}
+
+	public void pendingMessage(Message message) {
+		if (!this.isOfflineClient(message.to))
+			this.getClient(message.to).pendingMessage(message);
+		else if (this.stateHandler != null)
+			this.stateHandler.onClientOffline(this.getClient(message.to), message);
 	}
 
 	private void prepareSenders(int senderCount, int senderIdle) {
@@ -207,17 +212,20 @@ public class PushManager {
 			this.pendingClients.add(client);
 			this.idleClients.remove(client.getId());
 			this.offlineClients.remove(client.getId());
-			this.stateHandler.onClientPending(client);
+			if (this.stateHandler != null)
+				this.stateHandler.onClientPending(client);
 		} else if (!pending && !offline) {
 			this.idleClients.put(client.getId(), client);
 			this.offlineClients.remove(client.getId());
-			this.stateHandler.onClientIdle(client);
+			if (this.stateHandler != null)
+				this.stateHandler.onClientIdle(client);
 		} else if (offline) {
 			// TODO:clear pending messages of offline client after
 			// a long time
 			this.offlineClients.put(client.getId(), client);
 			this.idleClients.remove(client.getId());
-			this.stateHandler.onClientOffline(client);
+			if (this.stateHandler != null)
+				this.stateHandler.onClientOffline(client);
 		}
 	}
 }

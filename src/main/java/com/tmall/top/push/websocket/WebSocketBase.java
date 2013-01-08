@@ -90,7 +90,7 @@ public abstract class WebSocketBase implements WebSocket.OnTextMessage,
 			} else {
 				// forward message
 				// deliver to target client
-				this.manager.getClient(msg.to).pendingMessage(msg);
+				this.manager.pendingMessage(msg);
 			}
 		} catch (MessageTooLongException e) {
 			e.printStackTrace();
