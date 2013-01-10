@@ -120,6 +120,11 @@ public class PushManager {
 		return this.pendingClients.poll();
 	}
 
+	public int getPendingClientCount() {
+		// size() is O(n)
+		return this.pendingClients.size();
+	}
+
 	public void pendingMessage(Message message) {
 		if (!this.isOfflineClient(message.to))
 			this.getClient(message.to).pendingMessage(message);
