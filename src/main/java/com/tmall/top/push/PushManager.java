@@ -135,7 +135,7 @@ public class PushManager {
 	private void prepareSenders(int senderCount, int senderIdle) {
 		this.senders = new HashMap<Sender, Thread>();
 		for (int i = 0; i < senderCount; i++) {
-			Sender sender = new Sender(this, this.token, senderIdle);
+			Sender sender = new Sender(this, this.token, senderIdle, senderCount);
 			Thread thread = new Thread(sender);
 			thread.start();
 			this.senders.put(sender, thread);
