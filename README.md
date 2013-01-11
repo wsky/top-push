@@ -34,8 +34,6 @@ sudo sh scripts/aws-install.sh
 
 ## License
 
-	Copyright (c) Alibaba.  All rights reserved. - http://open.taobao.com/
-
 	Licensed under the Apache License, Version 2.0 (the "License");
 
 	you may not use this file except in compliance with the License.
