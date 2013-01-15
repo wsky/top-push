@@ -77,6 +77,10 @@ public class Client {
 		if (msg != null)
 			this.pendingMessages.add(msg);
 	}
+	
+	public void clearPendingMessages() {
+		this.pendingMessages.clear();
+	}
 
 	public void flush(CancellationToken token, int count) {
 		int temp = 0;
