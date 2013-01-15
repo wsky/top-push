@@ -225,11 +225,10 @@ public class PushManager {
 			if (this.stateHandler != null)
 				this.stateHandler.onClientIdle(client);
 		} else if (offline) {
-			// TODO:clear pending messages of offline client after
-			// a long time
 			this.offlineClients.put(client.getId(), client);
 			this.idleClients.remove(client.getId());
 			if (this.stateHandler != null)
+				//can clear pending messages of offline client in this handler after a long time
 				this.stateHandler.onClientOffline(client);
 		}
 	}

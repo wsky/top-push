@@ -97,7 +97,9 @@ public abstract class WebSocketBase implements WebSocket.OnTextMessage,
 			this.frameConnection.close(400, e.getMessage());
 		} catch (NoMessageBufferException e) {
 			e.printStackTrace();
-			this.frameConnection.close(400, e.getMessage());
+			// https://github.com/wsky/top-push/issues/23
+			// ignore no buffer and drop it
+			//this.frameConnection.close(400, e.getMessage());
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
