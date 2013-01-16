@@ -22,11 +22,9 @@ public class MessageIOTest {
 
 	@Test
 	public void read_write_client_id_test() {
-		// always 8
-		assertEquals(" abcdefg", MessageIO.padClientId("abcdefg"));
-
 		ByteBuffer buffer = ByteBuffer.allocateDirect(1024);
-		MessageIO.writeClientId(buffer, "abc");
+		MessageIO.writeClientId(buffer, "abc");// 1+3
+		assertEquals(4, buffer.position());
 		buffer.position(0);
 		assertEquals("abc", MessageIO.readClientId(buffer));
 	}
@@ -47,16 +45,19 @@ public class MessageIOTest {
 		msg.messageType = MessageType.PUBLISH;
 		msg.to = "abc";
 		msg.bodyFormat = 5;
-		msg.remainingLength = 100;
-
+		msg.remainingLength = 2;
 		MessageIO.parseClientSending(msg, buffer);
+		buffer.put((byte) 'a');
+		buffer.put((byte) 'b');
 		msg.clear();
 
 		MessageIO.parseServerReceiving(msg, buffer);
 		assertEquals(MessageType.PUBLISH, msg.messageType);
 		assertEquals("abc", msg.to);
 		assertEquals(5, msg.bodyFormat);
-		assertEquals(100, msg.remainingLength);
+		assertEquals(2, msg.remainingLength);
+		assertEquals('a', (char) buffer.get());
+		assertEquals('b', (char) buffer.get());
 	}
 
 	@Test
@@ -66,9 +67,10 @@ public class MessageIOTest {
 		msg.messageType = MessageType.PUBLISH;
 		msg.from = "abc";
 		msg.bodyFormat = 5;
-		msg.remainingLength = 100;
-
+		msg.remainingLength = 2;
 		MessageIO.parseServerSending(msg, buffer);
+		buffer.put((byte) 'a');
+		buffer.put((byte) 'b');
 		msg.clear();
 
 		MessageIO.parseClientReceiving(msg, buffer);
@@ -76,7 +78,9 @@ public class MessageIOTest {
 		assertEquals(MessageType.PUBLISH, msg.messageType);
 		assertEquals("abc", msg.from);
 		assertEquals(5, msg.bodyFormat);
-		assertEquals(100, msg.remainingLength);
+		assertEquals(2, msg.remainingLength);
+		assertEquals('a', (char) buffer.get());
+		assertEquals('b', (char) buffer.get());
 	}
 
 	@Test

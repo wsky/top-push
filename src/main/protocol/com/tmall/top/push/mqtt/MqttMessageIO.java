@@ -56,7 +56,7 @@ public class MqttMessageIO {
 			if (pub.Header.RemainingLength <= 0)
 				pub.Header.RemainingLength = MqttMessageIO
 						.getVariableHeaderWriteLength(pub.VariableHeader)
-						+ MessageIO.getFullMessageSize(pub.remainingLength);
+						+ MessageIO.getFullMessageSize(pub.remainingLength, message.from);
 			writeHeader(message.Header, buffer);
 			writeVariableHeader(pub.VariableHeader, buffer);
 
@@ -111,7 +111,7 @@ public class MqttMessageIO {
 			MqttPublishMessage pub = (MqttPublishMessage) message;
 			pub.Header.RemainingLength = MqttMessageIO
 					.getVariableHeaderWriteLength(pub.VariableHeader)
-					+ MessageIO.getFullMessageSize(pub.remainingLength);
+					+ MessageIO.getFullMessageSize(pub.remainingLength, message.to);
 
 			writeHeader(message.Header, buffer);
 			writeVariableHeader(pub.VariableHeader, buffer);

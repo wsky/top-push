@@ -117,7 +117,7 @@ public class WebSocketPushServerTest {
 				});
 
 		// back-end client like a publisher
-		String backId = "back";
+		String backId = "iback";
 		final Message confirmMessage = new Message();
 		final MqttPublishMessage mqttConfirmMessage = new MqttPublishMessage();
 		final Object waitBack = new Object();
@@ -238,22 +238,26 @@ public class WebSocketPushServerTest {
 		if ("mqtt".equals(protocol)) {
 			MqttPublishMessage msg = new MqttPublishMessage();
 			msg.messageType = MessageType.PUBLISH;// 1
-			msg.to = to;// 8
+			msg.to = to;// 1+5
+			msg.bodyFormat = 0;// 1
 			msg.remainingLength = 7;// 4
-			
+
 			msg.Header.Qos = MqttQos.AtLeastOnce;
 			msg.VariableHeader.TopicName = "abc";
 			msg.VariableHeader.MessageIdentifier = 10;
-			
+
 			MqttMessageIO.parseClientSending(msg, buffer);
-			// 1+8+4+7=20
-			// 20+4
+			// 1+1+5+1+4+7=19
+			// 19+9
+			//size = 28;
 		} else {
 			Message msg = new Message();
 			msg.messageType = MessageType.PUBLISH;
 			msg.to = to;
+			msg.bodyFormat = 0;
 			msg.remainingLength = 7;
 			MessageIO.parseClientSending(msg, buffer);
+			//size = 19;
 		}
 		buffer.put((byte) 'a');
 		buffer.put((byte) 'b');
@@ -262,6 +266,7 @@ public class WebSocketPushServerTest {
 		buffer.put((byte) 'e');
 		buffer.put((byte) 'f');
 		buffer.put((byte) 'g');
+		// assertEquals(size, buffer.position());
 		return buffer;
 	}
 

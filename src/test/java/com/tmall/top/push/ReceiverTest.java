@@ -29,8 +29,7 @@ public class ReceiverTest {
 		// assert more about buffer
 		assertEquals(1024, ((ByteBuffer) msg.body).limit());
 		// parse to buffer
-		ByteBuffer buffer2 = receiver.parseMessage("", msg);
-		assertEquals(buffer.hashCode(), buffer2.hashCode());
+		// ByteBuffer buffer2 = receiver.parseMessage("", msg);
 		// release
 		receiver.release(msg);
 		assertNull(msg.to);
