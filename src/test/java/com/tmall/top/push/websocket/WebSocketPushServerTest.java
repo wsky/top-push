@@ -47,23 +47,6 @@ public class WebSocketPushServerTest {
 
 	@Test
 	public void publish_confirm_test() throws Exception {
-		System.out.print((char)((byte)102)+ " ");
-		System.out.print((char)((byte)114)+ " ");
-		System.out.print((char)((byte)111)+ " ");
-		System.out.print((char)((byte)110)+ " ");
-		System.out.print((char)((byte)116)+ " ");
-		System.out.print((char)((byte)0)+ " ");
-		
-		System.out.println("");
-		
-		System.out.print((char)((byte)98)+ " ");
-		System.out.print((char)((byte)97)+ " ");
-		System.out.print((char)((byte)99)+ " ");
-		System.out.print((char)((byte)107)+ " ");
-		System.out.print((char)((byte)0)+ " ");
-		System.out.print((char)((byte)7)+ " ");
-		
-		
 		publish_confirm_test(null, 9011, 9012);
 	}
 
