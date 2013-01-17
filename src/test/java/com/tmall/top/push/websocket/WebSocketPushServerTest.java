@@ -50,12 +50,12 @@ public class WebSocketPushServerTest {
 
 	@Test
 	public void publish_confirm_test() throws Exception {
-		publish_confirm_test(null);
+		publish_confirm_test(null, 9001, 9002);
 	}
 
 	@Test
 	public void publish_confirm_mqtt_test() throws Exception {
-		publish_confirm_test("mqtt");
+		publish_confirm_test("mqtt", 9013, 9014);
 	}
 
 	@Test
@@ -68,8 +68,8 @@ public class WebSocketPushServerTest {
 		publish_confirm_long_running_test("mqtt");
 	}
 
-	private void publish_confirm_test(final String protocol) throws Exception {
-		Server server = this.initServer(9001, 9002);
+	private void publish_confirm_test(final String protocol, int frontPort, int backPort) throws Exception {
+		Server server = this.initServer(frontPort, backPort);
 		server.start();
 
 		WebSocketClientFactory factory = new WebSocketClientFactory();
@@ -81,7 +81,7 @@ public class WebSocketPushServerTest {
 		final MqttPublishMessage mqttPublishMessage = new MqttPublishMessage();
 
 		final Object waitFront = new Object();
-		Connection front = this.connect(factory, "ws://localhost:9001/front",
+		Connection front = this.connect(factory, "ws://localhost:" + frontPort + "/front",
 				frontId, protocol, new WebSocket.OnBinaryMessage() {
 
 					@Override
@@ -117,11 +117,11 @@ public class WebSocketPushServerTest {
 				});
 
 		// back-end client like a publisher
-		String backId = "iback";
+		String backId = "back1";
 		final Message confirmMessage = new Message();
 		final MqttPublishMessage mqttConfirmMessage = new MqttPublishMessage();
 		final Object waitBack = new Object();
-		Connection back = this.connect(factory, "ws://localhost:9002/back",
+		Connection back = this.connect(factory, "ws://localhost:" + backPort + "/back",
 				backId, protocol, new WebSocket.OnBinaryMessage() {
 
 					@Override
@@ -198,18 +198,18 @@ public class WebSocketPushServerTest {
 
 	private void publish_confirm_long_running_test(String protocol)
 			throws Exception {
-		Server server = this.initServer(9003, 9004);
+		Server server = this.initServer(9005, 9006);
 		server.start();
 
 		WebSocketClientFactory factory = new WebSocketClientFactory();
 		factory.start();
 
-		this.connect(factory, "ws://localhost:9003/front", "front", protocol,
+		this.connect(factory, "ws://localhost:9005/front", "front", protocol,
 				null);
-		this.connect(factory, "ws://localhost:9003/front", "front", protocol,
+		this.connect(factory, "ws://localhost:9005/front", "front", protocol,
 				null);
 
-		Connection back = this.connect(factory, "ws://localhost:9004/back",
+		Connection back = this.connect(factory, "ws://localhost:9006/back",
 				"back", protocol, null);
 
 		int total = 10000;
@@ -249,7 +249,7 @@ public class WebSocketPushServerTest {
 			MqttMessageIO.parseClientSending(msg, buffer);
 			// 1+1+5+1+4+7=19
 			// 19+9
-			//size = 28;
+			// size = 28;
 		} else {
 			Message msg = new Message();
 			msg.messageType = MessageType.PUBLISH;
@@ -257,7 +257,7 @@ public class WebSocketPushServerTest {
 			msg.bodyFormat = 0;
 			msg.remainingLength = 7;
 			MessageIO.parseClientSending(msg, buffer);
-			//size = 19;
+			// size = 19;
 		}
 		buffer.put((byte) 'a');
 		buffer.put((byte) 'b');
@@ -280,12 +280,14 @@ public class WebSocketPushServerTest {
 			MqttPublishMessage msg = new MqttPublishMessage();
 			msg.messageType = MessageType.PUBCONFIRM;
 			msg.to = publishMessage.from;
+			msg.bodyFormat = 0;
 			msg.remainingLength = 100;
 			MqttMessageIO.parseClientSending(msg, buffer);
 		} else {
 			Message msg = new Message();
 			msg.messageType = MessageType.PUBCONFIRM;
 			msg.to = publishMessage.from;
+			msg.bodyFormat = 0;
 			msg.remainingLength = 100;
 			MessageIO.parseClientSending(msg, buffer);
 		}

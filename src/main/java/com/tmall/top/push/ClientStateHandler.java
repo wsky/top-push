@@ -1,8 +1,16 @@
 package com.tmall.top.push;
 
+import java.util.HashMap;
+
 import com.tmall.top.push.messages.Message;
 
 public abstract class ClientStateHandler {
+	
+	public abstract String onClientConnecting(HashMap<String, String> headers);
+	
+	public abstract void onClientConnect(Client client, ClientConnection clientConnection) throws UnauthorizedException;
+	
+	public abstract void onClientDisconnect(Client client, ClientConnection clientConnection);
 
 	public abstract void onClientPending(Client client);
 

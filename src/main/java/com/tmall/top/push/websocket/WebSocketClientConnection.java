@@ -8,7 +8,6 @@ import org.eclipse.jetty.websocket.WebSocket.FrameConnection;
 import com.tmall.top.push.ClientConnection;
 import com.tmall.top.push.MessageTooLongException;
 import com.tmall.top.push.NoMessageBufferException;
-import com.tmall.top.push.UnauthorizedException;
 import com.tmall.top.push.messages.Message;
 
 public class WebSocketClientConnection extends ClientConnection {
@@ -27,12 +26,6 @@ public class WebSocketClientConnection extends ClientConnection {
 		this.connection = connection;
 	}
 
-	public void verifyHeaders() throws UnauthorizedException {
-		// FIXME:authentication here
-		if (this.id == null || this.id == "")
-			throw new UnauthorizedException();
-	}
-
 	public Message parse(byte[] data, int offset, int length)
 			throws MessageTooLongException, NoMessageBufferException {
 		Message msg = this.receiver.parseMessage(this.protocol, data, offset,
@@ -44,8 +37,6 @@ public class WebSocketClientConnection extends ClientConnection {
 
 	@Override
 	protected void initHeaders() {
-		// TODO: how to get id? origin? use connect message instead?
-		this.id = this.headers.get(ORIGIN);
 		this.protocol = this.headers.get(PROTOCOL);
 		this.origin = this.headers.get(ORIGIN);
 	}

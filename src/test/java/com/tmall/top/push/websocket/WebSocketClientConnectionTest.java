@@ -10,7 +10,6 @@ import org.junit.Test;
 import com.tmall.top.push.MessageTooLongException;
 import com.tmall.top.push.NoMessageBufferException;
 import com.tmall.top.push.PushManager;
-import com.tmall.top.push.UnauthorizedException;
 import com.tmall.top.push.messages.Message;
 import com.tmall.top.push.messages.MessageIO;
 import com.tmall.top.push.messages.MessageType;
@@ -34,19 +33,11 @@ public class WebSocketClientConnectionTest {
 		// headers.put("id", "abc");
 		headers.put("origin", "abc");
 
-		connection.init(headers, this.getManager());
+		connection.init("abc", headers, this.getManager());
 		assertEquals(headers.get("origin"), connection.getOrigin());
-		assertEquals(headers.get("origin"), connection.getId());
+		assertEquals("abc", connection.getId());
 
 		assertFalse(connection.isOpen());
-	}
-
-	@Test(expected = UnauthorizedException.class)
-	public void verify_header_test() throws UnauthorizedException {
-		WebSocketClientConnection connection = this.getConnection();
-		HashMap<String, String> headers = new HashMap<String, String>();
-		connection.init(headers, this.getManager());
-		connection.verifyHeaders();
 	}
 
 	@Test
@@ -54,8 +45,7 @@ public class WebSocketClientConnectionTest {
 			NoMessageBufferException {
 		WebSocketClientConnection connection = this.getConnection();
 		HashMap<String, String> headers = new HashMap<String, String>();
-		headers.put("id", "abc");
-		connection.init(headers, this.getManager());
+		connection.init("abc", headers, this.getManager());
 
 		byte[] bytes = new byte[1024];
 		ByteBuffer buffer = ByteBuffer.wrap(bytes);

@@ -132,6 +132,28 @@ public class PushManager {
 			this.stateHandler.onClientOffline(this.getClient(message.to), message);
 	}
 
+	public Client connectingClient(HashMap<String, String> headers) {
+		return this.getClient(this.stateHandler != null 
+				? this.stateHandler.onClientConnecting(headers) 
+				: headers.get("id"));
+	}
+
+	public void connectClient(Client client,
+			ClientConnection clientConnection) throws UnauthorizedException {
+		if (this.stateHandler != null)
+			this.stateHandler.onClientConnect(client, clientConnection);
+
+		client.AddConnection(clientConnection);
+	}
+
+	public void disconnectClient(Client client, ClientConnection clientConnection) {
+		if (this.stateHandler != null)
+			this.stateHandler.onClientDisconnect(client, clientConnection);
+
+		client.RemoveConnection(clientConnection);
+		clientConnection.clear();
+	}
+
 	private void prepareSenders(int senderCount, int senderIdle) {
 		this.senders = new HashMap<Sender, Thread>();
 		for (int i = 0; i < senderCount; i++) {
@@ -228,7 +250,8 @@ public class PushManager {
 			this.offlineClients.put(client.getId(), client);
 			this.idleClients.remove(client.getId());
 			if (this.stateHandler != null)
-				//can clear pending messages of offline client in this handler after a long time
+				// can clear pending messages of offline client in this handler
+				// after a long time
 				this.stateHandler.onClientOffline(client);
 		}
 	}

@@ -6,9 +6,10 @@ import java.util.HashMap;
 import com.tmall.top.push.messages.Message;
 
 public abstract class ClientConnection {
+	private String id;
+	
 	protected Date lastPingTime;
 	protected HashMap<String, String> headers;
-	protected String id;
 	protected String origin;
 	protected String protocol;
 
@@ -35,6 +36,10 @@ public abstract class ClientConnection {
 		return this.protocol;
 	}
 
+	public HashMap<String, String> getHeaders() {
+		return this.headers;
+	}
+
 	public void clear() {
 		this.lastPingTime = null;
 		this.headers = null;
@@ -46,8 +51,9 @@ public abstract class ClientConnection {
 		this.internalClear();
 	}
 
-	public void init(HashMap<String, String> headers, PushManager manager) {
+	public void init(String id, HashMap<String, String> headers, PushManager manager) {
 		this.receivePing();
+		this.id = id;
 		this.headers = headers;
 		this.manager = manager;
 		this.receiver = this.manager.getReceiver();

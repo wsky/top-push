@@ -48,26 +48,6 @@ public class Client {
 		return this.lastPingTime;
 	}
 
-	public void AddConnection(ClientConnection conn) {
-		synchronized (this.connections) {
-			this.connections.add(conn);
-		}
-		this.connectionQueue.add(conn);
-		System.out.println(String.format(
-				"client#%s add new connection from %s", this.getId(),
-				conn.getOrigin()));
-	}
-
-	public void RemoveConnection(ClientConnection conn) {
-		synchronized (this.connections) {
-			this.connections.remove(conn);
-		}
-		this.connectionQueue.remove(conn);
-		System.out.println(String.format(
-				"client#%s remove a connection from %s", this.getId(),
-				conn.getOrigin()));
-	}
-
 	public void receivePing() {
 		this.lastPingTime = new Date();
 	}
@@ -106,6 +86,26 @@ public class Client {
 					temp, this.getId(), this.totalSendMessageCount));
 	}
 
+	protected void AddConnection(ClientConnection conn) {
+		synchronized (this.connections) {
+			this.connections.add(conn);
+		}
+		this.connectionQueue.add(conn);
+		System.out.println(String.format(
+				"client#%s add new connection from %s", this.getId(),
+				conn.getOrigin()));
+	}
+
+	protected void RemoveConnection(ClientConnection conn) {
+		synchronized (this.connections) {
+			this.connections.remove(conn);
+		}
+		this.connectionQueue.remove(conn);
+		System.out.println(String.format(
+				"client#%s remove a connection from %s", this.getId(),
+				conn.getOrigin()));
+	}
+	
 	private void SendMessage(CancellationToken token, Message msg) {
 		// FIFO queue for LRU load-balance
 		while (true) {

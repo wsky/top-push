@@ -43,7 +43,7 @@ public class MessageIOTest {
 		ByteBuffer buffer = ByteBuffer.allocateDirect(1024);
 		Message msg = new Message();
 		msg.messageType = MessageType.PUBLISH;
-		msg.to = "abc";
+		msg.to = "back";
 		msg.bodyFormat = 5;
 		msg.remainingLength = 2;
 		MessageIO.parseClientSending(msg, buffer);
@@ -53,7 +53,7 @@ public class MessageIOTest {
 
 		MessageIO.parseServerReceiving(msg, buffer);
 		assertEquals(MessageType.PUBLISH, msg.messageType);
-		assertEquals("abc", msg.to);
+		assertEquals("back", msg.to);
 		assertEquals(5, msg.bodyFormat);
 		assertEquals(2, msg.remainingLength);
 		assertEquals('a', (char) buffer.get());

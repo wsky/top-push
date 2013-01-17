@@ -1,12 +1,16 @@
 package com.tmall.top.push.websocket;
 
+import java.util.HashMap;
+
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 
 import com.tmall.top.push.Client;
+import com.tmall.top.push.ClientConnection;
 import com.tmall.top.push.ClientStateHandler;
 import com.tmall.top.push.PushManager;
+import com.tmall.top.push.UnauthorizedException;
 import com.tmall.top.push.messages.Message;
 
 public class InitServlet extends HttpServlet {
@@ -39,8 +43,20 @@ public class InitServlet extends HttpServlet {
 
 			@Override
 			public void onClientOffline(Client client, Message message) {
-				// PushManager.current().getReceiver().release(message);
-				client.pendingMessage(message);
+				PushManager.current().getReceiver().release(message);
+			}
+
+			@Override
+			public void onClientConnect(Client client, ClientConnection clientConnection) throws UnauthorizedException {
+			}
+
+			@Override
+			public void onClientDisconnect(Client client, ClientConnection clientConnection) {
+			}
+
+			@Override
+			public String onClientConnecting(HashMap<String, String> headers) {
+				return headers.get("origin");
 			}
 		});
 

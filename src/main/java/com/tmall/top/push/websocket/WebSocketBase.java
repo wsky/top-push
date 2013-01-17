@@ -9,8 +9,10 @@ import com.tmall.top.push.NoMessageBufferException;
 import com.tmall.top.push.UnauthorizedException;
 import com.tmall.top.push.messages.Message;
 
-public abstract class WebSocketBase implements WebSocket.OnTextMessage,
-		WebSocket.OnBinaryMessage, WebSocket.OnControl, WebSocket.OnFrame {
+public abstract class WebSocketBase implements WebSocket.OnTextMessage, 
+	WebSocket.OnBinaryMessage, 
+	WebSocket.OnControl, 
+	WebSocket.OnFrame {
 
 	protected FrameConnection frameConnection;
 	protected Connection connection;
@@ -19,7 +21,8 @@ public abstract class WebSocketBase implements WebSocket.OnTextMessage,
 	protected Client client;
 	protected WebSocketClientConnection clientConnection;
 
-	public WebSocketBase(PushManager manager, Client client,
+	public WebSocketBase(PushManager manager, 
+			Client client, 
 			WebSocketClientConnection clientConnection) {
 		this.manager = manager;
 		this.client = client;
@@ -28,34 +31,31 @@ public abstract class WebSocketBase implements WebSocket.OnTextMessage,
 
 	@Override
 	public void onClose(int closeCode, String message) {
-		this.release();
-		System.out.println(String.format("websocket close: %s %s", closeCode,
-				message));
+		this.manager.disconnectClient(this.client, this.clientConnection);
+		this.clear();
+		System.out.println(String.format("websocket close: %s | %s", closeCode, message));
 	}
 
 	@Override
 	public void onHandshake(FrameConnection frameConnection) {
-		try {
-			this.clientConnection.verifyHeaders();
-		} catch (UnauthorizedException e) {
-			this.release();
-			frameConnection.close(401, "invalid header");
-			System.out.println(String.format("websocket close: %s %s", 401,
-					"invalid header"));
-			return;
-		}
-
 		if (this.manager.isReachMaxConnectionCount()) {
-			this.release();
+			this.clear();
 			frameConnection.close(403, "reach max connections");
-			System.out.println(String.format("websocket close: %s %s", 403,
-					"reach max connections"));
+			System.out.println(String.format("websocket close: %s | %s", 403, "reach max connections"));
 			return;
 		}
-
+		
+		try {
+			this.manager.connectClient(this.client, this.clientConnection);
+		} catch (UnauthorizedException e) {
+			this.clear();
+			frameConnection.close(401, e.getMessage());
+			System.out.println(String.format("websocket close: %s | %s", 401, e.getMessage()));
+			return;
+		}
+		
 		this.frameConnection = frameConnection;
 		this.clientConnection.init(this.frameConnection);
-		this.client.AddConnection(this.clientConnection);
 	}
 
 	@Override
@@ -99,7 +99,7 @@ public abstract class WebSocketBase implements WebSocket.OnTextMessage,
 			e.printStackTrace();
 			// https://github.com/wsky/top-push/issues/23
 			// ignore no buffer and drop it
-			//this.frameConnection.close(400, e.getMessage());
+			// this.frameConnection.close(400, e.getMessage());
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -115,10 +115,8 @@ public abstract class WebSocketBase implements WebSocket.OnTextMessage,
 		this.clientConnection.receivePing();
 		this.client.receivePing();
 	}
-
-	private void release() {
-		this.client.RemoveConnection(this.clientConnection);
-		this.clientConnection.clear();
+	
+	private void clear() {
 		Utils.getClientConnectionPool().release(this.clientConnection);
 	}
 }

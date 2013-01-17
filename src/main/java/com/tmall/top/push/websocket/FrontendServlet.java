@@ -1,5 +1,7 @@
 package com.tmall.top.push.websocket;
 
+import java.util.HashMap;
+
 import javax.servlet.http.HttpServletRequest;
 
 import org.eclipse.jetty.websocket.WebSocket;
@@ -15,13 +17,13 @@ public class FrontendServlet extends WebSocketServlet {
 	@Override
 	public WebSocket doWebSocketConnect(HttpServletRequest arg0, String arg1) {
 		PushManager manager = PushManager.current();
+		HashMap<String, String> headers = Utils.parseHeaders(arg0);
+		Client client = manager.connectingClient(headers);
 
-		WebSocketClientConnection clientConnection = Utils
-				.getClientConnectionPool().acquire();
-		clientConnection.init(Utils.parseHeaders(arg0), manager);
+		WebSocketClientConnection clientConnection = Utils.getClientConnectionPool().acquire();
+		clientConnection.init(client.getId(), headers, manager);
 
-		return new FrontendWebSocket(manager,
-				manager.getClient(clientConnection.getId()), clientConnection);
+		return new FrontendWebSocket(manager, client, clientConnection);
 	}
 
 	private class FrontendWebSocket extends WebSocketBase {

@@ -9,8 +9,7 @@ public class Processor {
 	public void process(Message message, ClientConnection connection)
 			throws Exception {
 		if (!"mqtt".equalsIgnoreCase(connection.getProtocol())) {
-			System.out
-					.println("Only mqtt protocol support command message process, currently");
+			System.out.println("Only mqtt protocol support command message process, currently");
 			return;
 		}
 
