@@ -24,7 +24,7 @@ public class MessageIOTest {
 	public void read_write_client_id_test() {
 		ByteBuffer buffer = ByteBuffer.allocateDirect(1024);
 		MessageIO.writeClientId(buffer, "abc");// 1+3
-		assertEquals(4, buffer.position());
+		assertEquals(8, buffer.position());
 		buffer.position(0);
 		assertEquals("abc", MessageIO.readClientId(buffer));
 	}

@@ -9,10 +9,7 @@ public final class MessageIO {
 	 * 1byte MessageType, or extend to 8bit usage, DUP Flag, Body Formatter,
 	 * RETAIN
 	 * 
-	 * 1byte id length N 
-	 * 
-	 * N bytes from(receiving)/to(sending) id, support
-	 * front<-->forward<-->back.
+	 * 8 bytes from(receiving)/to(sending) id, support front<-->forward<-->back.
 	 * 
 	 * 1byte Message body format flag
 	 * 
@@ -48,7 +45,7 @@ public final class MessageIO {
 		message.to = readClientId(buffer);
 		message.bodyFormat = readBodyFormat(buffer);
 		message.remainingLength = readRemainingLength(buffer);
-		message.fullMessageSize = getFullMessageSize(message.remainingLength, message.to);
+		message.fullMessageSize = getFullMessageSize(message.remainingLength);
 		message.body = buffer;
 		return message;
 	}
@@ -72,7 +69,7 @@ public final class MessageIO {
 		message.from = readClientId(buffer);
 		message.bodyFormat = readBodyFormat(buffer);
 		message.remainingLength = readRemainingLength(buffer);
-		message.fullMessageSize = getFullMessageSize(message.remainingLength, message.from);
+		message.fullMessageSize = getFullMessageSize(message.remainingLength);
 		message.body = buffer;
 		return message;
 	}
@@ -90,17 +87,11 @@ public final class MessageIO {
 	}
 
 	public static String readClientId(ByteBuffer buffer) {
-		int length = (int) buffer.get();
-		return length > 0 ? readString(buffer, length) : null;
+		return readString(buffer, 8).trim();
 	}
 
 	public static void writeClientId(ByteBuffer buffer, String id) {
-		if (id == null) {
-			buffer.put((byte) 0);
-			return;
-		}
-		buffer.put((byte) id.length());
-		writeString(buffer, id);
+		writeString(buffer, padClientId(id));
 	}
 
 	public static int readBodyFormat(ByteBuffer buffer) {
@@ -129,11 +120,19 @@ public final class MessageIO {
 	}
 
 	public static void writeString(ByteBuffer buffer, String value) {
-		for (int i = 0; i < value.length(); i++)
+		int l = value.length();
+		for (int i = 0; i < l; i++)
 			buffer.put((byte) value.charAt(i));
 	}
 
-	public static int getFullMessageSize(int remainingLength, String id) {
-		return 1 + 1 + (id != null ? id.length() : 0) + 1 + 4 + remainingLength;
+	public static String padClientId(String id) {
+		// HACK:8 is faster!
+		if (id != null && id.length() == 8)
+			return id;
+		return String.format("%8s", id);// bad perf
+	}
+
+	public static int getFullMessageSize(int remainingLength) {
+		return remainingLength + 1 + 8 + 1 + 4;
 	}
 }

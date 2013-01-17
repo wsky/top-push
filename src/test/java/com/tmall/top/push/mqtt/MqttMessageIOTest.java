@@ -123,7 +123,7 @@ public class MqttMessageIOTest {
 
 		MqttPublishMessage msg = new MqttPublishMessage();
 		msg.messageType = MessageType.PUBLISH;// 1
-		msg.to = "abc";// 1+3
+		msg.to = "abc";// 8
 		msg.bodyFormat = 5;// 1
 		msg.remainingLength = 100;
 
@@ -136,8 +136,8 @@ public class MqttMessageIOTest {
 		// + MessageIO.getFullMessageSize(msg.remainingLength);// 113
 
 		MqttMessageIO.parseClientSending(msg, buffer);
-		assertEquals(117, msg.Header.RemainingLength);
-		assertEquals(119, MqttMessageIO.getFullMessageSize(msg));
+		assertEquals(121, msg.Header.RemainingLength);
+		assertEquals(123, MqttMessageIO.getFullMessageSize(msg));
 
 		msg.clear();
 
@@ -147,8 +147,8 @@ public class MqttMessageIOTest {
 		assertEquals(5, msg.bodyFormat);
 		assertEquals(100, msg.remainingLength);
 
-		assertEquals(117, msg.Header.RemainingLength);
-		assertEquals(119, MqttMessageIO.getFullMessageSize(msg));
+		assertEquals(121, msg.Header.RemainingLength);
+		assertEquals(123, MqttMessageIO.getFullMessageSize(msg));
 
 		assertEquals("abc", msg.VariableHeader.TopicName);
 		assertEquals(10, msg.VariableHeader.MessageIdentifier);
@@ -169,8 +169,8 @@ public class MqttMessageIOTest {
 		msg.VariableHeader.TopicName = "abc";
 		msg.VariableHeader.MessageIdentifier = 10;
 		MqttMessageIO.parseServerSending(msg, buffer);
-		assertEquals(117, msg.Header.RemainingLength);
-		assertEquals(119, MqttMessageIO.getFullMessageSize(msg));
+		assertEquals(121, msg.Header.RemainingLength);
+		assertEquals(123, MqttMessageIO.getFullMessageSize(msg));
 
 		msg.clear();
 
@@ -180,8 +180,8 @@ public class MqttMessageIOTest {
 		assertEquals(5, msg.bodyFormat);
 		assertEquals(100, msg.remainingLength);
 
-		assertEquals(117, msg.Header.RemainingLength);
-		assertEquals(119, MqttMessageIO.getFullMessageSize(msg));
+		assertEquals(121, msg.Header.RemainingLength);
+		assertEquals(123, MqttMessageIO.getFullMessageSize(msg));
 		assertEquals("abc", msg.VariableHeader.TopicName);
 		assertEquals(10, msg.VariableHeader.MessageIdentifier);
 	}

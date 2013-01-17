@@ -37,20 +37,34 @@ public class WebSocketPushServerTest {
 	public void init_test() throws Exception {
 		Server server = this.initServer(8001, 8002);
 		server.start();
-
 		WebSocketClientFactory factory = new WebSocketClientFactory();
 		factory.start();
-		this.connect(factory, "ws://localhost:8001/front", "front-test",
-				"mqtt", null);
-		this.connect(factory, "ws://localhost:8002/back", "back-test", "mqtt",
-				null);
-
+		this.connect(factory, "ws://localhost:8001/front", "front-test", "mqtt", null).close();
+		this.connect(factory, "ws://localhost:8002/back", "back-test", "mqtt", null).close();
 		server.stop();
+		Thread.sleep(1000);
 	}
 
 	@Test
 	public void publish_confirm_test() throws Exception {
-		publish_confirm_test(null, 9001, 9002);
+		System.out.print((char)((byte)102)+ " ");
+		System.out.print((char)((byte)114)+ " ");
+		System.out.print((char)((byte)111)+ " ");
+		System.out.print((char)((byte)110)+ " ");
+		System.out.print((char)((byte)116)+ " ");
+		System.out.print((char)((byte)0)+ " ");
+		
+		System.out.println("");
+		
+		System.out.print((char)((byte)98)+ " ");
+		System.out.print((char)((byte)97)+ " ");
+		System.out.print((char)((byte)99)+ " ");
+		System.out.print((char)((byte)107)+ " ");
+		System.out.print((char)((byte)0)+ " ");
+		System.out.print((char)((byte)7)+ " ");
+		
+		
+		publish_confirm_test(null, 9011, 9012);
 	}
 
 	@Test
@@ -117,7 +131,7 @@ public class WebSocketPushServerTest {
 				});
 
 		// back-end client like a publisher
-		String backId = "back1";
+		String backId = "back";
 		final Message confirmMessage = new Message();
 		final MqttPublishMessage mqttConfirmMessage = new MqttPublishMessage();
 		final Object waitBack = new Object();
@@ -159,7 +173,7 @@ public class WebSocketPushServerTest {
 
 		// send publish
 		ByteBuffer publish = this.createPublishMessage(protocol, frontId);
-		back.sendMessage(publish.array(), 0, publish.limit());
+		back.sendMessage(publish.array(), 0, publish.position());
 
 		// receive publish
 		synchronized (waitFront) {
@@ -169,6 +183,7 @@ public class WebSocketPushServerTest {
 		Message msg = "mqtt".equals(protocol) ? mqttPublishMessage
 				: publishMessage;
 		assertEquals(backId, msg.from);
+		assertEquals(7, msg.remainingLength);
 		// assert body is expected
 		assertEquals('a', (char) ((ByteBuffer) msg.body).get());
 		assertEquals('b', (char) ((ByteBuffer) msg.body).get());
@@ -238,7 +253,7 @@ public class WebSocketPushServerTest {
 		if ("mqtt".equals(protocol)) {
 			MqttPublishMessage msg = new MqttPublishMessage();
 			msg.messageType = MessageType.PUBLISH;// 1
-			msg.to = to;// 1+5
+			msg.to = to;// 8
 			msg.bodyFormat = 0;// 1
 			msg.remainingLength = 7;// 4
 
@@ -266,7 +281,6 @@ public class WebSocketPushServerTest {
 		buffer.put((byte) 'e');
 		buffer.put((byte) 'f');
 		buffer.put((byte) 'g');
-		// assertEquals(size, buffer.position());
 		return buffer;
 	}
 

@@ -28,7 +28,7 @@ public class PushManager {
 
 	// all connections whatever from any client
 	private int totalConnections;
-	private int totalPendingMessages;
+	// private int totalPendingMessages;
 	// easy find client by id
 	private HashMap<String, Client> clients;
 	// hold clients which having pending messages and in processing
@@ -133,8 +133,8 @@ public class PushManager {
 	}
 
 	public Client connectingClient(HashMap<String, String> headers) {
-		return this.getClient(this.stateHandler != null 
-				? this.stateHandler.onClientConnecting(headers) 
+		return this.getClient(this.stateHandler != null
+				? this.stateHandler.onClientConnecting(headers)
 				: headers.get("id"));
 	}
 
@@ -179,12 +179,12 @@ public class PushManager {
 				}
 				try {
 					rebuildClientsState();
-					System.out.println(String.format(
-							"total %s pending messages, total %s connections, total %s clients, %s is idle, %s is offline",
-							totalPendingMessages, totalConnections,
-							clients.size(),
-							idleClients.size(),
-							offlineClients.size()));
+					// System.out.println(String.format(
+					// "total %s pending messages, total %s connections, total %s clients, %s is idle, %s is offline",
+					// totalPendingMessages, totalConnections,
+					// clients.size(),
+					// idleClients.size(),
+					// offlineClients.size()));
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -197,7 +197,7 @@ public class PushManager {
 	// build pending/idle clients queue
 	private void rebuildClientsState() {
 		int totalConn = 0;
-		int totalPending = 0;
+		//int totalPending = 0;
 		int connCount, pendingCount;
 		// still have pending clients in processing
 		boolean noPending = this.pendingClients.isEmpty();
@@ -217,7 +217,7 @@ public class PushManager {
 			pendingCount = client.getPendingMessagesCount();
 
 			totalConn += connCount;
-			totalPending += pendingCount;
+			// totalPending += pendingCount;
 
 			offline = connCount == 0;
 			pending = pendingCount > 0;
@@ -230,7 +230,7 @@ public class PushManager {
 			}
 		}
 		this.totalConnections = totalConn;
-		this.totalPendingMessages = totalPending;
+		// this.totalPendingMessages = totalPending;
 	}
 
 	private void rebuildClientsState(Client client, boolean noPending,
