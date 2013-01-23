@@ -11,7 +11,6 @@ import com.tmall.top.push.ClientConnection;
 import com.tmall.top.push.ClientStateHandler;
 import com.tmall.top.push.PushManager;
 import com.tmall.top.push.UnauthorizedException;
-import com.tmall.top.push.messages.Message;
 
 public class InitServlet extends HttpServlet {
 
@@ -39,11 +38,6 @@ public class InitServlet extends HttpServlet {
 
 			@Override
 			public void onClientIdle(Client client) {
-			}
-
-			@Override
-			public void onClientOffline(Client client, Message message) {
-				PushManager.current().getReceiver().release(message);
 			}
 
 			@Override

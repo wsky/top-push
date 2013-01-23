@@ -154,6 +154,7 @@ public class WebSocketPushServerTest {
 					}
 				});
 
+		Thread.sleep(1000);
 		// send publish
 		ByteBuffer publish = this.createPublishMessage(protocol, frontId);
 		back.sendMessage(publish.array(), 0, publish.position());
