@@ -25,7 +25,7 @@
 		</init-param>
 		<init-param>
 			<param-name>senderCount</param-name>
-			<param-value>4</param-value>
+			<param-value>1</param-value>
 		</init-param>
 		<init-param>
 			<param-name>senderIdle</param-name>
@@ -33,7 +33,7 @@
 		</init-param>
 		<init-param>
 			<param-name>stateBuilderIdle</param-name>
-			<param-value>5000</param-value>
+			<param-value>1000</param-value>
 		</init-param>
 	</servlet>
 	<servlet>

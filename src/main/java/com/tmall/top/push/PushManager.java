@@ -48,6 +48,8 @@ public class PushManager {
 	private CancellationToken token;
 
 	private ClientStateHandler stateHandler;
+	private boolean stateBuilding;
+	private Object stateBuildingLock = new Object();
 
 	public PushManager(int maxConnectionCount,
 			int maxMessageSize,
@@ -126,10 +128,9 @@ public class PushManager {
 	}
 
 	public void pendingMessage(Message message) {
-		if (!this.isOfflineClient(message.to))
-			this.getClient(message.to).pendingMessage(message);
-		else if (this.stateHandler != null)
-			this.stateHandler.onClientOffline(this.getClient(message.to), message);
+		if (this.isOfflineClient(message.to)
+				|| !this.getClient(message.to).pendingMessage(message))
+			this.receiver.release(message);
 	}
 
 	public Client connectingClient(HashMap<String, String> headers) {
@@ -138,7 +139,7 @@ public class PushManager {
 				: headers.get("id"));
 	}
 
-	public void connectClient(Client client,
+	public void connectClient(Client client, 
 			ClientConnection clientConnection) throws UnauthorizedException {
 		if (this.stateHandler != null)
 			this.stateHandler.onClientConnect(client, clientConnection);
@@ -168,6 +169,15 @@ public class PushManager {
 		// timer check
 		TimerTask task = new TimerTask() {
 			public void run() {
+				if (stateBuilding)
+					return;
+
+				synchronized (stateBuildingLock) {
+					if (stateBuilding)
+						return;
+					stateBuilding = true;
+				}
+
 				// checking senders
 				try {
 					for (Map.Entry<Sender, Thread> entry : senders.entrySet()) {
@@ -188,6 +198,8 @@ public class PushManager {
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
+
+				stateBuilding = false;
 			}
 		};
 		Timer timer = new Timer(true);
@@ -197,7 +209,7 @@ public class PushManager {
 	// build pending/idle clients queue
 	private void rebuildClientsState() {
 		int totalConn = 0;
-		//int totalPending = 0;
+		// int totalPending = 0;
 		int connCount, pendingCount;
 		// still have pending clients in processing
 		boolean noPending = this.pendingClients.isEmpty();

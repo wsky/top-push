@@ -2,8 +2,6 @@ package com.tmall.top.push;
 
 import java.util.HashMap;
 
-import com.tmall.top.push.messages.Message;
-
 public abstract class ClientStateHandler {
 	
 	public abstract String onClientConnecting(HashMap<String, String> headers);
@@ -18,5 +16,5 @@ public abstract class ClientStateHandler {
 
 	public abstract void onClientOffline(Client client);
 
-	public abstract void onClientOffline(Client client, Message message);
+	//public abstract void onClientOffline(Client client, Message message);
 }

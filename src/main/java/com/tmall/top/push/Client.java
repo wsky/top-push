@@ -7,7 +7,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import com.tmall.top.push.messages.Message;
 
 public class Client {
-	private final static int MAX_FLUSH_COUNT = 100000;
+	private final static int MAX_PENDING_COUNT = 10000;
 	private String id;
 	// ping from any connection
 	private Date lastPingTime;
@@ -33,6 +33,7 @@ public class Client {
 	}
 
 	public int getPendingMessagesCount() {
+		// size() is O(n)
 		return this.pendingMessages.size();
 	}
 
@@ -53,9 +54,13 @@ public class Client {
 	}
 
 	// pend message waiting to be send
-	public void pendingMessage(Message msg) {
-		if (msg != null)
-			this.pendingMessages.add(msg);
+	public boolean pendingMessage(Message msg) {
+		if (msg == null)
+			return false;
+		if (this.getPendingMessagesCount() >= MAX_PENDING_COUNT)
+			return false;
+		this.pendingMessages.add(msg);
+		return true;
 	}
 
 	public void clearPendingMessages() {
@@ -69,9 +74,6 @@ public class Client {
 		int temp = 0;
 		for (int i = 0; i < count; i++) {
 			if (token.isCancelling())
-				break;
-			// prevent client and bandwidth usage
-			if (i == MAX_FLUSH_COUNT - 1)
 				break;
 			Message msg = this.pendingMessages.poll();
 			if (msg == null)
@@ -105,7 +107,7 @@ public class Client {
 				"client#%s remove a connection from %s", this.getId(),
 				conn.getOrigin()));
 	}
-	
+
 	private void SendMessage(CancellationToken token, Message msg) {
 		// FIFO queue for LRU load-balance
 		while (true) {
