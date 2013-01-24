@@ -9,7 +9,7 @@ var i = 0;
 function doConnect() {
     if(i++ == connects) return;
     
-    client(flag, 'ws://localhost:8080/backend').
+    client(flag, uri).
     	on('connect', function(context) {}).
     	on('message', function(context) {
 			var msg = context.message;
