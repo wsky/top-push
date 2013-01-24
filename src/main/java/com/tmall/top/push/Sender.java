@@ -38,7 +38,7 @@ public class Sender implements Runnable {
 		// TODO: auto adjust max flush count
 		// https://github.com/wsky/top-push/issues/24
 		// 100000 is max message count server can flush per second
-		int max = 2000 / this.totalSenderCount;
+		int max = 2000;
 		int min = 100;
 		int pending = this.manager.getPendingClientCount();
 		pending = pending == 0 ? 1 : pending;
