@@ -8,9 +8,9 @@ BRIDGE=ubuntu@ec2-46-51-227-180.ap-northeast-1.compute.amazonaws.com
 SERVERS=(
 	#m1.large
 	#ubuntu@ec2-176-34-6-67.ap-northeast-1.compute.amazonaws.com
-	ubuntu@ec2-54-248-166-38.ap-northeast-1.compute.amazonaws.com
-	ubuntu@ec2-54-248-33-62.ap-northeast-1.compute.amazonaws.com
-	ubuntu@ec2-176-34-0-58.ap-northeast-1.compute.amazonaws.com
+	ubuntu@ec2-54-248-60-76.ap-northeast-1.compute.amazonaws.com
+	ubuntu@ec2-54-248-205-9.ap-northeast-1.compute.amazonaws.com
+	ubuntu@ec2-54-248-202-252.ap-northeast-1.compute.amazonaws.com
 )
 
 CLIENTS=(
@@ -22,7 +22,7 @@ CLIENTS=(
 	#m1.large
 	#ubuntu@ec2-176-34-6-67.ap-northeast-1.compute.amazonaws.com
 	#m1.xlarge
-	ubuntu@ec2-54-248-166-38.ap-northeast-1.compute.amazonaws.com
-	ubuntu@ec2-54-248-33-62.ap-northeast-1.compute.amazonaws.com
-	ubuntu@ec2-176-34-0-58.ap-northeast-1.compute.amazonaws.com
+	ubuntu@ec2-54-248-60-76.ap-northeast-1.compute.amazonaws.com
+	ubuntu@ec2-54-248-205-9.ap-northeast-1.compute.amazonaws.com
+	ubuntu@ec2-54-248-202-252.ap-northeast-1.compute.amazonaws.com
 )

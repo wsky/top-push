@@ -13,31 +13,30 @@
 var top 		= require('./lib/top-push-client'),
 	client 		= top.client,
 	uri 		= process.argv[2],
-	flag		= 'sender',
+	to 			= process.argv[3],
 	MessageType = { PUBLISH: 1, PUBCONFIRM: 2 };
 
 
-client(flag, uri).
+client('sender', uri).
 	on('connect', function(context) {
+		var msg = { MessageId: "20130104" };
+		console.log(msg);
+		console.log(to);
 		setTimeout(function(){
 			setInterval(function(){
-				for(var i = 0; i < 100; i++) {
-					context.sendMessage(
-						'receiver', 
-						MessageType.PUBLISH, 
-						{ MessageId: "20130104" + i });
-				}
+				for(var i = 0; i < 100; i++)
+					context.sendMessage(to, MessageType.PUBLISH, msg);
 			}, 10);
 		}, 2000);
 	}).
 	on('message', function(context) {
-		var msg = context.message;
+		/*var msg = context.message;
 
 		if(context.messageType == MessageType.PUBCONFIRM) {
 			//console.log('---- receive confirm ----');
 			//console.log(msg);
 			//process.exit();
-		}
+		}*/
 	});
 
 process.openStdin().addListener("data", function(d) { process.exit(); });
