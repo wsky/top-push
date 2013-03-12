@@ -5,7 +5,7 @@ JETTY_DIR=jetty-distribution-$JETTY_VERSION
 
 #build package first
 cd ..
-mvn package
+mvn clean package
 cd scripts
 
 #copy

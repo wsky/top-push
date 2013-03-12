@@ -2,7 +2,7 @@ var top 		= require('./lib/top-push-client'),
 	client 		= top.client,
 	uri 		= process.argv[2],
     connects 	= parseInt(process.argv[3]),
-	flag		= 'receiver',
+	flag		= process.argv[4],
 	MessageType = { PUBLISH: 1, PUBCONFIRM: 2 };
 
 var i = 0;
