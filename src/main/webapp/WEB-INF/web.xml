@@ -9,7 +9,7 @@
 	<!-- </context-param> -->
 	<servlet>
 		<servlet-name>init</servlet-name>
-		<servlet-class>com.tmall.top.push.websocket.InitServlet</servlet-class>
+		<servlet-class>com.taobao.top.push.websocket.InitServlet</servlet-class>
 		<load-on-startup>0</load-on-startup>
 		<init-param>
 			<param-name>maxConnectionCount</param-name>
@@ -38,7 +38,7 @@
 	</servlet>
 	<servlet>
 		<servlet-name>frontend</servlet-name>
-		<servlet-class>com.tmall.top.push.websocket.FrontendServlet</servlet-class>
+		<servlet-class>com.taobao.top.push.websocket.FrontendServlet</servlet-class>
 		<init-param>
 			<param-name>maxTextMessageSize</param-name>
 			<param-value>1048576</param-value>
@@ -50,7 +50,7 @@
 	</servlet>
 	<servlet>
 		<servlet-name>backend</servlet-name>
-		<servlet-class>com.tmall.top.push.websocket.BackendServlet</servlet-class>
+		<servlet-class>com.taobao.top.push.websocket.BackendServlet</servlet-class>
 		<init-param>
 			<param-name>maxTextMessageSize</param-name>
 			<param-value>1048576</param-value>
