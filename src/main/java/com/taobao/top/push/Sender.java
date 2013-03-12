@@ -3,7 +3,6 @@ package com.taobao.top.push;
 public class Sender implements Runnable {
 	protected CancellationToken token;
 	protected PushManager manager;
-	private int totalSenderCount;
 	private Client pendingClient;
 	private int idle;
 
@@ -15,7 +14,6 @@ public class Sender implements Runnable {
 		this.manager = manager;
 		this.token = token;
 		this.idle = idle;
-		this.totalSenderCount = totalSenderCount;
 	}
 
 	@Override
