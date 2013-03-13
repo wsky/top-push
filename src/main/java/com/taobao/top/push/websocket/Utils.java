@@ -24,7 +24,6 @@ public class Utils {
 		while (names.hasMoreElements()) {
 			String h = names.nextElement().toLowerCase();
 			headers.put(h, request.getHeader(h));
-			System.out.println(String.format("%s=%s", h, request.getHeader(h)));
 		}
 		return headers;
 	}

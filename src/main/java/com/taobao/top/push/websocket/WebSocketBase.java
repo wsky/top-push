@@ -3,16 +3,19 @@ package com.taobao.top.push.websocket;
 import org.eclipse.jetty.websocket.WebSocket;
 
 import com.taobao.top.push.Client;
+import com.taobao.top.push.Logger;
+import com.taobao.top.push.LoggerFactory;
 import com.taobao.top.push.MessageTooLongException;
 import com.taobao.top.push.NoMessageBufferException;
 import com.taobao.top.push.PushManager;
 import com.taobao.top.push.UnauthorizedException;
 import com.taobao.top.push.messages.Message;
 
-public abstract class WebSocketBase implements WebSocket.OnTextMessage, 
-	WebSocket.OnBinaryMessage, 
-	WebSocket.OnControl, 
-	WebSocket.OnFrame {
+public abstract class WebSocketBase implements WebSocket.OnTextMessage,
+		WebSocket.OnBinaryMessage,
+		WebSocket.OnControl,
+		WebSocket.OnFrame {
+	protected Logger logger;
 
 	protected FrameConnection frameConnection;
 	protected Connection connection;
@@ -21,9 +24,11 @@ public abstract class WebSocketBase implements WebSocket.OnTextMessage,
 	protected Client client;
 	protected WebSocketClientConnection clientConnection;
 
-	public WebSocketBase(PushManager manager, 
-			Client client, 
+	public WebSocketBase(LoggerFactory loggerFactory,
+			PushManager manager,
+			Client client,
 			WebSocketClientConnection clientConnection) {
+		this.logger = loggerFactory.create(this);
 		this.manager = manager;
 		this.client = client;
 		this.clientConnection = clientConnection;
@@ -33,7 +38,7 @@ public abstract class WebSocketBase implements WebSocket.OnTextMessage,
 	public void onClose(int closeCode, String message) {
 		this.manager.disconnectClient(this.client, this.clientConnection);
 		this.clear();
-		System.out.println(String.format("websocket close: %s | %s", closeCode, message));
+		this.logger.info("websocket closed: %s | %s", closeCode, message);
 	}
 
 	@Override
@@ -41,19 +46,19 @@ public abstract class WebSocketBase implements WebSocket.OnTextMessage,
 		if (this.manager.isReachMaxConnectionCount()) {
 			this.clear();
 			frameConnection.close(403, "reach max connections");
-			System.out.println(String.format("websocket close: %s | %s", 403, "reach max connections"));
+			this.logger.warn("close websocket: %s | %s", 403, "reach max connections");
 			return;
 		}
-		
+
 		try {
 			this.manager.connectClient(this.client, this.clientConnection);
 		} catch (UnauthorizedException e) {
 			this.clear();
 			frameConnection.close(401, e.getMessage());
-			System.out.println(String.format("websocket close: %s | %s", 401, e.getMessage()));
+			this.logger.warn("close websocket: %s | %s", 401, e.getMessage());
 			return;
 		}
-		
+
 		this.frameConnection = frameConnection;
 		this.clientConnection.init(this.frameConnection);
 	}
@@ -73,7 +78,9 @@ public abstract class WebSocketBase implements WebSocket.OnTextMessage,
 	}
 
 	@Override
-	public abstract void onMessage(String message);
+	public void onMessage(String message) {
+		this.logger.warn("receive text message: %s", message);
+	}
 
 	@Override
 	public void onMessage(byte[] data, int offset, int length) {
@@ -93,15 +100,15 @@ public abstract class WebSocketBase implements WebSocket.OnTextMessage,
 				this.manager.pendingMessage(msg);
 			}
 		} catch (MessageTooLongException e) {
-			e.printStackTrace();
+			this.logger.error(e);
 			this.frameConnection.close(400, e.getMessage());
 		} catch (NoMessageBufferException e) {
-			e.printStackTrace();
+			this.logger.error(e);
 			// https://github.com/wsky/top-push/issues/23
 			// ignore no buffer and drop it
 			// this.frameConnection.close(400, e.getMessage());
 		} catch (Exception e) {
-			e.printStackTrace();
+			this.logger.error(e);
 		}
 	}
 
@@ -115,7 +122,7 @@ public abstract class WebSocketBase implements WebSocket.OnTextMessage,
 		this.clientConnection.receivePing();
 		this.client.receivePing();
 	}
-	
+
 	private void clear() {
 		Utils.getClientConnectionPool().release(this.clientConnection);
 	}

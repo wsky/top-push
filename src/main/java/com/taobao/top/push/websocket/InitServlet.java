@@ -9,6 +9,7 @@ import javax.servlet.http.HttpServlet;
 import com.taobao.top.push.Client;
 import com.taobao.top.push.ClientConnection;
 import com.taobao.top.push.ClientStateHandler;
+import com.taobao.top.push.DefaultLoggerFactory;
 import com.taobao.top.push.PushManager;
 import com.taobao.top.push.UnauthorizedException;
 
@@ -20,6 +21,7 @@ public class InitServlet extends HttpServlet {
 	public void init(ServletConfig config) throws ServletException {
 		Utils.initClientConnectionPool(100000);
 		PushManager.current(new PushManager(
+				new DefaultLoggerFactory(),
 				this.get(config, "maxConnectionCount"),
 				this.get(config, "maxMessageSize"),
 				this.get(config, "maxMessageBufferCount"),

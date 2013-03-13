@@ -6,14 +6,20 @@ import com.taobao.top.push.mqtt.disconnect.MqttDisconnectMessage;
 
 // deal with command message like CONNECT/DISCONNECT
 public class Processor {
+	private Logger logger;
+
+	public Processor(LoggerFactory loggerFactory) {
+		this.logger = loggerFactory.create(this);
+	}
+
 	public void process(Message message, ClientConnection connection)
 			throws Exception {
 		if (!"mqtt".equalsIgnoreCase(connection.getProtocol())) {
-			System.out.println("Only mqtt protocol support command message process, currently");
+			this.logger.warn("Only mqtt protocol support command message process, currently");
 			return;
 		}
 
-		System.err.println("ignore MQTT Message|" + message);
+		this.logger.warn("ignore MQTT Message|" + message);
 
 		// TODO: Actually implement MQTT CONNECT/DISCONNECT
 		if (message instanceof MqttConnectMessage) {

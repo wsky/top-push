@@ -7,6 +7,7 @@ import java.util.HashMap;
 
 import org.junit.Test;
 
+import com.taobao.top.push.DefaultLoggerFactory;
 import com.taobao.top.push.MessageTooLongException;
 import com.taobao.top.push.NoMessageBufferException;
 import com.taobao.top.push.PushManager;
@@ -67,7 +68,7 @@ public class WebSocketClientConnectionTest {
 	}
 
 	private PushManager getManager() {
-		return new PushManager(10, 1024, 1, 0, 1000, 10000);
+		return new PushManager(new DefaultLoggerFactory(), 10, 1024, 1, 0, 1000, 10000);
 	}
 
 	private WebSocketClientConnectionPool getPool() {

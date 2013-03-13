@@ -23,6 +23,9 @@ public class PushManager {
 		return current;
 	}
 
+	private LoggerFactory loggerFactory;
+	private Logger logger;
+
 	private Object clientLock = new Object();
 	private int maxConnectionCount;
 
@@ -51,12 +54,15 @@ public class PushManager {
 	private boolean stateBuilding;
 	private Object stateBuildingLock = new Object();
 
-	public PushManager(int maxConnectionCount,
+	public PushManager(LoggerFactory loggerFactory, int maxConnectionCount,
 			int maxMessageSize,
 			int maxMessageBufferCount,
 			int senderCount,
 			int senderIdle,
 			int stateBuilderIdle) {
+		this.loggerFactory = loggerFactory;
+		this.logger = this.loggerFactory.create(this);
+
 		this.maxConnectionCount = maxConnectionCount;
 		// client management
 		this.clients = new HashMap<String, Client>(1000);
@@ -66,7 +72,7 @@ public class PushManager {
 
 		this.receiver = new Receiver(maxMessageSize, maxMessageBufferCount);
 		// HACK:more message protocol process can extend it
-		this.processor = new Processor();
+		this.processor = new Processor(loggerFactory);
 
 		// TODO:move to start and support start/stop/restart
 		this.token = new CancellationToken();
@@ -88,6 +94,10 @@ public class PushManager {
 		this.token.setCancelling(false);
 	}
 
+	public LoggerFactory getLoggerFactory() {
+		return this.loggerFactory;
+	}
+
 	public Receiver getReceiver() {
 		return this.receiver;
 	}
@@ -100,7 +110,7 @@ public class PushManager {
 		if (!this.clients.containsKey(id)) {
 			synchronized (this.clientLock) {
 				if (!this.clients.containsKey(id))
-					this.clients.put(id, new Client(id, this));
+					this.clients.put(id, new Client(this.loggerFactory, id, this));
 			}
 		}
 		return this.clients.get(id);
@@ -139,7 +149,7 @@ public class PushManager {
 				: headers.get("id"));
 	}
 
-	public void connectClient(Client client, 
+	public void connectClient(Client client,
 			ClientConnection clientConnection) throws UnauthorizedException {
 		if (this.stateHandler != null)
 			this.stateHandler.onClientConnect(client, clientConnection);
@@ -182,21 +192,24 @@ public class PushManager {
 				try {
 					for (Map.Entry<Sender, Thread> entry : senders.entrySet()) {
 						if (!entry.getValue().isAlive())
-							System.out.println(String.format("sender#%s is broken!", entry.getKey()));
+							logger.warn("sender#%s is broken!", entry.getKey());
 					}
 				} catch (Exception e) {
-					e.printStackTrace();
+					logger.error(e);
 				}
 				try {
 					rebuildClientsState();
-					/*System.out.println(String.format(
-						"total %s pending messages, total %s connections, total %s clients, %s is idle, %s is offline",
-						totalPendingMessages, totalConnections,
-						clients.size(),
-						idleClients.size(),
-						offlineClients.size()));*/
+					if (logger.isDebugEnable())
+						logger.debug(
+								"total %s pending messages, total %s connections, total %s clients, %s is idle, %s is offline",
+								totalPendingMessages,
+								totalConnections,
+								clients.size(),
+								idleClients.size(),
+								offlineClients.size());
+
 				} catch (Exception e) {
-					e.printStackTrace();
+					logger.fatal("rebuildClientsState error!", e);
 				}
 
 				stateBuilding = false;
@@ -209,7 +222,7 @@ public class PushManager {
 	// build pending/idle clients queue
 	private void rebuildClientsState() {
 		int totalConn = 0;
-	 	int totalPending = 0;
+		int totalPending = 0;
 		int connCount, pendingCount;
 		// still have pending clients in processing
 		boolean noPending = this.pendingClients.isEmpty();
@@ -237,8 +250,8 @@ public class PushManager {
 			try {
 				this.rebuildClientsState(client, noPending, pending, offline);
 			} catch (Exception e) {
-				System.err.println(String.format("error on rebuilding client#%s state", client.getId()));
-				e.printStackTrace();
+				this.logger.error(String.format(
+						"error on rebuilding client#%s state", client.getId()), e);
 			}
 		}
 		this.totalConnections = totalConn;

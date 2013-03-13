@@ -15,7 +15,7 @@ public class ClientTest {
 
 	@Test
 	public void init_test() {
-		Client client = new Client("abc", this.getManager());
+		Client client = new Client(new DefaultLoggerFactory(), "abc", this.getManager());
 		assertEquals("abc", client.getId());
 		assertEquals(0, client.getConnectionsCount());
 		assertEquals(0, client.getPendingMessagesCount());
@@ -23,7 +23,7 @@ public class ClientTest {
 
 	@Test
 	public void add_remove_connection_test() {
-		Client client = new Client("abc", this.getManager());
+		Client client = new Client(new DefaultLoggerFactory(), "abc", this.getManager());
 		TestConnection c1 = new TestConnection();
 		TestConnection c2 = new TestConnection();
 		client.AddConnection(c1);
@@ -37,14 +37,14 @@ public class ClientTest {
 
 	@Test
 	public void pending_message_test() {
-		Client client = new Client("abc", this.getManager());
+		Client client = new Client(new DefaultLoggerFactory(), "abc", this.getManager());
 		client.pendingMessage(new Message());
 		assertEquals(1, client.getPendingMessagesCount());
 	}
 
 	@Test
 	public void release_after_send_message_test() {
-		Client client = new Client("abc", this.getManager());
+		Client client = new Client(new DefaultLoggerFactory(), "abc", this.getManager());
 		Message msg = new Message();
 		msg.body = new Object();
 		client.pendingMessage(msg);
@@ -55,7 +55,7 @@ public class ClientTest {
 
 	@Test
 	public void flush_LRU_test() {
-		Client client = new Client("abc", this.getManager());
+		Client client = new Client(new DefaultLoggerFactory(), "abc", this.getManager());
 		TestConnection c1 = new TestConnection();
 		TestConnection c2 = new TestConnection();
 		client.AddConnection(c1);
@@ -78,7 +78,7 @@ public class ClientTest {
 
 	@Test
 	public void flush_closed_connection_test() {
-		Client client = new Client("abc", this.getManager());
+		Client client = new Client(new DefaultLoggerFactory(), "abc", this.getManager());
 		TestConnection c1 = new TestConnection(false, true);
 		TestConnection c2 = new TestConnection();
 		client.AddConnection(c1);
@@ -94,7 +94,7 @@ public class ClientTest {
 
 	@Test
 	public void flush_when_send_error_test() {
-		Client client = new Client("abc", this.getManager());
+		Client client = new Client(new DefaultLoggerFactory(), "abc", this.getManager());
 		TestConnection c1 = new TestConnection(true, false);
 		TestConnection c2 = new TestConnection();
 		client.AddConnection(c1);
@@ -109,7 +109,7 @@ public class ClientTest {
 	}
 
 	private PushManager getManager() {
-		return new PushManager(10, 1024, 1, 0, 1000, 10000);
+		return new PushManager(new DefaultLoggerFactory(), 10, 1024, 1, 0, 1000, 10000);
 	}
 
 	public class TestConnection extends ClientConnection {

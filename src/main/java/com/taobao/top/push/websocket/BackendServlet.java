@@ -8,6 +8,7 @@ import org.eclipse.jetty.websocket.WebSocket;
 import org.eclipse.jetty.websocket.WebSocketServlet;
 
 import com.taobao.top.push.Client;
+import com.taobao.top.push.LoggerFactory;
 import com.taobao.top.push.PushManager;
 
 public class BackendServlet extends WebSocketServlet {
@@ -23,19 +24,14 @@ public class BackendServlet extends WebSocketServlet {
 		WebSocketClientConnection clientConnection = Utils.getClientConnectionPool().acquire();
 		clientConnection.init(client.getId(), headers, manager);
 
-		return new BackendWebSocket(manager, client, clientConnection);
+		return new BackendWebSocket(
+				manager.getLoggerFactory(), manager, client, clientConnection);
 	}
 
 	public class BackendWebSocket extends WebSocketBase {
-
-		public BackendWebSocket(PushManager manager, 
-				Client client,
-				WebSocketClientConnection clientConnection) {
-			super(manager, client, clientConnection);
-		}
-
-		@Override
-		public void onMessage(String arg0) {
+		public BackendWebSocket(LoggerFactory loggerFactory,
+				PushManager manager, Client client, WebSocketClientConnection clientConnection) {
+			super(loggerFactory, manager, client, clientConnection);
 		}
 	}
 }

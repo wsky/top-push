@@ -8,6 +8,7 @@ import com.taobao.top.push.messages.Message;
 
 public class Client {
 	private final static int MAX_PENDING_COUNT = 10000;
+	private Logger logger;
 	private String id;
 	// ping from any connection
 	private Date lastPingTime;
@@ -19,7 +20,8 @@ public class Client {
 
 	private PushManager manager;
 
-	public Client(String id, PushManager manager) {
+	public Client(LoggerFactory factory, String id, PushManager manager) {
+		this.logger = factory.create(this);
 		this.id = id;
 		this.receivePing();
 		this.connections = new LinkedList<ClientConnection>();
@@ -83,9 +85,11 @@ public class Client {
 		}
 		this.totalSendMessageCount += temp;
 		if (temp > 0)
-			System.out.println(String.format(
+			this.logger.info(
 					"flush %s messages to client#%s, totalSendMessageCount=%s",
-					temp, this.getId(), this.totalSendMessageCount));
+					temp,
+					this.getId(),
+					this.totalSendMessageCount);
 	}
 
 	protected void AddConnection(ClientConnection conn) {
@@ -93,9 +97,8 @@ public class Client {
 			this.connections.add(conn);
 		}
 		this.connectionQueue.add(conn);
-		System.out.println(String.format(
-				"client#%s add new connection from %s", this.getId(),
-				conn.getOrigin()));
+		this.logger.info("client#%s add new connection from %s",
+				this.getId(), conn.getOrigin());
 	}
 
 	protected void RemoveConnection(ClientConnection conn) {
@@ -103,9 +106,8 @@ public class Client {
 			this.connections.remove(conn);
 		}
 		this.connectionQueue.remove(conn);
-		System.out.println(String.format(
-				"client#%s remove a connection from %s", this.getId(),
-				conn.getOrigin()));
+		this.logger.info("client#%s remove a connection from %s",
+				this.getId(), conn.getOrigin());
 	}
 
 	private void SendMessage(CancellationToken token, Message msg) {
@@ -119,16 +121,14 @@ public class Client {
 			if (!connection.isOpen()) {
 				// TODO:release connection object here? or websocketbase always
 				// do this?
-				System.out.println(String.format(
-						"connection#%s[%s] is closed, remove it",
-						connection.getId(), connection.getOrigin()));
+				this.logger.info("connection#%s[%s] is closed, remove it",
+						connection.getId(), connection.getOrigin());
 				continue;
 			}
 			try {
 				connection.sendMessage(msg);
 			} catch (Exception e) {
-				System.out.println("send message error");
-				e.printStackTrace();
+				this.logger.error("send message error", e);
 			} finally {
 				this.connectionQueue.add(connection);
 			}

@@ -13,8 +13,7 @@ import com.taobao.top.push.websocket.WebSocketClientConnection;
 public class PushMangerTest {
 	@Test
 	public void get_client_test() {
-		PushManager manager = new PushManager(10, 1024, 10, 1, 1000,
-				100);
+		PushManager manager = new PushManager(new DefaultLoggerFactory(), 10, 1024, 10, 1, 1000, 100);
 		String id = "abc";
 		assertEquals(manager.getClient(id), manager.getClient(id));
 
@@ -42,8 +41,7 @@ public class PushMangerTest {
 	public void state_test() throws SecurityException, NoSuchMethodException,
 			InterruptedException {
 		// senderCount should be 0
-		PushManager manager = new PushManager(2, 1024, 10, 0, 1000,
-				100);
+		PushManager manager = new PushManager(new DefaultLoggerFactory(), 2, 1024, 10, 0, 1000, 100);
 		Client c1 = manager.getClient("1");
 		Client c2 = manager.getClient("2");
 		Thread.sleep(1000);
