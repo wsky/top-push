@@ -1,6 +1,5 @@
 package com.taobao.top.push.mqtt;
 
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 
@@ -359,27 +358,18 @@ public class MqttMessageIO {
 			buffer.put((byte) (0 & 0xFF));
 			return;
 		}
-		try {
-			byte[] bytes = value.getBytes("UTF-8");
-			buffer.put((byte) (bytes.length >> 8));
-			buffer.put((byte) (bytes.length & 0xFF));
-			buffer.put(bytes);
-		} catch (UnsupportedEncodingException e) {
-			e.printStackTrace();
-		}
+		byte[] bytes = value.getBytes(Charset.forName("UTF-8"));
+		buffer.put((byte) (bytes.length >> 8));
+		buffer.put((byte) (bytes.length & 0xFF));
+		buffer.put(bytes);
+
 	}
 
 	public static int getByteCount(String value) {
 		if (value == null || value == "")
 			return 2;
 		// TODO: avoid getBytes create temp array
-		try {
-			return value.getBytes("UTF-8").length + 2;
-		} catch (UnsupportedEncodingException e) {
-			e.printStackTrace();
-			// ASCII
-			return value.length() + 2;
-		}
+		return value.getBytes(Charset.forName("UTF-8")).length + 2;
 	}
 
 	// public class StringLengthBufferPool extends Pool<byte[]> {

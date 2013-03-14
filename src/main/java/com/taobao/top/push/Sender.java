@@ -1,6 +1,7 @@
 package com.taobao.top.push;
 
 public class Sender implements Runnable {
+	private Logger logger;
 	protected CancellationToken token;
 	protected PushManager manager;
 	private Client pendingClient;
@@ -10,7 +11,9 @@ public class Sender implements Runnable {
 		return this.token;
 	}
 
-	public Sender(PushManager manager, CancellationToken token, int idle, int totalSenderCount) {
+	public Sender(LoggerFactory loggerFactory, 
+			PushManager manager, CancellationToken token, int idle, int totalSenderCount) {
+		this.logger = loggerFactory.create(this);
 		this.manager = manager;
 		this.token = token;
 		this.idle = idle;
@@ -22,12 +25,12 @@ public class Sender implements Runnable {
 			try {
 				doSend();
 			} catch (Exception e) {
-				e.printStackTrace();
+				this.logger.error(e);
 			}
 			try {
 				Thread.sleep(this.idle);
 			} catch (InterruptedException e) {
-				e.printStackTrace();
+				this.logger.error(e);
 			}
 		}
 	}
@@ -45,7 +48,7 @@ public class Sender implements Runnable {
 			flushCount = max;
 		if (flushCount < min)
 			flushCount = min;
-		
+
 		while (!this.token.isCancelling()
 				&& (this.pendingClient = this.manager.pollPendingClient()) != null) {
 			this.pendingClient.flush(token, flushCount);
