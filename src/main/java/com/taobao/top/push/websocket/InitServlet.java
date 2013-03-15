@@ -21,7 +21,7 @@ public class InitServlet extends HttpServlet {
 	public void init(ServletConfig config) throws ServletException {
 		Utils.initClientConnectionPool(100000);
 		PushManager.current(new PushManager(
-				new DefaultLoggerFactory(),
+				new DefaultLoggerFactory(true, true, true, true, true),
 				this.get(config, "maxConnectionCount"),
 				this.get(config, "maxMessageSize"),
 				this.get(config, "maxMessageBufferCount"),
@@ -29,7 +29,6 @@ public class InitServlet extends HttpServlet {
 				this.get(config, "senderIdle"),
 				this.get(config, "stateBuilderIdle")));
 		PushManager.current().setClientStateHandler(new ClientStateHandler() {
-
 			@Override
 			public void onClientPending(Client client) {
 			}
@@ -43,16 +42,17 @@ public class InitServlet extends HttpServlet {
 			}
 
 			@Override
-			public void onClientConnect(Client client, ClientConnection clientConnection) throws UnauthorizedException {
+			public String onClientConnecting(HashMap<String, String> headers) throws UnauthorizedException {
+				String id = headers.get("origin");
+
+				if (id == null || id.trim() == "")
+					throw new UnauthorizedException("origin is empty");
+
+				return id;
 			}
 
 			@Override
 			public void onClientDisconnect(Client client, ClientConnection clientConnection) {
-			}
-
-			@Override
-			public String onClientConnecting(HashMap<String, String> headers) {
-				return headers.get("origin");
 			}
 		});
 

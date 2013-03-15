@@ -143,18 +143,14 @@ public class PushManager {
 			this.receiver.release(message);
 	}
 
-	public Client connectingClient(HashMap<String, String> headers) {
-		return this.getClient(this.stateHandler != null
-				? this.stateHandler.onClientConnecting(headers)
-				: headers.get("id"));
-	}
-
-	public void connectClient(Client client,
+	public Client connectClient(HashMap<String, String> headers,
 			ClientConnection clientConnection) throws UnauthorizedException {
-		if (this.stateHandler != null)
-			this.stateHandler.onClientConnect(client, clientConnection);
+		String id = this.stateHandler.onClientConnecting(headers);
+		clientConnection.init(id, headers, this);
 
+		Client client = this.getClient(id);
 		client.AddConnection(clientConnection);
+		return client;
 	}
 
 	public void disconnectClient(Client client, ClientConnection clientConnection) {

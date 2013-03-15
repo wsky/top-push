@@ -8,7 +8,6 @@ import com.taobao.top.push.LoggerFactory;
 import com.taobao.top.push.MessageTooLongException;
 import com.taobao.top.push.NoMessageBufferException;
 import com.taobao.top.push.PushManager;
-import com.taobao.top.push.UnauthorizedException;
 import com.taobao.top.push.messages.Message;
 
 public abstract class WebSocketBase implements WebSocket.OnTextMessage,
@@ -49,16 +48,6 @@ public abstract class WebSocketBase implements WebSocket.OnTextMessage,
 			this.logger.warn("close websocket: %s | %s", 403, "reach max connections");
 			return;
 		}
-
-		try {
-			this.manager.connectClient(this.client, this.clientConnection);
-		} catch (UnauthorizedException e) {
-			this.clear();
-			frameConnection.close(401, e.getMessage());
-			this.logger.warn("close websocket: %s | %s", 401, e.getMessage());
-			return;
-		}
-
 		this.frameConnection = frameConnection;
 		this.clientConnection.init(this.frameConnection);
 	}
