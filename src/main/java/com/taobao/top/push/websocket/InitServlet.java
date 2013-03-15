@@ -21,7 +21,7 @@ public class InitServlet extends HttpServlet {
 	public void init(ServletConfig config) throws ServletException {
 		Utils.initClientConnectionPool(100000);
 		PushManager.current(new PushManager(
-				new DefaultLoggerFactory(true, true, true, true, true),
+				new DefaultLoggerFactory(false, true, true, true, true),
 				this.get(config, "maxConnectionCount"),
 				this.get(config, "maxMessageSize"),
 				this.get(config, "maxMessageBufferCount"),
