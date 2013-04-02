@@ -12,13 +12,12 @@ public class Processor {
 		this.logger = loggerFactory.create(this);
 	}
 
-	public void process(Message message, ClientConnection connection)
+	public boolean process(Message message, ClientConnection connection)
 			throws Exception {
 		if (!"mqtt".equalsIgnoreCase(connection.getProtocol())) {
 			this.logger.warn("Only mqtt protocol support command message process, currently");
-			return;
 		}
-
+		
 		this.logger.warn("ignore MQTT Message|" + message);
 
 		// TODO: Actually implement MQTT CONNECT/DISCONNECT
@@ -27,5 +26,6 @@ public class Processor {
 		} else if (message instanceof MqttDisconnectMessage) {
 
 		}
+		return false;
 	}
 }

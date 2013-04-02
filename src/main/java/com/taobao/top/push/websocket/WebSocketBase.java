@@ -79,11 +79,7 @@ public abstract class WebSocketBase implements WebSocket.OnTextMessage,
 		try {
 			Message msg = this.clientConnection.parse(data, offset, length);
 
-			// TODO:make this judgment understandably, command or not
-			if (msg.to == null || msg.to == "") {
-				// maybe command message like CONNECT/DISCONNECT
-				this.manager.getProcessor().process(msg, this.clientConnection);
-			} else {
+			if (!this.manager.getProcessor().process(msg, this.clientConnection)) {
 				// forward message
 				// deliver to target client
 				this.manager.pendingMessage(msg);

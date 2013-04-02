@@ -54,7 +54,8 @@ public class PushManager {
 	private boolean stateBuilding;
 	private Object stateBuildingLock = new Object();
 
-	public PushManager(LoggerFactory loggerFactory, int maxConnectionCount,
+	public PushManager(LoggerFactory loggerFactory,
+			int maxConnectionCount,
 			int maxMessageSize,
 			int maxMessageBufferCount,
 			int senderCount,
@@ -82,6 +83,10 @@ public class PushManager {
 
 	public void setClientStateHandler(ClientStateHandler handler) {
 		this.stateHandler = handler;
+	}
+
+	public void setProcessor(Processor processor) {
+		this.processor = processor;
 	}
 
 	// cancel all current job
