@@ -76,14 +76,9 @@ public abstract class WebSocketBase implements WebSocket.OnTextMessage,
 		// any message use as ping
 		this.receivePing();
 
+		Message msg = null;
 		try {
-			Message msg = this.clientConnection.parse(data, offset, length);
-
-			if (!this.manager.getProcessor().process(msg, this.clientConnection)) {
-				// forward message
-				// deliver to target client
-				this.manager.pendingMessage(msg);
-			}
+			msg = this.clientConnection.parse(data, offset, length);
 		} catch (MessageTooLongException e) {
 			this.logger.error(e);
 			this.frameConnection.close(400, e.getMessage());
@@ -92,13 +87,25 @@ public abstract class WebSocketBase implements WebSocket.OnTextMessage,
 			// https://github.com/wsky/top-push/issues/23
 			// ignore no buffer and drop it
 			// this.frameConnection.close(400, e.getMessage());
+		}
+
+		try {
+			if (!this.manager.getProcessor().process(msg, this.clientConnection)) {
+				// forward message
+				// deliver to target client
+				this.manager.pendingMessage(msg);
+			}
 		} catch (Exception e) {
+			this.manager.getReceiver().release(msg);
 			this.logger.error(e);
 		}
 	}
 
 	@Override
-	public boolean onFrame(byte arg0, byte arg1, byte[] arg2, int arg3, int arg4) {
+	public boolean onFrame(byte flags, byte opcode, byte[] array, int offset, int length) {
+		int FIN = flags & 0x8;
+		if (FIN == 0)
+			this.logger.error("FIN=%s|OpCode=%s|length=%s", FIN, opcode, length);
 		return false;
 	}
 
