@@ -62,6 +62,7 @@ public abstract class WebSocketBase implements WebSocket.OnTextMessage,
 	public boolean onControl(byte arg0, byte[] arg1, int arg2, int arg3) {
 		if (this.frameConnection.isPing(arg0)) {
 			this.receivePing();
+			return true;
 		}
 		return false;
 	}
