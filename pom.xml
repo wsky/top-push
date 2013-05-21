@@ -6,9 +6,9 @@
   <groupId>com.taobao.top</groupId>
   <artifactId>top-push</artifactId>
   <version>1.0-SNAPSHOT</version>
-  <packaging>war</packaging>
+  <packaging>jar</packaging>
 
-  <name>Push Server</name>
+  <name>top-push</name>
   <url>http://open.taobao.com</url>
 
   <properties>
@@ -16,6 +16,17 @@
     <jetty.version>8.1.7.v20120910</jetty.version>
     <javax.servlet.version>3.0.0.v201112011016</javax.servlet.version>
   </properties>
+
+  <distributionManagement>
+    <repository>
+      <id>releases</id>
+      <url>http://mvnrepo.taobao.ali.com/mvn/releases</url>
+    </repository>
+    <snapshotRepository>
+      <id>snapshots</id>
+      <url>http://mvnrepo.taobao.ali.com/mvn/snapshots</url>
+    </snapshotRepository>
+  </distributionManagement>
 
   <dependencies>
     <dependency>
@@ -43,11 +54,13 @@
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-websocket</artifactId>
       <version>${jetty.version}</version>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty.orbit</groupId>
       <artifactId>javax.servlet</artifactId>
       <version>${javax.servlet.version}</version>
+      <scope>provided</scope>
     </dependency>
     <dependency>
 	    <groupId>org.eclipse.jetty</groupId>
@@ -61,7 +74,6 @@
       <version>${jetty.version}</version>
       <scope>test</scope>
     </dependency>
-                        
   </dependencies>
 
   <build>
@@ -76,6 +88,7 @@
             <configuration>
               <sources>
                 <source>src/main/protocol</source>
+                <source>src/main/jetty-support</source>
               </sources>
             </configuration>
           </execution>
