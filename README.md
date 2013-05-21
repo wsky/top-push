@@ -8,10 +8,9 @@ As a component, it was designed to be extensible, you can easily replace the tra
 
 [![Build Status](https://travis-ci.org/wsky/top-push.png?branch=master)](https://travis-ci.org/wsky/top-push)
 
-top-push-client https://github.com/wsky/top-push-client
-
 server implementation:
-- jetty-support
+- jetty-support: build-in server, impl message forwarder.
+	- matched client: top-push-client https://github.com/wsky/top-push-client
 - top-link-support
 
 ## Concept

@@ -38,7 +38,6 @@ public class Receiver {
 	}
 
 	// must be called after send
-	public synchronized void release(Object message) {}
 	public synchronized void release(Message message) {
 		// return buffer for reusing
 		if (message.body != null && message.body instanceof ByteBuffer) {

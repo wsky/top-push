@@ -35,13 +35,6 @@
       <version>4.8.2</version>
       <scope>test</scope>
     </dependency>
-
-    <dependency>
-      <groupId>commons-collections</groupId>
-      <artifactId>commons-collections</artifactId>
-      <version>3.2.1</version>
-	  <scope>test</scope>
-    </dependency>
     <dependency>
       <groupId>commons-lang</groupId>
       <artifactId>commons-lang</artifactId>
@@ -54,13 +47,11 @@
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-websocket</artifactId>
       <version>${jetty.version}</version>
-      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty.orbit</groupId>
       <artifactId>javax.servlet</artifactId>
       <version>${javax.servlet.version}</version>
-      <scope>provided</scope>
     </dependency>
     <dependency>
 	    <groupId>org.eclipse.jetty</groupId>

@@ -1,10 +1,10 @@
 package com.taobao.top.push;
 
-import java.util.HashMap;
+import java.util.Map;
 
 public interface ClientStateHandler {
 
-	public Identity onClientConnecting(HashMap<String, String> headers) throws Exception;
+	public Identity onClientConnecting(Map<String, String> headers) throws Exception;
 
 	public void onClientDisconnect(Client client, ClientConnection clientConnection);
 

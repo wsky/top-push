@@ -26,7 +26,7 @@ public class BackendServlet extends WebSocketServlet {
 	@Override
 	protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		PushManager manager = InitServlet.manager;
-		this.logger = manager.getLoggerFactory().create(this);
+		this.logger = InitServlet.loggerFactory.create(this);
 
 		HashMap<String, String> headers = Utils.parseHeaders(request);
 		this.dump(headers);
@@ -34,7 +34,7 @@ public class BackendServlet extends WebSocketServlet {
 		WebSocketClientConnection clientConnection = Utils.getClientConnectionPool().acquire();
 		try {
 			this.webSocket = new BackendWebSocket(
-					manager.getLoggerFactory(),
+					InitServlet.loggerFactory,
 					manager,
 					manager.connectClient(headers, clientConnection),
 					clientConnection,

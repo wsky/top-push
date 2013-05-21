@@ -78,10 +78,6 @@ public class PushManager {
 		this.token.setCancelling(false);
 	}
 
-	public LoggerFactory getLoggerFactory() {
-		return this.loggerFactory;
-	}
-
 	public Client getClient(Identity id) {
 		if (!this.clients.containsKey(id)) {
 			synchronized (this.clientLock) {
@@ -114,7 +110,7 @@ public class PushManager {
 		return this.pendingClients.size();
 	}
 
-	public Client connectClient(HashMap<String, String> headers,
+	public Client connectClient(Map<String, String> headers,
 			ClientConnection clientConnection) throws Exception {
 		Identity id = this.clientStateHandler.onClientConnecting(headers);
 		clientConnection.init(id, headers);

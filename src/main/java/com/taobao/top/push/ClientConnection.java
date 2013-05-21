@@ -1,13 +1,13 @@
 package com.taobao.top.push;
 
 import java.util.Date;
-import java.util.HashMap;
+import java.util.Map;
 
 public abstract class ClientConnection {
 	private Identity id;
 	
 	protected Date lastPingTime;
-	protected HashMap<String, String> headers;
+	protected Map<String, String> headers;
 	protected String origin;
 	protected String protocol;
 
@@ -31,7 +31,7 @@ public abstract class ClientConnection {
 		return this.protocol;
 	}
 
-	public HashMap<String, String> getHeaders() {
+	public Map<String, String> getHeaders() {
 		return this.headers;
 	}
 
@@ -44,7 +44,7 @@ public abstract class ClientConnection {
 		this.internalClear();
 	}
 
-	public void init(Identity id, HashMap<String, String> headers) {
+	public void init(Identity id, Map<String, String> headers) {
 		this.receivePing();
 		this.id = id;
 		this.headers = headers;
