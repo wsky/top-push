@@ -171,7 +171,7 @@ public class PushManager {
 				}
 				try {
 					rebuildClientsState();
-					if (logger.isDebugEnable())
+					if (logger.isDebugEnabled())
 						logger.debug(
 								"total %s pending messages, total %s connections, total %s clients, %s is idle, %s is offline",
 								totalPendingMessages,

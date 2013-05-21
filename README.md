@@ -26,7 +26,15 @@ https://github.com/wsky/top-push/issues/35
 ## Sever
 
 ```bash
-mvn jetty:run
+mvn clean jetty:run
+```
+
+## Build
+
+- core
+
+```bash
+mvn clean -f pom-core.xml package
 ```
 
 ## Stress tests on AWS

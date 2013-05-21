@@ -61,7 +61,7 @@ public class BackendServlet extends WebSocketServlet {
 	}
 
 	private void dump(HashMap<String, String> headers) {
-		if (!this.logger.isDebugEnable())
+		if (!this.logger.isDebugEnabled())
 			return;
 		for (Entry<String, String> h : headers.entrySet()) {
 			this.logger.debug("%s=%s", h.getKey(), h.getValue());

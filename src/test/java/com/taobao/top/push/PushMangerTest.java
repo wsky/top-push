@@ -9,7 +9,6 @@ import org.junit.Test;
 
 import com.taobao.top.push.Client;
 import com.taobao.top.push.PushManager;
-import com.taobao.top.push.messages.Message;
 
 public class PushMangerTest {
 	@Test
@@ -50,7 +49,7 @@ public class PushMangerTest {
 		assertNull(manager.pollPendingClient());
 		assertFalse(manager.isReachMaxConnectionCount());
 
-		c1.pendingMessage(new Message());
+		c1.pendingMessage(new Object());
 		Thread.sleep(1000);
 		assertFalse(manager.isIdleClient(c1.getId()));
 		assertNotNull(manager.pollPendingClient());
