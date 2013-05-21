@@ -4,33 +4,37 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import com.taobao.top.push.messages.Message;
-
 public class Client {
 	private final static int MAX_PENDING_COUNT = 10000;
 	private Logger logger;
-	private String id;
+	private Identity id;
 	// ping from any connection
 	private Date lastPingTime;
 	private int totalSendMessageCount;
 
 	private LinkedList<ClientConnection> connections;
 	private ConcurrentLinkedQueue<ClientConnection> connectionQueue;
-	private ConcurrentLinkedQueue<Message> pendingMessages;
+	private ConcurrentLinkedQueue<Object> pendingMessages;
 
-	private PushManager manager;
+	private MessageStateHandler messageStateHandler;
 
-	public Client(LoggerFactory factory, String id, PushManager manager) {
+	public Client(LoggerFactory factory, Identity id) {
+		this(factory, id, null);
+	}
+
+	public Client(LoggerFactory factory,
+			Identity id,
+			MessageStateHandler messageStateHandler) {
 		this.logger = factory.create(this);
 		this.id = id;
 		this.receivePing();
 		this.connections = new LinkedList<ClientConnection>();
 		this.connectionQueue = new ConcurrentLinkedQueue<ClientConnection>();
-		this.pendingMessages = new ConcurrentLinkedQueue<Message>();
-		this.manager = manager;
+		this.pendingMessages = new ConcurrentLinkedQueue<Object>();
+		this.messageStateHandler = messageStateHandler;
 	}
 
-	public String getId() {
+	public Identity getId() {
 		return this.id;
 	}
 
@@ -56,20 +60,20 @@ public class Client {
 	}
 
 	// pend message waiting to be send
-	public boolean pendingMessage(Message msg) {
-		if (msg == null)
+	public boolean pendingMessage(Object message) {
+		if (message == null)
 			return false;
 		if (this.getPendingMessagesCount() >= MAX_PENDING_COUNT)
 			return false;
-		this.pendingMessages.add(msg);
+		this.pendingMessages.add(message);
 		return true;
 	}
 
 	public void clearPendingMessages() {
-		Message msg;
-		while ((msg = this.pendingMessages.poll()) != null) {
-			this.manager.getReceiver().release(msg);
-		}
+		Object msg;
+		while ((msg = this.pendingMessages.poll()) != null)
+			if (this.messageStateHandler != null)
+				this.messageStateHandler.onDropped(this.id, msg, "clearPendingMessages");
 	}
 
 	public void flush(CancellationToken token, int count) {
@@ -77,7 +81,7 @@ public class Client {
 		for (int i = 0; i < count; i++) {
 			if (token.isCancelling())
 				break;
-			Message msg = this.pendingMessages.poll();
+			Object msg = this.pendingMessages.poll();
 			if (msg == null)
 				break;
 			this.SendMessage(token, msg);
@@ -110,32 +114,49 @@ public class Client {
 				this.getId(), conn.getOrigin());
 	}
 
-	private void SendMessage(CancellationToken token, Message msg) {
+	private void SendMessage(CancellationToken token, Object message) {
 		// FIFO queue for LRU load-balance
 		while (true) {
-			if (token.isCancelling())
-				break;
+			if (token.isCancelling()) {
+				onDrop(message, "canceled");
+				return;
+			}
+			
 			ClientConnection connection = this.connectionQueue.poll();
-			if (connection == null)
-				break;
+			if (connection == null) {
+				onDrop(message, "no valid connection");
+				return;
+			}
+			
 			if (!connection.isOpen()) {
-				// TODO:release connection object here? or websocketbase always
-				// do this?
+				// TODO:onConnectionBroken
 				this.logger.info("connection#%s[%s] is closed, remove it",
 						connection.getId(), connection.getOrigin());
 				continue;
 			}
+			
 			try {
-				connection.sendMessage(msg);
+				connection.sendMessage(message);
 			} catch (Exception e) {
+				onDrop(message, "send message error");
 				this.logger.error("send message error", e);
+				return; // only send once
 			} finally {
 				this.connectionQueue.add(connection);
 			}
-			// only send once whatever exception occur
-			break;
+			
+			this.onSent(message);
+			return;
 		}
-		// release message object always
-		this.manager.getReceiver().release(msg);
+	}
+
+	private void onDrop(Object message, String reason) {
+		if (this.messageStateHandler != null)
+			this.messageStateHandler.onDropped(this.id, message, reason);
+	}
+
+	private void onSent(Object message) {
+		if (this.messageStateHandler != null)
+			this.messageStateHandler.onSent(this.id, message);
 	}
 }

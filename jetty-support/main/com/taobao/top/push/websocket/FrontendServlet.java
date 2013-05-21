@@ -15,18 +15,17 @@ import com.taobao.top.push.Client;
 import com.taobao.top.push.Logger;
 import com.taobao.top.push.LoggerFactory;
 import com.taobao.top.push.PushManager;
-import com.taobao.top.push.UnauthorizedException;
 
-public class BackendServlet extends WebSocketServlet {
+public class FrontendServlet extends WebSocketServlet {
 
-	private static final long serialVersionUID = 3431855312865710986L;
+	private static final long serialVersionUID = -2545213842937092374L;
 
 	private Logger logger;
 	private WebSocket webSocket;
 
 	@Override
 	protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		PushManager manager = PushManager.current();
+		PushManager manager = InitServlet.manager;
 		this.logger = manager.getLoggerFactory().create(this);
 
 		HashMap<String, String> headers = Utils.parseHeaders(request);
@@ -34,12 +33,14 @@ public class BackendServlet extends WebSocketServlet {
 
 		WebSocketClientConnection clientConnection = Utils.getClientConnectionPool().acquire();
 		try {
-			this.webSocket = new BackendWebSocket(
+			this.webSocket = new FrontendWebSocket(
 					manager.getLoggerFactory(),
 					manager,
 					manager.connectClient(headers, clientConnection),
-					clientConnection);
-		} catch (UnauthorizedException e) {
+					clientConnection, 
+					InitServlet.receiver, 
+					InitServlet.processor);
+		} catch (Exception e) {
 			Utils.getClientConnectionPool().release(clientConnection);
 			response.sendError(401, e.getMessage());
 			this.logger.error(e);
@@ -48,12 +49,12 @@ public class BackendServlet extends WebSocketServlet {
 
 		super.service(request, response);
 	}
-	
+
 	@Override
 	public boolean checkOrigin(HttpServletRequest request, String origin) {
 		return true;
 	}
-	
+
 	@Override
 	public WebSocket doWebSocketConnect(HttpServletRequest request, String protocol) {
 		return this.webSocket;
@@ -66,11 +67,16 @@ public class BackendServlet extends WebSocketServlet {
 			this.logger.debug("%s=%s", h.getKey(), h.getValue());
 		}
 	}
-	
-	public class BackendWebSocket extends WebSocketBase {
-		public BackendWebSocket(LoggerFactory loggerFactory,
-				PushManager manager, Client client, WebSocketClientConnection clientConnection) {
-			super(loggerFactory, manager, client, clientConnection);
+
+	private class FrontendWebSocket extends WebSocketBase {
+		public FrontendWebSocket(LoggerFactory loggerFactory,
+				PushManager manager,
+				Client client,
+				WebSocketClientConnection clientConnection,
+				Receiver receiver,
+				Processor processor) {
+			super(loggerFactory, manager, client, clientConnection, receiver, processor);
 		}
 	}
+
 }

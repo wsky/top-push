@@ -6,8 +6,6 @@ import org.eclipse.jetty.websocket.WebSocket.Connection;
 import org.eclipse.jetty.websocket.WebSocket.FrameConnection;
 
 import com.taobao.top.push.ClientConnection;
-import com.taobao.top.push.MessageTooLongException;
-import com.taobao.top.push.NoMessageBufferException;
 import com.taobao.top.push.messages.Message;
 
 public class WebSocketClientConnection extends ClientConnection {
@@ -15,15 +13,17 @@ public class WebSocketClientConnection extends ClientConnection {
 	// always lower case
 	private final static String PROTOCOL = "sec-websocket-protocol";
 
-	private Connection connection;
+	private Connection wsConnection;
+	private Receiver receiver;
 
 	public void init(FrameConnection frameConnection) {
 		this.receivePing();
 	}
 
-	public void init(Connection connection) {
+	public void init(Connection wsConnection, Receiver receiver) {
 		this.receivePing();
-		this.connection = connection;
+		this.wsConnection = wsConnection;
+		this.receiver = receiver;
 	}
 
 	public Message parse(byte[] data, int offset, int length)
@@ -31,7 +31,7 @@ public class WebSocketClientConnection extends ClientConnection {
 		Message msg = this.receiver.parseMessage(this.protocol, data, offset,
 				length);
 		// must tell who send it
-		msg.from = this.getId();
+		msg.from = this.getId().toString();
 		return msg;
 	}
 
@@ -43,19 +43,20 @@ public class WebSocketClientConnection extends ClientConnection {
 
 	@Override
 	protected void internalClear() {
-		this.connection = null;
+		this.wsConnection = null;
 	}
 
 	@Override
 	public boolean isOpen() {
-		return this.connection != null && this.connection.isOpen();
+		return this.wsConnection != null && this.wsConnection.isOpen();
 	}
 
 	@Override
-	public void sendMessage(Message message) throws Exception {
-		int length = message.fullMessageSize;
-		ByteBuffer buffer = this.receiver.parseMessage(this.protocol, message);
-		this.connection.sendMessage(buffer.array(), buffer.arrayOffset(),
+	public void sendMessage(Object message) throws Exception {
+		Message msg = (Message) message;
+		int length = msg.fullMessageSize;
+		ByteBuffer buffer = this.receiver.parseMessage(this.protocol, msg);
+		this.wsConnection.sendMessage(buffer.array(), buffer.arrayOffset(),
 				length);
 	}
 }

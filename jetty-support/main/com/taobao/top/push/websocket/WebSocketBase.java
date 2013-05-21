@@ -3,10 +3,9 @@ package com.taobao.top.push.websocket;
 import org.eclipse.jetty.websocket.WebSocket;
 
 import com.taobao.top.push.Client;
+import com.taobao.top.push.DefaultIdentity;
 import com.taobao.top.push.Logger;
 import com.taobao.top.push.LoggerFactory;
-import com.taobao.top.push.MessageTooLongException;
-import com.taobao.top.push.NoMessageBufferException;
 import com.taobao.top.push.PushManager;
 import com.taobao.top.push.messages.Message;
 
@@ -20,17 +19,23 @@ public abstract class WebSocketBase implements WebSocket.OnTextMessage,
 	protected Connection connection;
 
 	protected PushManager manager;
+	protected Processor processor;
+	protected Receiver receiver;
 	protected Client client;
 	protected WebSocketClientConnection clientConnection;
 
 	public WebSocketBase(LoggerFactory loggerFactory,
 			PushManager manager,
 			Client client,
-			WebSocketClientConnection clientConnection) {
+			WebSocketClientConnection clientConnection,
+			Receiver receiver,
+			Processor processor) {
 		this.logger = loggerFactory.create(this);
 		this.manager = manager;
 		this.client = client;
 		this.clientConnection = clientConnection;
+		this.receiver = receiver;
+		this.processor = processor;
 	}
 
 	@Override
@@ -55,7 +60,7 @@ public abstract class WebSocketBase implements WebSocket.OnTextMessage,
 	@Override
 	public void onOpen(Connection connection) {
 		this.connection = connection;
-		this.clientConnection.init(connection);
+		this.clientConnection.init(connection, this.receiver);
 	}
 
 	@Override
@@ -91,13 +96,18 @@ public abstract class WebSocketBase implements WebSocket.OnTextMessage,
 		}
 
 		try {
-			if (!this.manager.getProcessor().process(msg, this.clientConnection)) {
+			if (this.processor != null &&
+					!this.processor.process(msg, this.clientConnection)) {
 				// forward message
 				// deliver to target client
-				this.manager.pendingMessage(msg);
+				Client client = this.manager.getClient(new DefaultIdentity(msg.to));
+				if (client != null)
+					client.pendingMessage(msg);
+				else 
+					this.receiver.release(msg);
 			}
 		} catch (Exception e) {
-			this.manager.getReceiver().release(msg);
+			this.receiver.release(msg);
 			this.logger.error(e);
 		}
 	}

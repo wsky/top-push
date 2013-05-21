@@ -7,10 +7,7 @@ import java.util.HashMap;
 
 import org.junit.Test;
 
-import com.taobao.top.push.DefaultLoggerFactory;
-import com.taobao.top.push.MessageTooLongException;
-import com.taobao.top.push.NoMessageBufferException;
-import com.taobao.top.push.PushManager;
+import com.taobao.top.push.DefaultIdentity;
 import com.taobao.top.push.messages.Message;
 import com.taobao.top.push.messages.MessageIO;
 import com.taobao.top.push.messages.MessageType;
@@ -31,12 +28,11 @@ public class WebSocketClientConnectionTest {
 	public void init_header_test() {
 		WebSocketClientConnection connection = this.getConnection();
 		HashMap<String, String> headers = new HashMap<String, String>();
-		// headers.put("id", "abc");
 		headers.put("origin", "abc");
 
-		connection.init("abc", headers, this.getManager());
+		connection.init(new DefaultIdentity("abc"), headers);
 		assertEquals(headers.get("origin"), connection.getOrigin());
-		assertEquals("abc", connection.getId());
+		assertEquals(new DefaultIdentity("abc"), connection.getId());
 
 		assertFalse(connection.isOpen());
 	}
@@ -46,7 +42,8 @@ public class WebSocketClientConnectionTest {
 			NoMessageBufferException {
 		WebSocketClientConnection connection = this.getConnection();
 		HashMap<String, String> headers = new HashMap<String, String>();
-		connection.init("abc", headers, this.getManager());
+		connection.init(new DefaultIdentity("abc"), headers);
+		connection.init(null, new Receiver(1024, 1));
 
 		byte[] bytes = new byte[1024];
 		ByteBuffer buffer = ByteBuffer.wrap(bytes);
@@ -59,16 +56,12 @@ public class WebSocketClientConnectionTest {
 		Message msg = connection.parse(bytes, 0, 1024);
 		assertEquals(Message.class, msg.getClass());
 		// message from must be fill after connection received
-		assertEquals(connection.getId(), msg.from);
+		assertEquals(connection.getId(), new DefaultIdentity(msg.from));
 	}
 
 	private WebSocketClientConnection getConnection() {
 		WebSocketClientConnectionPool pool = this.getPool();
 		return pool.acquire();
-	}
-
-	private PushManager getManager() {
-		return new PushManager(new DefaultLoggerFactory(), 10, 1024, 1, 0, 1000, 10000);
 	}
 
 	private WebSocketClientConnectionPool getPool() {

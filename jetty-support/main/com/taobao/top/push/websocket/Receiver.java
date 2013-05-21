@@ -1,8 +1,9 @@
-package com.taobao.top.push;
+package com.taobao.top.push.websocket;
 
 import java.nio.ByteBuffer;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import com.taobao.top.push.Pool;
 import com.taobao.top.push.messages.Message;
 import com.taobao.top.push.messages.MessageIO;
 import com.taobao.top.push.mqtt.MqttMessage;
@@ -37,6 +38,7 @@ public class Receiver {
 	}
 
 	// must be called after send
+	public synchronized void release(Object message) {}
 	public synchronized void release(Message message) {
 		// return buffer for reusing
 		if (message.body != null && message.body instanceof ByteBuffer) {

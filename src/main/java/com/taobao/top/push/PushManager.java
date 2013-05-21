@@ -8,21 +8,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import com.taobao.top.push.messages.Message;
-
 public class PushManager {
-	private static PushManager current;
-
-	// TODO: use IOC managing life cycle
-	public static void current(PushManager manager) {
-		if (current == null)
-			current = manager;
-	}
-
-	public static PushManager current() {
-		return current;
-	}
-
 	private LoggerFactory loggerFactory;
 	private Logger logger;
 
@@ -33,31 +19,28 @@ public class PushManager {
 	private int totalConnections;
 	private int totalPendingMessages;
 	// easy find client by id
-	private HashMap<String, Client> clients;
+	private HashMap<Identity, Client> clients;
 	// hold clients which having pending messages and in processing
 	// not immediately
 	private ConcurrentLinkedQueue<Client> pendingClients;
 	// hold clients which do not having pending messages and not in processing
 	// not immediately
-	private LinkedHashMap<String, Client> idleClients;
+	private LinkedHashMap<Identity, Client> idleClients;
 	// hold clients which do not having any active connections
 	// not immediately
-	private LinkedHashMap<String, Client> offlineClients;
+	private LinkedHashMap<Identity, Client> offlineClients;
 
-	private Receiver receiver;
-	private Processor processor;
 	private HashMap<Sender, Thread> senders;
 	// for managing some worker state
 	private CancellationToken token;
 
-	private ClientStateHandler stateHandler;
+	private ClientStateHandler clientStateHandler;
+	private MessageStateHandler messageStateHandler;
 	private boolean stateBuilding;
 	private Object stateBuildingLock = new Object();
 
 	public PushManager(LoggerFactory loggerFactory,
 			int maxConnectionCount,
-			int maxMessageSize,
-			int maxMessageBufferCount,
 			int senderCount,
 			int senderIdle,
 			int stateBuilderIdle) {
@@ -65,15 +48,11 @@ public class PushManager {
 		this.logger = this.loggerFactory.create(this);
 
 		this.maxConnectionCount = maxConnectionCount;
-		// client management
-		this.clients = new HashMap<String, Client>(1000);
-		this.pendingClients = new ConcurrentLinkedQueue<Client>();
-		this.idleClients = new LinkedHashMap<String, Client>();
-		this.offlineClients = new LinkedHashMap<String, Client>();
 
-		this.receiver = new Receiver(maxMessageSize, maxMessageBufferCount);
-		// HACK:more message protocol process can extend it
-		this.processor = new Processor(loggerFactory);
+		this.clients = new HashMap<Identity, Client>(1000);
+		this.pendingClients = new ConcurrentLinkedQueue<Client>();
+		this.idleClients = new LinkedHashMap<Identity, Client>();
+		this.offlineClients = new LinkedHashMap<Identity, Client>();
 
 		// TODO:move to start and support start/stop/restart
 		this.token = new CancellationToken();
@@ -82,11 +61,11 @@ public class PushManager {
 	}
 
 	public void setClientStateHandler(ClientStateHandler handler) {
-		this.stateHandler = handler;
+		this.clientStateHandler = handler;
 	}
 
-	public void setProcessor(Processor processor) {
-		this.processor = processor;
+	public void setMessageStateHandler(MessageStateHandler messageStateHandler) {
+		this.messageStateHandler = messageStateHandler;
 	}
 
 	// cancel all current job
@@ -103,19 +82,11 @@ public class PushManager {
 		return this.loggerFactory;
 	}
 
-	public Receiver getReceiver() {
-		return this.receiver;
-	}
-
-	public Processor getProcessor() {
-		return this.processor;
-	}
-
-	public Client getClient(String id) {
+	public Client getClient(Identity id) {
 		if (!this.clients.containsKey(id)) {
 			synchronized (this.clientLock) {
 				if (!this.clients.containsKey(id))
-					this.clients.put(id, new Client(this.loggerFactory, id, this));
+					this.clients.put(id, new Client(this.loggerFactory, id, this.messageStateHandler));
 			}
 		}
 		return this.clients.get(id);
@@ -125,11 +96,11 @@ public class PushManager {
 		return this.totalConnections >= this.maxConnectionCount;
 	}
 
-	public boolean isIdleClient(String id) {
+	public boolean isIdleClient(Identity id) {
 		return this.idleClients.containsKey(id);
 	}
 
-	public boolean isOfflineClient(String id) {
+	public boolean isOfflineClient(Identity id) {
 		return this.offlineClients.containsKey(id);
 	}
 
@@ -139,28 +110,22 @@ public class PushManager {
 
 	public int getPendingClientCount() {
 		// size() is O(n)
+		// TODO:just change to list
 		return this.pendingClients.size();
 	}
 
-	public void pendingMessage(Message message) {
-		if (this.isOfflineClient(message.to)
-				|| !this.getClient(message.to).pendingMessage(message))
-			this.receiver.release(message);
-	}
-
 	public Client connectClient(HashMap<String, String> headers,
-			ClientConnection clientConnection) throws UnauthorizedException {
-		String id = this.stateHandler.onClientConnecting(headers);
-		clientConnection.init(id, headers, this);
-
+			ClientConnection clientConnection) throws Exception {
+		Identity id = this.clientStateHandler.onClientConnecting(headers);
+		clientConnection.init(id, headers);
 		Client client = this.getClient(id);
 		client.AddConnection(clientConnection);
 		return client;
 	}
 
 	public void disconnectClient(Client client, ClientConnection clientConnection) {
-		if (this.stateHandler != null)
-			this.stateHandler.onClientDisconnect(client, clientConnection);
+		if (this.clientStateHandler != null)
+			this.clientStateHandler.onClientDisconnect(client, clientConnection);
 
 		client.RemoveConnection(clientConnection);
 		clientConnection.clear();
@@ -266,21 +231,21 @@ public class PushManager {
 			this.pendingClients.add(client);
 			this.idleClients.remove(client.getId());
 			this.offlineClients.remove(client.getId());
-			if (this.stateHandler != null)
-				this.stateHandler.onClientPending(client);
+			if (this.clientStateHandler != null)
+				this.clientStateHandler.onClientPending(client);
 		} else if (!pending && !offline) {
 			this.idleClients.put(client.getId(), client);
 			this.offlineClients.remove(client.getId());
-			if (this.stateHandler != null)
-				this.stateHandler.onClientIdle(client);
+			if (this.clientStateHandler != null)
+				this.clientStateHandler.onClientIdle(client);
 		} else if (offline) {
 			this.offlineClients.put(client.getId(), client);
 			this.idleClients.remove(client.getId());
-			if (this.stateHandler != null)
+			if (this.clientStateHandler != null)
 				// can clear pending messages of offline client in this handler
 				// after a long time
 				// client.clearPendingMessages();
-				this.stateHandler.onClientOffline(client);
+				this.clientStateHandler.onClientOffline(client);
 		}
 	}
 }

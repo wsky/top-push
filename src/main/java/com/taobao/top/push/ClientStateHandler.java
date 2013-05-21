@@ -2,15 +2,15 @@ package com.taobao.top.push;
 
 import java.util.HashMap;
 
-public abstract class ClientStateHandler {
-	
-	public abstract String onClientConnecting(HashMap<String, String> headers) throws UnauthorizedException;
-	
-	public abstract void onClientDisconnect(Client client, ClientConnection clientConnection);
+public interface ClientStateHandler {
 
-	public abstract void onClientPending(Client client);
+	public Identity onClientConnecting(HashMap<String, String> headers) throws Exception;
 
-	public abstract void onClientIdle(Client client);
+	public void onClientDisconnect(Client client, ClientConnection clientConnection);
 
-	public abstract void onClientOffline(Client client);
+	public void onClientPending(Client client);
+
+	public void onClientIdle(Client client);
+
+	public void onClientOffline(Client client);
 }

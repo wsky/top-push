@@ -3,18 +3,13 @@ package com.taobao.top.push;
 import java.util.Date;
 import java.util.HashMap;
 
-import com.taobao.top.push.messages.Message;
-
 public abstract class ClientConnection {
-	private String id;
+	private Identity id;
 	
 	protected Date lastPingTime;
 	protected HashMap<String, String> headers;
 	protected String origin;
 	protected String protocol;
-
-	protected PushManager manager;
-	protected Receiver receiver;
 
 	protected abstract void initHeaders();
 
@@ -22,9 +17,9 @@ public abstract class ClientConnection {
 
 	public abstract boolean isOpen();
 
-	public abstract void sendMessage(Message msg) throws Exception;
+	public abstract void sendMessage(Object msg) throws Exception;
 
-	public String getId() {
+	public Identity getId() {
 		return this.id;
 	}
 
@@ -46,17 +41,13 @@ public abstract class ClientConnection {
 		this.id = null;
 		this.origin = null;
 		this.protocol = null;
-		this.manager = null;
-		this.receiver = null;
 		this.internalClear();
 	}
 
-	public void init(String id, HashMap<String, String> headers, PushManager manager) {
+	public void init(Identity id, HashMap<String, String> headers) {
 		this.receivePing();
 		this.id = id;
 		this.headers = headers;
-		this.manager = manager;
-		this.receiver = this.manager.getReceiver();
 		this.initHeaders();
 	}
 

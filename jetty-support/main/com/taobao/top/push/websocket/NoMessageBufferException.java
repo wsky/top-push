@@ -1,4 +1,4 @@
-package com.taobao.top.push;
+package com.taobao.top.push.websocket;
 
 public class NoMessageBufferException extends Exception {
 

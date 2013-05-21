@@ -13,15 +13,15 @@ import com.taobao.top.push.websocket.WebSocketClientConnection;
 public class PushMangerTest {
 	@Test
 	public void get_client_test() {
-		PushManager manager = new PushManager(new DefaultLoggerFactory(), 10, 1024, 10, 1, 1000, 100);
-		String id = "abc";
+		PushManager manager = new PushManager(new DefaultLoggerFactory(), 10, 1, 1000, 100);
+		Identity id = new DefaultIdentity("abc");
 		assertEquals(manager.getClient(id), manager.getClient(id));
 
 		StopWatch watch = new StopWatch();
 		watch.start();
 		int count = 100000;
 		for (int i = 0; i < count; i++)
-			manager.getClient(id + i);
+			manager.getClient(new DefaultIdentity("abc" + i));
 		watch.stop();
 		System.out.println(String.format("%s clients cost %sms", count,
 				watch.getTime()));
@@ -41,9 +41,9 @@ public class PushMangerTest {
 	public void state_test() throws SecurityException, NoSuchMethodException,
 			InterruptedException {
 		// senderCount should be 0
-		PushManager manager = new PushManager(new DefaultLoggerFactory(), 2, 1024, 10, 0, 1000, 100);
-		Client c1 = manager.getClient("1");
-		Client c2 = manager.getClient("2");
+		PushManager manager = new PushManager(new DefaultLoggerFactory(), 2, 0, 1000, 100);
+		Client c1 = manager.getClient(new DefaultIdentity("1"));
+		Client c2 = manager.getClient(new DefaultIdentity("2"));
 		Thread.sleep(1000);
 		assertTrue(manager.isOfflineClient(c1.getId()));
 		assertTrue(manager.isOfflineClient(c2.getId()));

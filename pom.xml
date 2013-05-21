@@ -78,7 +78,7 @@
 
   <build>
     <plugins>
-	<plugin>
+      <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
         <executions>
@@ -88,7 +88,25 @@
             <configuration>
               <sources>
                 <source>src/main/protocol</source>
-                <source>src/main/jetty-support</source>
+                <source>jetty-support/main</source>
+                <source>top-link-support/main</source>
+              </sources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>add-test</id>
+            <phase>generate-sources</phase>
+            <goals><goal>add-test-source</goal></goals>
+            <configuration>
+              <sources>
+                <source>jetty-support/test</source>
+                <source>top-link-support/test</source>
               </sources>
             </configuration>
           </execution>

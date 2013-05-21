@@ -23,7 +23,7 @@ import org.eclipse.jetty.websocket.WebSocketClient;
 import org.eclipse.jetty.websocket.WebSocketClientFactory;
 import org.junit.Test;
 
-import com.taobao.top.push.PushManager;
+import com.taobao.top.push.DefaultIdentity;
 import com.taobao.top.push.messages.Message;
 import com.taobao.top.push.messages.MessageIO;
 import com.taobao.top.push.messages.MessageType;
@@ -227,7 +227,7 @@ public class WebSocketPushServerTest {
 				total, watch.getTime()));
 
 		Thread.sleep(2000);
-		while (!PushManager.current().isIdleClient("front")) {
+		while (!InitServlet.manager.isIdleClient(new DefaultIdentity("front"))) {
 			Thread.sleep(1000);
 		}
 		server.stop();

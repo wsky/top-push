@@ -9,26 +9,33 @@ import javax.servlet.http.HttpServlet;
 import com.taobao.top.push.Client;
 import com.taobao.top.push.ClientConnection;
 import com.taobao.top.push.ClientStateHandler;
+import com.taobao.top.push.DefaultIdentity;
 import com.taobao.top.push.DefaultLoggerFactory;
+import com.taobao.top.push.Identity;
+import com.taobao.top.push.LoggerFactory;
 import com.taobao.top.push.PushManager;
-import com.taobao.top.push.UnauthorizedException;
 
 public class InitServlet extends HttpServlet {
 
 	private static final long serialVersionUID = 3059398081890461730L;
 
+	public static PushManager manager;
+	public static Receiver receiver;
+	public static Processor processor;
+
 	@Override
 	public void init(ServletConfig config) throws ServletException {
+		LoggerFactory loggerFactory = new DefaultLoggerFactory(false, true, true, true, true);
 		Utils.initClientConnectionPool(100000);
-		PushManager.current(new PushManager(
-				new DefaultLoggerFactory(false, true, true, true, true),
+		receiver = new Receiver(this.get(config, "maxMessageSize"), this.get(config, "maxMessageBufferCount"));
+		processor = new Processor();
+		manager = new PushManager(
+				loggerFactory,
 				this.get(config, "maxConnectionCount"),
-				this.get(config, "maxMessageSize"),
-				this.get(config, "maxMessageBufferCount"),
 				this.get(config, "senderCount"),
 				this.get(config, "senderIdle"),
-				this.get(config, "stateBuilderIdle")));
-		PushManager.current().setClientStateHandler(new ClientStateHandler() {
+				this.get(config, "stateBuilderIdle"));
+		manager.setClientStateHandler(new ClientStateHandler() {
 			@Override
 			public void onClientPending(Client client) {
 			}
@@ -42,20 +49,19 @@ public class InitServlet extends HttpServlet {
 			}
 
 			@Override
-			public String onClientConnecting(HashMap<String, String> headers) throws UnauthorizedException {
+			public Identity onClientConnecting(HashMap<String, String> headers) throws Exception {
 				String id = headers.get("origin");
 
 				if (id == null || id.trim() == "")
-					throw new UnauthorizedException("origin is empty");
+					throw new Exception("origin is empty");
 
-				return id;
+				return new DefaultIdentity(id);
 			}
 
 			@Override
 			public void onClientDisconnect(Client client, ClientConnection clientConnection) {
 			}
 		});
-
 		super.init(config);
 	}
 

@@ -5,11 +5,11 @@ import java.nio.ByteBuffer;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
-import com.taobao.top.push.MessageTooLongException;
-import com.taobao.top.push.NoMessageBufferException;
-import com.taobao.top.push.Receiver;
 import com.taobao.top.push.messages.Message;
 import com.taobao.top.push.messages.MessageIO;
+import com.taobao.top.push.websocket.MessageTooLongException;
+import com.taobao.top.push.websocket.NoMessageBufferException;
+import com.taobao.top.push.websocket.Receiver;
 
 public class ReceiverTest {
 	@Test
