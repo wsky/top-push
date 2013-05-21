@@ -117,7 +117,7 @@ public class Client {
 				this.getId(), conn.getOrigin());
 	}
 
-	private void SendMessage(CancellationToken token, Object message) {
+	protected void SendMessage(CancellationToken token, Object message) {
 		// FIFO queue for LRU load-balance
 		while (true) {
 			if (token.isCancelling()) {
