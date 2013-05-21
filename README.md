@@ -13,6 +13,9 @@ server implementation:
 	- matched client: top-push-client https://github.com/wsky/top-push-client
 - top-link-support
 
+latest refact defail here:
+https://github.com/wsky/top-push/issues/35
+
 ## Concept
 
 - Client/Connection
@@ -20,10 +23,10 @@ server implementation:
 - Scheduler
 - Queue
 
-## Build
+## Sever
 
 ```bash
-mvn package
+mvn jetty:run
 ```
 
 ## Stress tests on AWS
