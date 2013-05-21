@@ -21,12 +21,13 @@ import com.taobao.top.push.PushManager;
 public class MixServer {
 	private static PushManager pushManager;
 	private static Endpoint serverEndpoint;
+	private static Scheduler<com.taobao.top.link.endpoint.Identity> scheduler;
 
 	public static void main(String[] args) {
-		start();
+		start(8080);
 	}
 
-	public static void start() {
+	public static void start(int port) {
 		// whatever, log first
 		ServerLoggerFactory loggerFactory = new ServerLoggerFactory();
 
@@ -57,10 +58,11 @@ public class MixServer {
 
 		// init base server
 		// scheduler for business process and loadbalance/attack-prevent
-		Scheduler<com.taobao.top.link.endpoint.Identity> scheduler = new Scheduler<com.taobao.top.link.endpoint.Identity>();
+		scheduler = new Scheduler<com.taobao.top.link.endpoint.Identity>();
 		scheduler.setUserMaxPendingCount(100);
 		// biz-threadpool
 		scheduler.setThreadPool(new ThreadPoolExecutor(20, 300, 300, TimeUnit.SECONDS, new SynchronousQueue<Runnable>()));
+		scheduler.start();
 
 		// extended low-level channelHandler
 		ServerEndpointChannelHandler channelHandler = new ServerEndpointChannelHandler(loggerFactory);
@@ -85,14 +87,19 @@ public class MixServer {
 		serverEndpoint.setMessageHandler(new ServerMessageHandler());
 
 		// websocket serverchannel
-		WebSocketServerChannel serverChannel = new WebSocketServerChannel(loggerFactory, 8080, true);
+		WebSocketServerChannel serverChannel = new WebSocketServerChannel(loggerFactory, port, true);
 		// if you want SSL/TLS
 		// serverChannel.setSSLContext(sslContext);
 		serverEndpoint.bind(serverChannel);
 	}
 
-	public static void stop() {
+	public static void stop() throws InterruptedException {
 		pushManager.cancelAll();
+		scheduler.stop();
 		serverEndpoint.unbindAll();
+	}
+
+	public static void pending(Identity target, HashMap<String, String> message) {
+		pushManager.getClient(target).pendingMessage(message);
 	}
 }

@@ -1,12 +1,15 @@
 package com.taobao.top.mix;
 
+import java.util.Map;
+
 import com.taobao.top.link.LinkException;
 import com.taobao.top.link.endpoint.Identity;
 
 public class ServerIdentity implements Identity {
+	@SuppressWarnings("unchecked")
 	@Override
 	public Identity parse(Object data) throws LinkException {
-		return null;
+		return new ClientIdentity(((Map<String, String>) data).get("appkey"));
 	}
 
 	@Override
@@ -15,7 +18,7 @@ public class ServerIdentity implements Identity {
 
 	@Override
 	public boolean equals(Identity id) {
-		return false;
+		return id instanceof ServerIdentity;
 	}
 
 }

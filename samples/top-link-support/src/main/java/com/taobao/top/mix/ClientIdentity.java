@@ -1,5 +1,7 @@
 package com.taobao.top.mix;
 
+import java.util.Map;
+
 import com.taobao.top.link.LinkException;
 import com.taobao.top.link.endpoint.Identity;
 
@@ -31,8 +33,10 @@ public class ClientIdentity implements com.taobao.top.push.Identity, com.taobao.
 		return null;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public void render(Object to) {
+		((Map<String, String>) to).put("appkey", this.appKey);
 	}
 
 	@Override
