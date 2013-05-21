@@ -2,7 +2,7 @@ package com.taobao.top.push;
 
 public class CancellationToken {
 	// something pending
-	//private boolean isPending;
+	// private boolean isPending;
 	// server stoping
 	private boolean isStoping;
 	// cancel current work

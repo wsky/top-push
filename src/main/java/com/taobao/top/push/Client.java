@@ -17,14 +17,16 @@ public class Client {
 	private ConcurrentLinkedQueue<Object> pendingMessages;
 
 	private MessageStateHandler messageStateHandler;
+	private ClientStateHandler clientStateHandler;
 
 	public Client(LoggerFactory factory, Identity id) {
-		this(factory, id, null);
+		this(factory, id, null, null);
 	}
 
 	public Client(LoggerFactory factory,
 			Identity id,
-			MessageStateHandler messageStateHandler) {
+			MessageStateHandler messageStateHandler,
+			ClientStateHandler clientStateHandler) {
 		this.logger = factory.create(this);
 		this.id = id;
 		this.receivePing();
@@ -32,6 +34,7 @@ public class Client {
 		this.connectionQueue = new ConcurrentLinkedQueue<ClientConnection>();
 		this.pendingMessages = new ConcurrentLinkedQueue<Object>();
 		this.messageStateHandler = messageStateHandler;
+		this.clientStateHandler = clientStateHandler;
 	}
 
 	public Identity getId() {
@@ -121,20 +124,23 @@ public class Client {
 				onDrop(message, "canceled");
 				return;
 			}
-			
+
 			ClientConnection connection = this.connectionQueue.poll();
 			if (connection == null) {
 				onDrop(message, "no valid connection");
 				return;
 			}
-			
+
 			if (!connection.isOpen()) {
-				// TODO:onConnectionBroken
+				this.RemoveConnection(connection);
+				if (this.clientStateHandler != null)
+					this.clientStateHandler.onClientDisconnect(this, connection);
 				this.logger.info("connection#%s[%s] is closed, remove it",
-						connection.getId(), connection.getOrigin());
+						connection.getId(),
+						connection.getOrigin());
 				continue;
 			}
-			
+
 			try {
 				connection.sendMessage(message);
 			} catch (Exception e) {
@@ -144,7 +150,7 @@ public class Client {
 			} finally {
 				this.connectionQueue.add(connection);
 			}
-			
+
 			this.onSent(message);
 			return;
 		}

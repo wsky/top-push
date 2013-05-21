@@ -2,6 +2,7 @@ package com.taobao.top.push;
 
 import static org.junit.Assert.*;
 
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
 import org.junit.Test;
@@ -15,7 +16,7 @@ public class ClientTest {
 
 	@Test
 	public void init_test() {
-		Identity id= new DefaultIdentity("abc");
+		Identity id = new DefaultIdentity("abc");
 		Client client = new Client(new DefaultLoggerFactory(), id);
 		assertEquals(id, client.getId());
 		assertEquals(0, client.getConnectionsCount());
@@ -25,8 +26,8 @@ public class ClientTest {
 	@Test
 	public void add_remove_connection_test() {
 		Client client = new Client(new DefaultLoggerFactory(), new DefaultIdentity("abc"));
-		TestConnection c1 = new TestConnection();
-		TestConnection c2 = new TestConnection();
+		ConnectionWrapper c1 = new ConnectionWrapper();
+		ConnectionWrapper c2 = new ConnectionWrapper();
 		client.AddConnection(c1);
 		client.AddConnection(c2);
 		assertEquals(2, client.getConnectionsCount());
@@ -45,16 +46,17 @@ public class ClientTest {
 
 	@Test
 	public void message_state_after_flush_test() throws InterruptedException {
-		final CountDownLatch latch=new CountDownLatch(1);
-		Client client = new Client(new DefaultLoggerFactory(), new DefaultIdentity("abc"),new MessageStateHandler() {
+		final CountDownLatch latch = new CountDownLatch(1);
+		Client client = new Client(new DefaultLoggerFactory(), new DefaultIdentity("abc"), new MessageStateHandler() {
 			@Override
 			public void onSent(Identity client, Object message) {
 			}
+
 			@Override
 			public void onDropped(Identity client, Object message, String reason) {
 				latch.countDown();
 			}
-		});
+		}, null);
 		client.pendingMessage(new Object());
 		client.flush(new CancellationToken(), 10);
 		latch.await();
@@ -63,8 +65,8 @@ public class ClientTest {
 	@Test
 	public void flush_LRU_test() {
 		Client client = new Client(new DefaultLoggerFactory(), new DefaultIdentity("abc"));
-		TestConnection c1 = new TestConnection();
-		TestConnection c2 = new TestConnection();
+		ConnectionWrapper c1 = new ConnectionWrapper();
+		ConnectionWrapper c2 = new ConnectionWrapper();
 		client.AddConnection(c1);
 		client.AddConnection(c2);
 		assertEquals(2, client.getConnectionsCount());
@@ -86,24 +88,23 @@ public class ClientTest {
 	@Test
 	public void flush_closed_connection_test() {
 		Client client = new Client(new DefaultLoggerFactory(), new DefaultIdentity("abc"));
-		TestConnection c1 = new TestConnection(false, true);
-		TestConnection c2 = new TestConnection();
+		ConnectionWrapper c1 = new ConnectionWrapper(false, true);
+		ConnectionWrapper c2 = new ConnectionWrapper();
 		client.AddConnection(c1);
 		client.AddConnection(c2);
 		client.pendingMessage(new Object());
 		client.flush(new CancellationToken(), 1);
 		assertEquals(0, c1.sendCount);
 		assertEquals(1, c2.sendCount);
-		// only remove by server container
-		assertEquals(2, client.getConnectionsCount());
+		assertEquals(1, client.getConnectionsCount());
 		assertEquals(1, client.getConnectionQueueSize());
 	}
 
 	@Test
 	public void flush_when_send_error_test() {
 		Client client = new Client(new DefaultLoggerFactory(), new DefaultIdentity("abc"));
-		TestConnection c1 = new TestConnection(true, false);
-		TestConnection c2 = new TestConnection();
+		ConnectionWrapper c1 = new ConnectionWrapper(true, false);
+		ConnectionWrapper c2 = new ConnectionWrapper();
 		client.AddConnection(c1);
 		client.AddConnection(c2);
 		client.pendingMessage(new Object());
@@ -115,40 +116,37 @@ public class ClientTest {
 		assertEquals(2, client.getConnectionQueueSize());
 	}
 
-	public class TestConnection extends ClientConnection {
-		public int sendCount;
-		private boolean isOpen;
-		private boolean canSend;
+	@Test
+	public void connection_state_test() throws InterruptedException {
+		final CountDownLatch latch = new CountDownLatch(1);
+		Client client = new Client(new DefaultLoggerFactory(),
+				new DefaultIdentity("abc"), null,
+				new ClientStateHandler() {
+					@Override
+					public void onClientPending(Client client) {
+					}
 
-		public TestConnection() {
-			this(true, true);
-		}
+					@Override
+					public void onClientOffline(Client client) {
+					}
 
-		public TestConnection(boolean isOpen, boolean canSend) {
-			this.isOpen = isOpen;
-			this.canSend = canSend;
-		}
+					@Override
+					public void onClientIdle(Client client) {
+					}
 
-		@Override
-		protected void initHeaders() {
-		}
+					@Override
+					public void onClientDisconnect(Client client, ClientConnection clientConnection) {
+						latch.countDown();
+					}
 
-		@Override
-		protected void internalClear() {
-		}
-
-		@Override
-		public boolean isOpen() {
-			return this.isOpen;
-		}
-
-		@Override
-		public void sendMessage(Object msg) throws Exception {
-			if (!this.canSend)
-				throw new Exception("send message exception mock!");
-			this.sendCount++;
-			ClientTest.sendCount++;
-		}
-
+					@Override
+					public Identity onClientConnecting(Map<String, String> headers) throws Exception {
+						return null;
+					}
+				});
+		client.pendingMessage(new Object());
+		client.AddConnection(new ConnectionWrapper(false, false));
+		client.flush(new CancellationToken(), 10);
+		latch.await();
 	}
 }

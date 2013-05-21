@@ -34,10 +34,10 @@ public class PushManager {
 	// for managing some worker state
 	private CancellationToken token;
 
-	private ClientStateHandler clientStateHandler;
-	private MessageStateHandler messageStateHandler;
 	private boolean stateBuilding;
 	private Object stateBuildingLock = new Object();
+	private ClientStateHandler clientStateHandler;
+	private MessageStateHandler messageStateHandler;
 
 	public PushManager(LoggerFactory loggerFactory,
 			int maxConnectionCount,
@@ -79,12 +79,6 @@ public class PushManager {
 	}
 
 	public Client getClient(Identity id) {
-		if (!this.clients.containsKey(id)) {
-			synchronized (this.clientLock) {
-				if (!this.clients.containsKey(id))
-					this.clients.put(id, new Client(this.loggerFactory, id, this.messageStateHandler));
-			}
-		}
 		return this.clients.get(id);
 	}
 
@@ -112,9 +106,11 @@ public class PushManager {
 
 	public Client connectClient(Map<String, String> headers,
 			ClientConnection clientConnection) throws Exception {
-		Identity id = this.clientStateHandler.onClientConnecting(headers);
+		Identity id = this.clientStateHandler != null ?
+				this.clientStateHandler.onClientConnecting(headers) :
+				new DefaultIdentity(headers.get("id"));
 		clientConnection.init(id, headers);
-		Client client = this.getClient(id);
+		Client client = this.getOrCreateClient(id);
 		client.AddConnection(clientConnection);
 		return client;
 	}
@@ -125,6 +121,19 @@ public class PushManager {
 
 		client.RemoveConnection(clientConnection);
 		clientConnection.clear();
+	}
+
+	private Client getOrCreateClient(Identity id) {
+		if (!this.clients.containsKey(id)) {
+			synchronized (this.clientLock) {
+				if (!this.clients.containsKey(id))
+					this.clients.put(id, new Client(
+							this.loggerFactory, id,
+							this.messageStateHandler,
+							this.clientStateHandler));
+			}
+		}
+		return this.clients.get(id);
 	}
 
 	private void prepareSenders(int senderCount, int senderIdle) {

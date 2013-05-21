@@ -63,6 +63,10 @@ public class InitServlet extends HttpServlet {
 
 			@Override
 			public void onClientDisconnect(Client client, ClientConnection clientConnection) {
+				if (clientConnection instanceof WebSocketClientConnection) {
+					clientConnection.clear();
+					Utils.getClientConnectionPool().release((WebSocketClientConnection) clientConnection);
+				}
 			}
 		});
 		manager.setMessageStateHandler(new MessageStateHandler() {
