@@ -28,10 +28,6 @@
 			<param-value>4</param-value>
 		</init-param>
 		<init-param>
-			<param-name>senderIdle</param-name>
-			<param-value>1000</param-value>
-		</init-param>
-		<init-param>
 			<param-name>stateBuilderIdle</param-name>
 			<param-value>1000</param-value>
 		</init-param>

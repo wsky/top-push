@@ -13,7 +13,7 @@ import com.taobao.top.push.PushManager;
 public class PushMangerTest {
 	@Test
 	public void get_client_test() throws Exception {
-		PushManager manager = new PushManager(new DefaultLoggerFactory(), 10, 1, 1000, 100);
+		PushManager manager = new PushManager(new DefaultLoggerFactory(), 10, 1, 100);
 		Identity id = new DefaultIdentity("abc");
 		assertNull(manager.getClient(id));
 		Map<String, String> headers = new HashMap<String, String>();
@@ -25,7 +25,7 @@ public class PushMangerTest {
 	@Test
 	public void state_test() throws Exception {
 		// senderCount should be 0
-		PushManager manager = new PushManager(new DefaultLoggerFactory(), 2, 0, 1000, 100);
+		PushManager manager = new PushManager(new DefaultLoggerFactory(), 2, 0, 100);
 
 		Map<String, String> headers = new HashMap<String, String>();
 		headers.put("id", "1");

@@ -36,7 +36,6 @@ public class InitServlet extends HttpServlet {
 				loggerFactory,
 				this.get(config, "maxConnectionCount"),
 				this.get(config, "senderCount"),
-				this.get(config, "senderIdle"),
 				this.get(config, "stateBuilderIdle"));
 		manager.setClientStateHandler(new ClientStateHandler() {
 			@Override
