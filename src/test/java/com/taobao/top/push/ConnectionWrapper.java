@@ -35,4 +35,8 @@ public class ConnectionWrapper extends ClientConnection {
 		ClientTest.sendCount++;
 	}
 
+	@Override
+	public void close(String reasonText) {
+	}
+
 }

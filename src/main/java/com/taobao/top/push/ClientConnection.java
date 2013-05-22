@@ -18,6 +18,8 @@ public abstract class ClientConnection {
 	public abstract boolean isOpen();
 
 	public abstract void sendMessage(Object msg) throws Exception;
+	
+	public abstract void close(String reasonText);
 
 	public Identity getId() {
 		return this.id;

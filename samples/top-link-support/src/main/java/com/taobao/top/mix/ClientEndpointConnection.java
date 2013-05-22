@@ -14,9 +14,9 @@ public class ClientEndpointConnection extends ClientConnection {
 		this.endpoint = endpoint;
 		this.sender = sender;
 	}
-	
+
 	@Override
-	protected void initHeaders() {	
+	protected void initHeaders() {
 	}
 
 	@Override
@@ -33,6 +33,11 @@ public class ClientEndpointConnection extends ClientConnection {
 	@SuppressWarnings("unchecked")
 	@Override
 	public void sendMessage(Object msg) throws Exception {
-		endpoint.sendAndWait((HashMap<String, String>) msg, 100);
+		this.endpoint.sendAndWait((HashMap<String, String>) msg, 100);
+	}
+
+	@Override
+	public void close(String reasonText) {
+		this.sender.close(reasonText);
 	}
 }

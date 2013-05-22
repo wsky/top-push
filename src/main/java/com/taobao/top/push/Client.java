@@ -50,7 +50,7 @@ public class Client {
 		return this.connections.size();
 	}
 
-	public int getConnectionQueueSize() {
+	protected int getConnectionQueueSize() {
 		return this.connectionQueue.size();
 	}
 
@@ -99,6 +99,24 @@ public class Client {
 					this.totalSendMessageCount);
 	}
 
+	public void disconnect(String reasonText) {
+		this.clearPendingMessages();
+		this.connectionQueue.clear();
+		int size = this.connections.size();
+		for (int i = 0; i < size; i++) {
+			try {
+				ClientConnection connection = this.connections.get(i);
+				connection.close(reasonText);
+				this.onDisconnect(connection);
+			} catch (IndexOutOfBoundsException e) {
+				break;
+			} catch (Exception e) {
+				this.logger.error(e);
+			}
+		}
+		this.connections.clear();
+	}
+
 	protected void AddConnection(ClientConnection conn) {
 		synchronized (this.connections) {
 			this.connections.add(conn);
@@ -133,8 +151,7 @@ public class Client {
 
 			if (!connection.isOpen()) {
 				this.RemoveConnection(connection);
-				if (this.clientStateHandler != null)
-					this.clientStateHandler.onClientDisconnect(this, connection);
+				this.onDisconnect(connection);
 				this.logger.info("connection#%s[%s] is closed, remove it",
 						connection.getId(),
 						connection.getOrigin());
@@ -164,5 +181,10 @@ public class Client {
 	private void onSent(Object message) {
 		if (this.messageStateHandler != null)
 			this.messageStateHandler.onSent(this.id, message);
+	}
+
+	private void onDisconnect(ClientConnection connection) {
+		if (this.clientStateHandler != null)
+			this.clientStateHandler.onClientDisconnect(this, connection);
 	}
 }

@@ -14,9 +14,11 @@ public class WebSocketClientConnection extends ClientConnection {
 	private final static String PROTOCOL = "sec-websocket-protocol";
 
 	private Connection wsConnection;
+	private FrameConnection frameConnection;
 	private Receiver receiver;
 
 	public void init(FrameConnection frameConnection) {
+		this.frameConnection = frameConnection;
 		this.receivePing();
 	}
 
@@ -58,5 +60,10 @@ public class WebSocketClientConnection extends ClientConnection {
 		ByteBuffer buffer = this.receiver.parseMessage(this.protocol, msg);
 		this.wsConnection.sendMessage(buffer.array(), buffer.arrayOffset(),
 				length);
+	}
+
+	@Override
+	public void close(String reasonText) {
+		this.frameConnection.close(1004, reasonText);
 	}
 }

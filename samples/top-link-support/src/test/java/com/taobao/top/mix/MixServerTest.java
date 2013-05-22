@@ -73,4 +73,14 @@ public class MixServerTest {
 		MixServer.pending(id, new HashMap<String, String>());
 		latch.await();
 	}
+
+	@Test(expected = NullPointerException.class)
+	public void disconnect_test() throws LinkException, InterruptedException {
+		ClientIdentity id = new ClientIdentity("app_disconnect");
+		Endpoint e = new Endpoint(id);
+		e.getEndpoint(new ServerIdentity(), uri);
+		MixServer.disconnect(id, "not auth");
+		Thread.sleep(500);
+		MixServer.pending(id, new HashMap<String, String>());
+	}
 }

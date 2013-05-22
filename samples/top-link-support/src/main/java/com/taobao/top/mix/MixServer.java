@@ -12,7 +12,6 @@ import com.taobao.top.link.endpoint.Endpoint;
 import com.taobao.top.link.endpoint.EndpointProxy;
 import com.taobao.top.link.endpoint.StateHandler;
 import com.taobao.top.link.schedule.Scheduler;
-import com.taobao.top.push.Identity;
 import com.taobao.top.push.PushManager;
 
 public class MixServer {
@@ -78,7 +77,11 @@ public class MixServer {
 		serverEndpoint.unbindAll();
 	}
 
-	public static void pending(Identity target, HashMap<String, String> message) {
+	public static void pending(ClientIdentity target, HashMap<String, String> message) {
 		pushManager.getClient(target).pendingMessage(message);
+	}
+
+	public static void disconnect(ClientIdentity id, String reasonText) {
+		pushManager.disconnectClient(id, reasonText);
 	}
 }

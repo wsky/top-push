@@ -129,6 +129,15 @@ public class PushManager {
 
 		client.RemoveConnection(clientConnection);
 		clientConnection.clear();
+		// need remove it if connections=0?
+	}
+
+	public void disconnectClient(Identity id, String reasonText) {
+		Client client = this.getClient(id);
+		if (client == null)
+			return;
+		client.disconnect(reasonText);
+		this.clients.remove(id);
 	}
 
 	private Client getOrCreateClient(Identity id) {
