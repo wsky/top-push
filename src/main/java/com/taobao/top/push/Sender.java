@@ -1,22 +1,24 @@
 package com.taobao.top.push;
 
+import java.util.concurrent.Semaphore;
+
 public class Sender implements Runnable {
 	private Logger logger;
 	protected CancellationToken token;
 	protected PushManager manager;
 	private Client pendingClient;
-	private int idle;
+	private Semaphore semaphore;
 
 	public CancellationToken getCancellationToken() {
 		return this.token;
 	}
 
-	public Sender(LoggerFactory loggerFactory, 
-			PushManager manager, CancellationToken token, int idle, int totalSenderCount) {
+	public Sender(LoggerFactory loggerFactory,
+			PushManager manager, CancellationToken token, Semaphore semaphore) {
 		this.logger = loggerFactory.create(this);
 		this.manager = manager;
 		this.token = token;
-		this.idle = idle;
+		this.semaphore = semaphore;
 	}
 
 	@Override
@@ -27,11 +29,7 @@ public class Sender implements Runnable {
 			} catch (Exception e) {
 				this.logger.error(e);
 			}
-			try {
-				Thread.sleep(this.idle);
-			} catch (InterruptedException e) {
-				this.logger.error(e);
-			}
+			this.semaphore.acquireUninterruptibly();
 		}
 	}
 

@@ -32,7 +32,10 @@ public class MixServer {
 		ServerLoggerFactory loggerFactory = new ServerLoggerFactory();
 
 		// for push support
-		pushManager = new PushManager(loggerFactory, 50000, 4, 1000, 1000);
+		pushManager = new PushManager(loggerFactory, 50000,
+				100,// care about senderCount by cpu usage
+				1000,//sender idle 
+				1000);
 		pushManager.setClientStateHandler(new ClientStateHandler() {
 			@Override
 			public void onClientPending(Client client) {

@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Semaphore;
 
 public class PushManager {
 	private LoggerFactory loggerFactory;
@@ -31,6 +32,8 @@ public class PushManager {
 	private LinkedHashMap<Identity, Client> offlineClients;
 
 	private HashMap<Sender, Thread> senders;
+	private Semaphore senderSemaphore;
+	private int senderCount;
 	// for managing some worker state
 	private CancellationToken token;
 
@@ -42,7 +45,6 @@ public class PushManager {
 	public PushManager(LoggerFactory loggerFactory,
 			int maxConnectionCount,
 			int senderCount,
-			int senderIdle,
 			int stateBuilderIdle) {
 		this.loggerFactory = loggerFactory;
 		this.logger = this.loggerFactory.create(this);
@@ -56,7 +58,7 @@ public class PushManager {
 
 		// TODO:move to start and support start/stop/restart
 		this.token = new CancellationToken();
-		this.prepareSenders(senderCount, senderIdle);
+		this.prepareSenders(this.senderCount = senderCount);
 		this.prepareChecker(stateBuilderIdle);
 	}
 
@@ -115,6 +117,12 @@ public class PushManager {
 		return client;
 	}
 
+	public Client connectClient(Identity id, ClientConnection clientConnection) {
+		Client client = this.getOrCreateClient(id);
+		client.AddConnection(clientConnection);
+		return client;
+	}
+
 	public void disconnectClient(Client client, ClientConnection clientConnection) {
 		if (this.clientStateHandler != null)
 			this.clientStateHandler.onClientDisconnect(client, clientConnection);
@@ -136,11 +144,12 @@ public class PushManager {
 		return this.clients.get(id);
 	}
 
-	private void prepareSenders(int senderCount, int senderIdle) {
+	private void prepareSenders(int senderCount) {
+		this.senderSemaphore = new Semaphore(0);
 		this.senders = new HashMap<Sender, Thread>();
 		for (int i = 0; i < senderCount; i++) {
 			Sender sender = new Sender(
-					this.loggerFactory, this, this.token, senderIdle, senderCount);
+					this.loggerFactory, this, this.token, this.senderSemaphore);
 			Thread thread = new Thread(sender);
 			thread.start();
 			this.senders.put(sender, thread);
@@ -228,6 +237,8 @@ public class PushManager {
 		}
 		this.totalConnections = totalConn;
 		this.totalPendingMessages = totalPending;
+		// tell sender work
+		this.senderSemaphore.release(this.senderCount);
 	}
 
 	private void rebuildClientsState(Client client, boolean noPending,
