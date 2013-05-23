@@ -2,7 +2,7 @@ package com.taobao.top.mix;
 
 import com.taobao.top.link.DefaultLoggerFactory;
 
-public class ServerLoggerFactory extends DefaultLoggerFactory
+public class MixLoggerFactory extends DefaultLoggerFactory
 		implements com.taobao.top.push.LoggerFactory, com.taobao.top.link.LoggerFactory {
 
 	private boolean isDebugEnabled;
@@ -11,11 +11,11 @@ public class ServerLoggerFactory extends DefaultLoggerFactory
 	private boolean isErrorEnabled;
 	private boolean isFatalEnabled;
 
-	public ServerLoggerFactory() {
+	public MixLoggerFactory() {
 		this(false, true, true, true, true);
 	}
 
-	public ServerLoggerFactory(boolean isDebugEnabled,
+	public MixLoggerFactory(boolean isDebugEnabled,
 			boolean isInfoEnabled,
 			boolean isWarnEnabled,
 			boolean isErrorEnabled,

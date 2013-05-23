@@ -25,7 +25,7 @@ public class MixServer {
 
 	public static void start(int port) {
 		// whatever, log first
-		ServerLoggerFactory loggerFactory = new ServerLoggerFactory();
+		MixLoggerFactory loggerFactory = new MixLoggerFactory();
 		Logger logger = loggerFactory.create(MixServer.class);
 
 		// for push support
