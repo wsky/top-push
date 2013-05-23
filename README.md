@@ -11,7 +11,8 @@ As a component, it was designed to be extensible, you can easily replace the tra
 server implementation:
 - jetty-support: build-in server, impl message forwarder.
 	- matched client: top-push-client https://github.com/wsky/top-push-client
-- top-link-support
+- top-link-support: poll/push mix server sample showing how it can be used
+	- https://github.com/wsky/top-link
 
 latest refact defail here:
 https://github.com/wsky/top-push/issues/35
