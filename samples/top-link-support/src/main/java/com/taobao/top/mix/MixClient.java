@@ -15,6 +15,7 @@ import com.taobao.top.link.endpoint.EndpointContext;
 import com.taobao.top.link.endpoint.EndpointProxy;
 import com.taobao.top.link.endpoint.MessageHandler;
 
+// poll-push mix client
 public class MixClient {
 	private Logger logger;
 	private ClientIdentity id;
@@ -37,8 +38,37 @@ public class MixClient {
 
 		this.endpoint = new Endpoint(loggerFactory, this.id = id);
 		this.endpoint.setClientChannelSelector(selector);
+		this.endpoint.setMessageHandler(this.createHandler());
 
-		this.endpoint.setMessageHandler(new MessageHandler() {
+		this.logger.info("mix-client#%s init", this.id);
+	}
+
+	public void setClientHandler(MixClientHandler handler) {
+		this.handler = handler;
+	}
+
+	public void connect(URI uri) throws LinkException {
+		// extra header for validate auth
+		HashMap<String, String> headers = new HashMap<String, String>();
+		this.server = this.endpoint.getEndpoint(new ServerIdentity(), uri, headers);
+		this.serverUri = uri;
+		this.doReconnect();
+		this.logger.info("connect to mix-server: %s", this.serverUri);
+	}
+
+	// TODO:define your request
+	public void poll() throws ChannelException {
+		HashMap<String, String> msg = new HashMap<String, String>();
+		this.server.send(msg);
+	}
+
+	public void confirm() throws LinkException {
+		HashMap<String, String> msg = new HashMap<String, String>();
+		this.server.sendAndWait(msg, 1000);
+	}
+
+	private MessageHandler createHandler() {
+		return new MessageHandler() {
 			@Override
 			public void onMessage(HashMap<String, String> message) {
 				logger.info("got poll message:" + message);
@@ -61,31 +91,7 @@ public class MixClient {
 				msg.put("confirm", "123");
 				context.reply(msg);
 			}
-		});
-
-		this.logger.info("mix-client#%s init", this.id);
-	}
-
-	public void connect(URI uri) throws LinkException {
-		// extra header for validate auth
-		HashMap<String, String> headers = new HashMap<String, String>();
-		this.server = this.endpoint.getEndpoint(new ServerIdentity(), uri, headers);
-		this.serverUri = uri;
-
-		this.doReconnect();
-
-		this.logger.info("connect to mix-server: %s", this.serverUri);
-	}
-
-	// TODO:define your request
-	public void poll() throws ChannelException {
-		HashMap<String, String> msg = new HashMap<String, String>();
-		this.server.send(msg);
-	}
-
-	public void confirm() throws LinkException {
-		HashMap<String, String> msg = new HashMap<String, String>();
-		this.server.sendAndWait(msg, 1000);
+		};
 	}
 
 	private void doReconnect() {
@@ -107,9 +113,7 @@ public class MixClient {
 					logger.warn("reconnect error", e);
 				}
 			}
-		},
-				this.reconnectInterval,
-				this.reconnectInterval);
+		}, this.reconnectInterval, this.reconnectInterval);
 	}
 
 	private void stopReconnect() {

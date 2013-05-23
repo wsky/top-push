@@ -14,6 +14,7 @@ import com.taobao.top.link.endpoint.StateHandler;
 import com.taobao.top.link.schedule.Scheduler;
 import com.taobao.top.push.PushManager;
 
+// poll-push mix server
 public class MixServer {
 	private static Logger logger;
 	private static PushManager pushManager;
