@@ -15,6 +15,7 @@ import com.taobao.top.link.schedule.Scheduler;
 import com.taobao.top.push.PushManager;
 
 public class MixServer {
+	private static Logger logger;
 	private static PushManager pushManager;
 	private static Endpoint serverEndpoint;
 	private static Scheduler<com.taobao.top.link.endpoint.Identity> scheduler;
@@ -26,7 +27,7 @@ public class MixServer {
 	public static void start(int port) {
 		// whatever, log first
 		MixLoggerFactory loggerFactory = new MixLoggerFactory();
-		Logger logger = loggerFactory.create(MixServer.class);
+		logger = loggerFactory.create(MixServer.class);
 
 		// for push support
 		pushManager = new PushManager(loggerFactory, 50000,
@@ -75,6 +76,7 @@ public class MixServer {
 		pushManager.cancelAll();
 		scheduler.stop();
 		serverEndpoint.unbindAll();
+		logger.info("==== mix-server stop");
 	}
 
 	public static void pending(ClientIdentity target, HashMap<String, String> message) {

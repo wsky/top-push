@@ -24,6 +24,7 @@ public class MixClient {
 	private EndpointProxy server;
 
 	private Timer timer;
+	protected int reconnectInterval = 30000;
 
 	public MixClient(ClientIdentity id) {
 		// whatever, log first
@@ -94,23 +95,27 @@ public class MixClient {
 			@Override
 			public void run() {
 				try {
-					reconnect();
+					if (server.hasValidSender())
+						return;
+				} catch (Exception e) {
+					logger.warn(e);
+				}
+				try {
+					logger.warn("reconnecting...");
+					connect(serverUri);
 				} catch (LinkException e) {
 					logger.warn("reconnect error", e);
 				}
 			}
-		}, 10000, 30000);
+		},
+				this.reconnectInterval,
+				this.reconnectInterval);
 	}
 
 	private void stopReconnect() {
 		if (this.timer == null)
 			return;
 		this.timer.cancel();
-	}
-
-	private void reconnect() throws LinkException {
-		if (!this.server.canSend())
-			this.connect(this.serverUri);
 	}
 
 	private MixMessage parseMessage(HashMap<String, String> raw) {
