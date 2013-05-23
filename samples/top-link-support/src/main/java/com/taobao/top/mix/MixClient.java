@@ -11,6 +11,7 @@ import com.taobao.top.link.LoggerFactory;
 import com.taobao.top.link.channel.ChannelException;
 import com.taobao.top.link.channel.ClientChannelSharedSelector;
 import com.taobao.top.link.endpoint.Endpoint;
+import com.taobao.top.link.endpoint.EndpointChannelHandler;
 import com.taobao.top.link.endpoint.EndpointContext;
 import com.taobao.top.link.endpoint.EndpointProxy;
 import com.taobao.top.link.endpoint.MessageHandler;
@@ -34,10 +35,17 @@ public class MixClient {
 
 		// sharedpool with heartbeat 60s
 		ClientChannelSharedSelector selector = new ClientChannelSharedSelector(loggerFactory);
+		// also can use embedded client
+		// ClientChannelSharedSelector selector = new EmbeddedClientChannelSharedSelector();
 		selector.setHeartbeat(60000);
 
+		// custom scheduler
+		EndpointChannelHandler channelHandler = new EndpointChannelHandler(loggerFactory);
+		// channelHandler.setScheduler(scheduler);
+		
 		this.endpoint = new Endpoint(loggerFactory, this.id = id);
 		this.endpoint.setClientChannelSelector(selector);
+		this.endpoint.setChannelHandler(channelHandler);
 		this.endpoint.setMessageHandler(this.createHandler());
 
 		this.logger.info("mix-client#%s init", this.id);
