@@ -2,6 +2,7 @@ package com.taobao.top.mix;
 
 import java.net.URI;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -66,19 +67,19 @@ public class MixClient {
 
 	// TODO:define your request
 	public void poll() throws ChannelException {
-		HashMap<String, String> msg = new HashMap<String, String>();
+		Map<String, String> msg = new HashMap<String, String>();
 		this.server.send(msg);
 	}
 
 	public void confirm() throws LinkException {
-		HashMap<String, String> msg = new HashMap<String, String>();
+		Map<String, String> msg = new HashMap<String, String>();
 		this.server.sendAndWait(msg, 1000);
 	}
 
 	private MessageHandler createHandler() {
 		return new MessageHandler() {
 			@Override
-			public void onMessage(HashMap<String, String> message) {
+			public void onMessage(Map<String, String> message) {
 				logger.info("got poll message:" + message);
 				if (handler != null)
 					handler.onPollResult(new MixMessage[0]);
@@ -130,7 +131,7 @@ public class MixClient {
 		this.timer.cancel();
 	}
 
-	private MixMessage parseMessage(HashMap<String, String> raw) {
+	private MixMessage parseMessage(Map<String, String> raw) {
 		return new MixMessage();
 	}
 

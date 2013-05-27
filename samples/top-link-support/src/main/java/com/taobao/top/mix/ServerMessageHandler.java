@@ -1,13 +1,13 @@
 package com.taobao.top.mix;
 
-import java.util.HashMap;
+import java.util.Map;
 
 import com.taobao.top.link.endpoint.EndpointContext;
 import com.taobao.top.link.endpoint.MessageHandler;
 
 public class ServerMessageHandler implements MessageHandler {
 	@Override
-	public void onMessage(HashMap<String, String> message) {
+	public void onMessage(Map<String, String> message) {
 		System.out.println("onMessage:" + message);
 	}
 
