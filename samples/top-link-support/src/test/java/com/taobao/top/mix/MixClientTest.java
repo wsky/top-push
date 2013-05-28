@@ -2,6 +2,7 @@ package com.taobao.top.mix;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.HashMap;
 
 import org.junit.Test;
 
@@ -43,6 +44,6 @@ public class MixClientTest {
 		MixServer.start(uri.getPort());
 
 		Thread.sleep(500);
-		client.poll();
+		client.send(new HashMap<String, String>());
 	}
 }
