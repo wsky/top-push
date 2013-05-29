@@ -5,12 +5,13 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import com.taobao.top.link.LinkException;
 import com.taobao.top.link.Logger;
 import com.taobao.top.link.channel.ServerChannelSender;
 import com.taobao.top.link.channel.websocket.WebSocketServerChannel;
 import com.taobao.top.link.endpoint.Endpoint;
 import com.taobao.top.link.endpoint.EndpointProxy;
-import com.taobao.top.link.endpoint.StateHandler;
+import com.taobao.top.link.endpoint.SingleProxyStateHandler;
 import com.taobao.top.link.schedule.Scheduler;
 import com.taobao.top.push.PushManager;
 
@@ -52,9 +53,10 @@ public class MixServer {
 		// extended low-level channelHandler
 		ServerEndpointChannelHandler channelHandler = new ServerEndpointChannelHandler(loggerFactory);
 		channelHandler.setScheduler(scheduler);
-		channelHandler.setStateHandler(new StateHandler() {
+		channelHandler.setStateHandler(new SingleProxyStateHandler() {
 			@Override
-			public void onConnected(EndpointProxy endpoint, ServerChannelSender sender) {
+			public void onConnect(EndpointProxy endpoint, ServerChannelSender sender) throws LinkException {
+				super.onConnect(endpoint, sender);
 				// build pushClient here
 				pushManager.connectClient(
 						(ClientIdentity) endpoint.getIdentity(),

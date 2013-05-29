@@ -35,7 +35,7 @@ public class MixServerTest {
 		Endpoint e = new Endpoint(new ClientIdentity("app_poll"));
 		e.setMessageHandler(new MessageHandler() {
 			@Override
-			public void onMessage(Map<String, String> message) {
+			public void onMessage(Map<String, String> message, com.taobao.top.link.endpoint.Identity messageFrom) {
 				System.out.println("got reply:" + message);
 			}
 
@@ -58,7 +58,7 @@ public class MixServerTest {
 		e.getEndpoint(new ServerIdentity(), uri);
 		e.setMessageHandler(new MessageHandler() {
 			@Override
-			public void onMessage(Map<String, String> message) {
+			public void onMessage(Map<String, String> message, com.taobao.top.link.endpoint.Identity messageFrom) {
 			}
 
 			@Override

@@ -37,13 +37,14 @@ public class MixClient {
 		// sharedpool with heartbeat 60s
 		ClientChannelSharedSelector selector = new ClientChannelSharedSelector(loggerFactory);
 		// also can use embedded client
-		// ClientChannelSharedSelector selector = new EmbeddedClientChannelSharedSelector();
+		// ClientChannelSharedSelector selector = new
+		// EmbeddedClientChannelSharedSelector();
 		selector.setHeartbeat(60000);
 
 		// custom scheduler
 		EndpointChannelHandler channelHandler = new EndpointChannelHandler(loggerFactory);
 		// channelHandler.setScheduler(scheduler);
-		
+
 		this.endpoint = new Endpoint(loggerFactory, this.id = id);
 		this.endpoint.setClientChannelSelector(selector);
 		this.endpoint.setChannelHandler(channelHandler);
@@ -79,7 +80,7 @@ public class MixClient {
 	private MessageHandler createHandler() {
 		return new MessageHandler() {
 			@Override
-			public void onMessage(Map<String, String> message) {
+			public void onMessage(Map<String, String> message, com.taobao.top.link.endpoint.Identity messageFrom) {
 				logger.info("got poll message:" + message);
 				if (handler != null)
 					handler.onPollResult(new MixMessage[0]);
