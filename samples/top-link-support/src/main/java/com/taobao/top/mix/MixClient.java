@@ -66,15 +66,12 @@ public class MixClient {
 		this.logger.info("connect to mix-server: %s", this.serverUri);
 	}
 
-	// TODO:define your request
-	public void poll() throws ChannelException {
-		Map<String, String> msg = new HashMap<String, String>();
-		this.server.send(msg);
+	public void send(Map<String, String> message) throws ChannelException {
+		this.server.send(message);
 	}
 
-	public void confirm() throws LinkException {
-		Map<String, String> msg = new HashMap<String, String>();
-		this.server.sendAndWait(msg, 1000);
+	public void sendAndWait(Map<String, String> message, int timeout) throws LinkException {
+		this.server.sendAndWait(message, timeout);
 	}
 
 	private MessageHandler createHandler() {
