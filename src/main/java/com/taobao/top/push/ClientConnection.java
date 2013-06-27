@@ -4,7 +4,7 @@ import java.util.Date;
 import java.util.Map;
 
 public abstract class ClientConnection {
-	private Identity id;
+	private Object id;
 	
 	protected Date lastPingTime;
 	protected Map<String, String> headers;
@@ -21,7 +21,7 @@ public abstract class ClientConnection {
 	
 	public abstract void close(String reasonText);
 
-	public Identity getId() {
+	public Object getId() {
 		return this.id;
 	}
 
@@ -46,7 +46,7 @@ public abstract class ClientConnection {
 		this.internalClear();
 	}
 
-	public void init(Identity id, Map<String, String> headers) {
+	public void init(Object id, Map<String, String> headers) {
 		this.receivePing();
 		this.id = id;
 		this.headers = headers;

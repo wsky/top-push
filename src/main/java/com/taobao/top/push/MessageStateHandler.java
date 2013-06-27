@@ -2,7 +2,7 @@ package com.taobao.top.push;
 
 public interface MessageStateHandler {
 	
-	public void onDropped(Identity client, Object message, String reason);
+	public void onDropped(Object client, Object message, String reason);
 
-	public void onSent(Identity client, Object message);
+	public void onSent(Object client, Object message);
 }

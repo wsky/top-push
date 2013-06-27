@@ -4,7 +4,7 @@ import java.util.Map;
 
 public interface ClientStateHandler {
 
-	public Identity onClientConnecting(Map<String, String> headers) throws Exception;
+	public Object onClientConnecting(Map<String, String> headers) throws Exception;
 
 	public void onClientDisconnect(Client client, ClientConnection clientConnection);
 

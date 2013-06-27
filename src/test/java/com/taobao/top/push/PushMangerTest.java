@@ -14,7 +14,7 @@ public class PushMangerTest {
 	@Test
 	public void get_client_test() throws Exception {
 		PushManager manager = new PushManager(new DefaultLoggerFactory(), 10, 1, 100);
-		Identity id = new DefaultIdentity("abc");
+		Object id = new DefaultIdentity("abc");
 		assertNull(manager.getClient(id));
 		Map<String, String> headers = new HashMap<String, String>();
 		headers.put("id", "abc");

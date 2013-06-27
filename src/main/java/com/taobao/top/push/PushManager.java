@@ -20,16 +20,16 @@ public class PushManager {
 	private int totalConnections;
 	private int totalPendingMessages;
 	// easy find client by id
-	private HashMap<Identity, Client> clients;
+	private HashMap<Object, Client> clients;
 	// hold clients which having pending messages and in processing
 	// not immediately
 	private ConcurrentLinkedQueue<Client> pendingClients;
 	// hold clients which do not having pending messages and not in processing
 	// not immediately
-	private LinkedHashMap<Identity, Client> idleClients;
+	private LinkedHashMap<Object, Client> idleClients;
 	// hold clients which do not having any active connections
 	// not immediately
-	private LinkedHashMap<Identity, Client> offlineClients;
+	private LinkedHashMap<Object, Client> offlineClients;
 
 	private HashMap<Sender, Thread> senders;
 	private Semaphore senderSemaphore;
@@ -51,10 +51,10 @@ public class PushManager {
 
 		this.maxConnectionCount = maxConnectionCount;
 
-		this.clients = new HashMap<Identity, Client>(1000);
+		this.clients = new HashMap<Object, Client>(1000);
 		this.pendingClients = new ConcurrentLinkedQueue<Client>();
-		this.idleClients = new LinkedHashMap<Identity, Client>();
-		this.offlineClients = new LinkedHashMap<Identity, Client>();
+		this.idleClients = new LinkedHashMap<Object, Client>();
+		this.offlineClients = new LinkedHashMap<Object, Client>();
 
 		// TODO:move to start and support start/stop/restart
 		this.token = new CancellationToken();
@@ -80,7 +80,7 @@ public class PushManager {
 		this.token.setCancelling(false);
 	}
 
-	public Client getClient(Identity id) {
+	public Client getClient(Object id) {
 		return this.clients.get(id);
 	}
 
@@ -88,11 +88,11 @@ public class PushManager {
 		return this.totalConnections >= this.maxConnectionCount;
 	}
 
-	public boolean isIdleClient(Identity id) {
+	public boolean isIdleClient(Object id) {
 		return this.idleClients.containsKey(id);
 	}
 
-	public boolean isOfflineClient(Identity id) {
+	public boolean isOfflineClient(Object id) {
 		return this.offlineClients.containsKey(id);
 	}
 
@@ -108,7 +108,7 @@ public class PushManager {
 
 	public Client connectClient(Map<String, String> headers,
 			ClientConnection clientConnection) throws Exception {
-		Identity id = this.clientStateHandler != null ?
+		Object id = this.clientStateHandler != null ?
 				this.clientStateHandler.onClientConnecting(headers) :
 				new DefaultIdentity(headers.get("id"));
 		clientConnection.init(id, headers);
@@ -117,7 +117,7 @@ public class PushManager {
 		return client;
 	}
 
-	public Client connectClient(Identity id, ClientConnection clientConnection) {
+	public Client connectClient(Object id, ClientConnection clientConnection) {
 		Client client = this.getOrCreateClient(id);
 		client.AddConnection(clientConnection);
 		return client;
@@ -132,7 +132,7 @@ public class PushManager {
 		// need remove it if connections=0?
 	}
 
-	public void disconnectClient(Identity id, String reasonText) {
+	public void disconnectClient(Object id, String reasonText) {
 		Client client = this.getClient(id);
 		if (client == null)
 			return;
@@ -140,7 +140,7 @@ public class PushManager {
 		this.clients.remove(id);
 	}
 
-	private Client getOrCreateClient(Identity id) {
+	private Client getOrCreateClient(Object id) {
 		if (!this.clients.containsKey(id)) {
 			synchronized (this.clientLock) {
 				if (!this.clients.containsKey(id))

@@ -16,7 +16,7 @@ public class ClientTest {
 
 	@Test
 	public void init_test() {
-		Identity id = new DefaultIdentity("abc");
+		Object id = new DefaultIdentity("abc");
 		Client client = new Client(new DefaultLoggerFactory(), id);
 		assertEquals(id, client.getId());
 		assertEquals(0, client.getConnectionsCount());
@@ -49,11 +49,11 @@ public class ClientTest {
 		final CountDownLatch latch = new CountDownLatch(1);
 		Client client = new Client(new DefaultLoggerFactory(), new DefaultIdentity("abc"), new MessageStateHandler() {
 			@Override
-			public void onSent(Identity client, Object message) {
+			public void onSent(Object client, Object message) {
 			}
 
 			@Override
-			public void onDropped(Identity client, Object message, String reason) {
+			public void onDropped(Object client, Object message, String reason) {
 				latch.countDown();
 			}
 		}, null);
@@ -140,7 +140,7 @@ public class ClientTest {
 					}
 
 					@Override
-					public Identity onClientConnecting(Map<String, String> headers) throws Exception {
+					public Object onClientConnecting(Map<String, String> headers) throws Exception {
 						return null;
 					}
 				});

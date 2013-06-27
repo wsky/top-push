@@ -1,7 +1,7 @@
 package com.taobao.top.push;
 
 
-public class DefaultIdentity implements Identity {
+public class DefaultIdentity {
 	private String id;
 
 	public DefaultIdentity(String id) {

@@ -7,7 +7,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class Client {
 	private final static int MAX_PENDING_COUNT = 10000;
 	private Logger logger;
-	private Identity id;
+	private Object id;
 	// ping from any connection
 	private Date lastPingTime;
 	private int totalSendMessageCount;
@@ -19,12 +19,12 @@ public class Client {
 	private MessageStateHandler messageStateHandler;
 	private ClientStateHandler clientStateHandler;
 
-	public Client(LoggerFactory factory, Identity id) {
+	public Client(LoggerFactory factory, Object id) {
 		this(factory, id, null, null);
 	}
 
 	public Client(LoggerFactory factory,
-			Identity id,
+			Object id,
 			MessageStateHandler messageStateHandler,
 			ClientStateHandler clientStateHandler) {
 		this.logger = factory.create(this);
@@ -37,7 +37,7 @@ public class Client {
 		this.clientStateHandler = clientStateHandler;
 	}
 
-	public Identity getId() {
+	public Object getId() {
 		return this.id;
 	}
 

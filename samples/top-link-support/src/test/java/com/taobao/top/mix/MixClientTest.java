@@ -46,4 +46,20 @@ public class MixClientTest {
 		Thread.sleep(500);
 		client.send(new HashMap<String, String>());
 	}
+
+	public static void main(String[] args) throws URISyntaxException, LinkException, InterruptedException {
+		URI uri = new URI("ws://localhost:8889/");
+		MixServer.start(uri.getPort());
+		MixClient client = new MixClient(new ClientIdentity("mix_client"));
+		client.reconnectInterval = 200;
+		client.connect(uri);
+		while (true) {
+			try {
+				client.send(new HashMap<String, String>());
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			Thread.sleep(1500);
+		}
+	}
 }

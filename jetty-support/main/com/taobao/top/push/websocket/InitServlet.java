@@ -11,7 +11,6 @@ import com.taobao.top.push.ClientConnection;
 import com.taobao.top.push.ClientStateHandler;
 import com.taobao.top.push.DefaultIdentity;
 import com.taobao.top.push.DefaultLoggerFactory;
-import com.taobao.top.push.Identity;
 import com.taobao.top.push.LoggerFactory;
 import com.taobao.top.push.MessageStateHandler;
 import com.taobao.top.push.PushManager;
@@ -51,7 +50,7 @@ public class InitServlet extends HttpServlet {
 			}
 
 			@Override
-			public Identity onClientConnecting(Map<String, String> headers) throws Exception {
+			public Object onClientConnecting(Map<String, String> headers) throws Exception {
 				String id = headers.get("origin");
 
 				if (id == null || id.trim() == "")
@@ -70,13 +69,13 @@ public class InitServlet extends HttpServlet {
 		});
 		manager.setMessageStateHandler(new MessageStateHandler() {
 			@Override
-			public void onSent(Identity client, Object message) {
+			public void onSent(Object client, Object message) {
 				if (message instanceof Message)
 					receiver.release((Message) message);
 			}
 
 			@Override
-			public void onDropped(Identity client, Object message, String reason) {
+			public void onDropped(Object client, Object message, String reason) {
 				if (message instanceof Message)
 					receiver.release((Message) message);
 			}
