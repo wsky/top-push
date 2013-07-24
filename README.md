@@ -32,6 +32,9 @@ mvn clean jetty:run
 
 ## Build
 
+dev version v1.0.1 
+https://github.com/wsky/top-push/issues?milestone=3&state=open
+
 - core
 
 ```bash
