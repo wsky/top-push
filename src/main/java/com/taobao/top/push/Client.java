@@ -10,7 +10,7 @@ public class Client {
 	private Object id;
 	// ping from any connection
 	private Date lastPingTime;
-	private int totalSendMessageCount;
+	private long totalSendMessageCount;
 
 	private LinkedList<ClientConnection> connections;
 	private ConcurrentLinkedQueue<ClientConnection> connectionQueue;

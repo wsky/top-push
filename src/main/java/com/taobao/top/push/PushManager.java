@@ -18,7 +18,7 @@ public class PushManager {
 
 	// all connections whatever from any client
 	private int totalConnections;
-	private int totalPendingMessages;
+	private long totalPendingMessages;
 	// easy find client by id
 	private HashMap<Object, Client> clients;
 	// hold clients which having pending messages and in processing
