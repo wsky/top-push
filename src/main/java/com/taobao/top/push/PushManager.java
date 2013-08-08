@@ -31,7 +31,8 @@ public class PushManager {
 	// not immediately
 	private LinkedHashMap<Object, Client> offlineClients;
 
-	private HashMap<Sender, Thread> senders;
+	private Thread sendWorker;
+	private Sender sender;
 	private Semaphore senderSemaphore;
 	private int senderCount;
 	// for managing some worker state
@@ -56,9 +57,10 @@ public class PushManager {
 		this.idleClients = new LinkedHashMap<Object, Client>();
 		this.offlineClients = new LinkedHashMap<Object, Client>();
 
-		// TODO:move to start and support start/stop/restart
+		// TODO move to start and support start/stop/restart
 		this.token = new CancellationToken();
-		this.prepareSenders(this.senderCount = senderCount);
+		this.senderCount = senderCount;
+		this.prepareSenders();
 		this.prepareChecker(stateBuilderIdle);
 	}
 
@@ -68,6 +70,20 @@ public class PushManager {
 
 	public void setMessageStateHandler(MessageStateHandler messageStateHandler) {
 		this.messageStateHandler = messageStateHandler;
+	}
+
+	// sender settings
+
+	public void setSenderHighWater(int value) {
+		this.sender.setHighwater(value);
+	}
+
+	public void setSenderMaxFlushCount(int value) {
+		this.sender.setMaxFlushCount(value);
+	}
+
+	public void setSenderMinFlushCount(int value) {
+		this.sender.setMinFlushCount(value);
 	}
 
 	// cancel all current job
@@ -153,16 +169,11 @@ public class PushManager {
 		return this.clients.get(id);
 	}
 
-	private void prepareSenders(int senderCount) {
+	private void prepareSenders() {
 		this.senderSemaphore = new Semaphore(0);
-		this.senders = new HashMap<Sender, Thread>();
-		for (int i = 0; i < senderCount; i++) {
-			Sender sender = new Sender(
-					this.loggerFactory, this, this.token, this.senderSemaphore);
-			Thread thread = new Thread(sender);
-			thread.start();
-			this.senders.put(sender, thread);
-		}
+		Sender sender = new Sender(this.loggerFactory, this, this.token, this.senderSemaphore, this.senderCount);
+		this.sendWorker = new Thread(sender);
+		this.sendWorker.start();
 	}
 
 	private void prepareChecker(int stateBuilderIdle) {
@@ -180,9 +191,9 @@ public class PushManager {
 
 				// checking senders
 				try {
-					for (Map.Entry<Sender, Thread> entry : senders.entrySet()) {
-						if (!entry.getValue().isAlive())
-							logger.warn("sender#%s is broken!", entry.getKey());
+					if (!sendWorker.isAlive()) {
+						logger.fatal("sender is broken! restarting...");
+						prepareSenders();
 					}
 				} catch (Exception e) {
 					logger.error(e);
@@ -197,7 +208,6 @@ public class PushManager {
 								clients.size(),
 								idleClients.size(),
 								offlineClients.size());
-
 				} catch (Exception e) {
 					logger.fatal("rebuildClientsState error!", e);
 				}
