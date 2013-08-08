@@ -1,10 +1,16 @@
 package com.taobao.top.push;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class Client {
+	private Random rd = new Random();
 	private int maxPendingCount = 10000;
 	private Logger logger;
 	private Object id;
@@ -13,7 +19,6 @@ public class Client {
 	private long totalSendMessageCount;
 
 	private LinkedList<ClientConnection> connections;
-	private ConcurrentLinkedQueue<ClientConnection> connectionQueue;
 	private ConcurrentLinkedQueue<Object> pendingMessages;
 
 	private MessageStateHandler messageStateHandler;
@@ -31,7 +36,6 @@ public class Client {
 		this.id = id;
 		this.receivePing();
 		this.connections = new LinkedList<ClientConnection>();
-		this.connectionQueue = new ConcurrentLinkedQueue<ClientConnection>();
 		this.pendingMessages = new ConcurrentLinkedQueue<Object>();
 		this.messageStateHandler = messageStateHandler;
 		this.clientStateHandler = clientStateHandler;
@@ -52,10 +56,6 @@ public class Client {
 
 	public int getConnectionsCount() {
 		return this.connections.size();
-	}
-
-	protected int getConnectionQueueSize() {
-		return this.connectionQueue.size();
 	}
 
 	public Date getLastPingTime() {
@@ -107,7 +107,6 @@ public class Client {
 
 	public void disconnect(String reasonText) {
 		this.clearPendingMessages();
-		this.connectionQueue.clear();
 		int size = this.connections.size();
 		for (int i = 0; i < size; i++) {
 			try {
@@ -127,7 +126,6 @@ public class Client {
 		synchronized (this.connections) {
 			this.connections.add(conn);
 		}
-		this.connectionQueue.add(conn);
 		this.logger.info("client#%s add new connection from %s",
 				this.getId(), conn.getOrigin());
 	}
@@ -136,20 +134,23 @@ public class Client {
 		synchronized (this.connections) {
 			this.connections.remove(conn);
 		}
-		this.connectionQueue.remove(conn);
 		this.logger.info("client#%s remove a connection from %s",
 				this.getId(), conn.getOrigin());
 	}
 
 	protected void SendMessage(CancellationToken token, Object message) {
-		// FIFO queue for LRU load-balance
+		// random queue for LRU load-balance
+		// LRU queue? https://github.com/wsky/top-push/issues/38
+		List<Object> list = Arrays.asList(this.connections.toArray());
+		Collections.shuffle(list, this.rd);
+		Queue<Object> connectionQueue = new ConcurrentLinkedQueue<Object>(list);
 		while (true) {
 			if (token.isCancelling()) {
 				onDrop(message, "canceled");
 				return;
 			}
 
-			ClientConnection connection = this.connectionQueue.poll();
+			ClientConnection connection = (ClientConnection) connectionQueue.poll();
 			if (connection == null) {
 				onDrop(message, "no valid connection");
 				return;
@@ -173,7 +174,7 @@ public class Client {
 				this.logger.error("send message error", e);
 				return; // only send once
 			} finally {
-				this.connectionQueue.add(connection);
+				connectionQueue.add(connection);
 			}
 
 			this.onSent(message);

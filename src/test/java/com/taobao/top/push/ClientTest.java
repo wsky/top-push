@@ -31,10 +31,8 @@ public class ClientTest {
 		client.AddConnection(c1);
 		client.AddConnection(c2);
 		assertEquals(2, client.getConnectionsCount());
-		assertEquals(2, client.getConnectionQueueSize());
 		client.RemoveConnection(c1);
 		assertEquals(1, client.getConnectionsCount());
-		assertEquals(1, client.getConnectionQueueSize());
 	}
 
 	@Test
@@ -62,7 +60,8 @@ public class ClientTest {
 		latch.await();
 	}
 
-	@Test
+	// change to random, not LRU
+	// @Test
 	public void flush_LRU_test() {
 		Client client = new Client(new DefaultLoggerFactory(), new DefaultIdentity("abc"));
 		ConnectionWrapper c1 = new ConnectionWrapper();
@@ -70,7 +69,6 @@ public class ClientTest {
 		client.AddConnection(c1);
 		client.AddConnection(c2);
 		assertEquals(2, client.getConnectionsCount());
-		assertEquals(2, client.getConnectionQueueSize());
 
 		int count = 10;
 		for (int i = 0; i < count; i++) {
@@ -82,10 +80,10 @@ public class ClientTest {
 		assertEquals(count / 2, c1.sendCount);
 		assertEquals(count / 2, c2.sendCount);
 		assertEquals(2, client.getConnectionsCount());
-		assertEquals(2, client.getConnectionQueueSize());
 	}
 
-	@Test
+	// not LRU
+	// @Test
 	public void flush_closed_connection_test() {
 		Client client = new Client(new DefaultLoggerFactory(), new DefaultIdentity("abc"));
 		ConnectionWrapper c1 = new ConnectionWrapper(false, true);
@@ -93,14 +91,15 @@ public class ClientTest {
 		client.AddConnection(c1);
 		client.AddConnection(c2);
 		client.pendingMessage(new Object());
+		client.pendingMessage(new Object());
 		client.flush(new CancellationToken(), 1);
 		assertEquals(0, c1.sendCount);
 		assertEquals(1, c2.sendCount);
 		assertEquals(1, client.getConnectionsCount());
-		assertEquals(1, client.getConnectionQueueSize());
 	}
 
-	@Test
+	// not LRU
+	// @Test
 	public void flush_when_send_error_test() {
 		Client client = new Client(new DefaultLoggerFactory(), new DefaultIdentity("abc"));
 		ConnectionWrapper c1 = new ConnectionWrapper(true, false);
@@ -113,7 +112,6 @@ public class ClientTest {
 		assertEquals(0, c2.sendCount);
 		// only remove by server container
 		assertEquals(2, client.getConnectionsCount());
-		assertEquals(2, client.getConnectionQueueSize());
 	}
 
 	@Test

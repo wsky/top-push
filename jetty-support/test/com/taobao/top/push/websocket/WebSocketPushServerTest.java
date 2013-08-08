@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -19,11 +20,11 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.websocket.WebSocket;
 import org.eclipse.jetty.websocket.WebSocket.Connection;
+import org.eclipse.jetty.websocket.WebSocket.OnBinaryMessage;
 import org.eclipse.jetty.websocket.WebSocketClient;
 import org.eclipse.jetty.websocket.WebSocketClientFactory;
 import org.junit.Test;
 
-import com.taobao.top.push.DefaultIdentity;
 import com.taobao.top.push.messages.Message;
 import com.taobao.top.push.messages.MessageIO;
 import com.taobao.top.push.messages.MessageType;
@@ -206,15 +207,28 @@ public class WebSocketPushServerTest {
 		WebSocketClientFactory factory = new WebSocketClientFactory();
 		factory.start();
 
-		this.connect(factory, "ws://localhost:9005/front", "front", protocol,
-				null);
-		this.connect(factory, "ws://localhost:9005/front", "front", protocol,
-				null);
+		int total = 10000;
+		final CountDownLatch latch = new CountDownLatch(total);
+		OnBinaryMessage handler = new WebSocket.OnBinaryMessage() {
+			@Override
+			public void onOpen(Connection arg0) {
+			}
+
+			@Override
+			public void onClose(int arg0, String arg1) {
+			}
+
+			@Override
+			public void onMessage(byte[] arg0, int arg1, int arg2) {
+				latch.countDown();
+			}
+		};
+		this.connect(factory, "ws://localhost:9005/front", "front", protocol, handler);
+		this.connect(factory, "ws://localhost:9005/front", "front", protocol, handler);
 
 		Connection back = this.connect(factory, "ws://localhost:9006/back",
 				"back", protocol, null);
 
-		int total = 10000;
 		StopWatch watch = new StopWatch();
 		watch.start();
 		for (int i = 0; i < total; i++) {
@@ -226,10 +240,8 @@ public class WebSocketPushServerTest {
 		System.out.println(String.format("---- publish %s messages cost %sms",
 				total, watch.getTime()));
 
-		Thread.sleep(2000);
-		while (!InitServlet.manager.isIdleClient(new DefaultIdentity("front"))) {
-			Thread.sleep(1000);
-		}
+		assertTrue(latch.await(5, TimeUnit.SECONDS));
+
 		server.stop();
 	}
 
@@ -345,7 +357,7 @@ public class WebSocketPushServerTest {
 		initHolder.setInitParameter("maxMessageBufferCount", "10000");
 		initHolder.setInitParameter("senderCount", "4");
 		initHolder.setInitParameter("senderIdle", "10");
-		initHolder.setInitParameter("stateBuilderIdle", "200");
+		initHolder.setInitParameter("stateBuilderIdle", "10");
 		context.addServlet(initHolder, "/init");
 		context.setContextPath("/");
 
