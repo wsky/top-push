@@ -9,12 +9,30 @@ public class Sender implements Runnable {
 	private Client pendingClient;
 	private Semaphore semaphore;
 
+	private int highwater = 100000;
+	private int maxFlushCount = 2000;
+	private int minFlushCount = 100;
+
+	public void setHighwater(int value) {
+		this.highwater = value;
+	}
+
+	public void setMaxFlushCount(int value) {
+		this.maxFlushCount = value;
+	}
+
+	public void setMinFlushCount(int value) {
+		this.minFlushCount = value;
+	}
+
 	public CancellationToken getCancellationToken() {
 		return this.token;
 	}
 
 	public Sender(LoggerFactory loggerFactory,
-			PushManager manager, CancellationToken token, Semaphore semaphore) {
+			PushManager manager,
+			CancellationToken token,
+			Semaphore semaphore) {
 		this.logger = loggerFactory.create(this);
 		this.manager = manager;
 		this.token = token;
@@ -37,15 +55,13 @@ public class Sender implements Runnable {
 		// TODO: auto adjust max flush count
 		// https://github.com/wsky/top-push/issues/24
 		// 100000 is max message count server can flush per second
-		int max = 2000;
-		int min = 100;
 		int pending = this.manager.getPendingClientCount();
 		pending = pending == 0 ? 1 : pending;
-		int flushCount = 100000 / pending;
-		if (flushCount > max)
-			flushCount = max;
-		if (flushCount < min)
-			flushCount = min;
+		int flushCount = this.highwater / pending;
+		if (flushCount > this.maxFlushCount)
+			flushCount = this.maxFlushCount;
+		if (flushCount < this.minFlushCount)
+			flushCount = this.minFlushCount;
 
 		while (!this.token.isCancelling()
 				&& (this.pendingClient = this.manager.pollPendingClient()) != null) {

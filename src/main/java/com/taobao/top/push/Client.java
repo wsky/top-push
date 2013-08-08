@@ -159,6 +159,7 @@ public class Client {
 			}
 
 			try {
+				//FIXME here maybe have many exception, use statusCode instead
 				connection.sendMessage(message);
 			} catch (Exception e) {
 				onDrop(message, "send message error");
