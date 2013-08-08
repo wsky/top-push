@@ -171,7 +171,7 @@ public class PushManager {
 
 	private void prepareSenders() {
 		this.senderSemaphore = new Semaphore(0);
-		Sender sender = new Sender(this.loggerFactory,
+		this.sender = new Sender(this.loggerFactory,
 				this.token,
 				this.senderSemaphore,
 				this.senderCount) {
@@ -185,7 +185,7 @@ public class PushManager {
 				return pollPendingClient();
 			}
 		};
-		this.sendWorker = new Thread(sender);
+		this.sendWorker = new Thread(this.sender);
 		this.sendWorker.start();
 	}
 
