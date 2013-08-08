@@ -7,9 +7,8 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-public class Sender implements Runnable {
+public abstract class Sender implements Runnable {
 	private Logger logger;
-	private PushManager manager;
 	private CancellationToken token;
 	private Semaphore semaphore;
 	private ExecutorService threadPool;
@@ -20,12 +19,10 @@ public class Sender implements Runnable {
 	private int minFlushCount = 100;
 
 	public Sender(LoggerFactory loggerFactory,
-			PushManager manager,
 			CancellationToken token,
 			Semaphore semaphore,
 			int senderCount) {
 		this.logger = loggerFactory.create(this);
-		this.manager = manager;
 		this.token = token;
 		this.semaphore = semaphore;
 
@@ -61,11 +58,11 @@ public class Sender implements Runnable {
 				if (this.logger.isWarnEnabled())
 					this.logger.warn(e);
 			}
-			
-			if(this.threadPool==null)
+
+			if (this.threadPool == null)
 				continue;
 
-			int pending = this.manager.getPendingClientCount();
+			int pending = this.getPending();
 			if (pending == 0)
 				continue;
 
@@ -75,7 +72,7 @@ public class Sender implements Runnable {
 			while (!this.token.isCancelling()) {
 				if (pendingClient == null) {
 					try {
-						pendingClient = this.manager.pollPendingClient();
+						pendingClient = this.pollPending();
 					} catch (Exception e) {
 						this.logger.error(e);
 						break;
@@ -102,10 +99,16 @@ public class Sender implements Runnable {
 				}
 			}
 		}
+
+		this.logger.info("sender stop");
 	}
 
+	protected abstract int getPending();
+
+	protected abstract Client pollPending();
+
 	// https://github.com/wsky/top-push/issues/24
-	private int calculate(int pending) {
+	protected int calculate(int pending) {
 		int flushCount = this.highwater / pending;
 		if (flushCount > this.maxFlushCount)
 			flushCount = this.maxFlushCount;
@@ -114,11 +117,15 @@ public class Sender implements Runnable {
 		return flushCount;
 	}
 
-	private Runnable createRunnable(final Client pendingClient, final int flushCount) {
+	protected Runnable createRunnable(final Client pendingClient, final int flushCount) {
 		return new Runnable() {
 			@Override
 			public void run() {
-				pendingClient.flush(token, flushCount);
+				try {
+					pendingClient.flush(token, flushCount);
+				} catch (Exception e) {
+					logger.error(e);
+				}
 			}
 		};
 	}

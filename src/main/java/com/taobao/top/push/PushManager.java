@@ -171,7 +171,20 @@ public class PushManager {
 
 	private void prepareSenders() {
 		this.senderSemaphore = new Semaphore(0);
-		Sender sender = new Sender(this.loggerFactory, this, this.token, this.senderSemaphore, this.senderCount);
+		Sender sender = new Sender(this.loggerFactory,
+				this.token,
+				this.senderSemaphore,
+				this.senderCount) {
+			@Override
+			protected int getPending() {
+				return getPendingClientCount();
+			}
+
+			@Override
+			protected Client pollPending() {
+				return pollPendingClient();
+			}
+		};
 		this.sendWorker = new Thread(sender);
 		this.sendWorker.start();
 	}
@@ -257,7 +270,7 @@ public class PushManager {
 		this.totalConnections = totalConn;
 		this.totalPendingMessages = totalPending;
 		// tell sender work
-		this.senderSemaphore.release(this.senderCount);
+		this.senderSemaphore.release();
 	}
 
 	private void rebuildClientsState(Client client, boolean noPending,
