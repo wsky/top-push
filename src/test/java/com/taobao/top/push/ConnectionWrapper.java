@@ -28,11 +28,12 @@ public class ConnectionWrapper extends ClientConnection {
 	}
 
 	@Override
-	public void sendMessage(Object msg) throws Exception {
+	public boolean sendMessage(Object msg) throws Exception {
 		if (!this.canSend)
 			throw new Exception("send message exception mock!");
 		this.sendCount++;
 		ClientTest.sendCount++;
+		return true;
 	}
 
 	@Override

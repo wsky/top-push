@@ -54,12 +54,12 @@ public class WebSocketClientConnection extends ClientConnection {
 	}
 
 	@Override
-	public void sendMessage(Object message) throws Exception {
+	public boolean sendMessage(Object message) throws Exception {
 		Message msg = (Message) message;
 		int length = msg.fullMessageSize;
 		ByteBuffer buffer = this.receiver.parseMessage(this.protocol, msg);
-		this.wsConnection.sendMessage(buffer.array(), buffer.arrayOffset(),
-				length);
+		this.wsConnection.sendMessage(buffer.array(), buffer.arrayOffset(), length);
+		return true;
 	}
 
 	@Override

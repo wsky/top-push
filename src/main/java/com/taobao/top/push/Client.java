@@ -5,7 +5,7 @@ import java.util.LinkedList;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class Client {
-	private final static int MAX_PENDING_COUNT = 10000;
+	private int maxPendingCount = 10000;
 	private Logger logger;
 	private Object id;
 	// ping from any connection
@@ -37,6 +37,10 @@ public class Client {
 		this.clientStateHandler = clientStateHandler;
 	}
 
+	public void setMaxPendingCount(int value) {
+		this.maxPendingCount = value;
+	}
+
 	public Object getId() {
 		return this.id;
 	}
@@ -66,7 +70,7 @@ public class Client {
 	public boolean pendingMessage(Object message) {
 		if (message == null)
 			return false;
-		if (this.getPendingMessagesCount() >= MAX_PENDING_COUNT)
+		if (this.getPendingMessagesCount() >= this.maxPendingCount)
 			return false;
 		this.pendingMessages.add(message);
 		return true;
@@ -159,8 +163,9 @@ public class Client {
 			}
 
 			try {
-				//FIXME here maybe have many exception, use statusCode instead
-				connection.sendMessage(message);
+				// here maybe have many exception, use statusCode instead
+				if (!connection.sendMessage(message))
+					return;
 			} catch (Exception e) {
 				onDrop(message, "send message error");
 				this.logger.error("send message error", e);
