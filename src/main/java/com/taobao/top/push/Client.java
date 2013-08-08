@@ -85,6 +85,7 @@ public class Client {
 
 	public void flush(CancellationToken token, int count) {
 		int temp = 0;
+		long begin = System.currentTimeMillis();
 		for (int i = 0; i < count; i++) {
 			if (token.isCancelling())
 				break;
@@ -97,9 +98,10 @@ public class Client {
 		this.totalSendMessageCount += temp;
 		if (temp > 0)
 			this.logger.info(
-					"flush %s messages to client#%s, totalSendMessageCount=%s",
+					"flush %s messages to client#%s, cost %sms, totalSendMessageCount=%s",
 					temp,
 					this.getId(),
+					System.currentTimeMillis() - begin,
 					this.totalSendMessageCount);
 	}
 
