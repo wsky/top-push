@@ -5,7 +5,7 @@
 
   <groupId>com.taobao.top</groupId>
   <artifactId>top-push</artifactId>
-  <version>1.1.1-SNAPSHOT</version>
+  <version>1.1.1-20130808-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>top-push</name>
