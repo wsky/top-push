@@ -9,6 +9,8 @@ import java.util.Queue;
 import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import com.taobao.top.push.ClientConnection.SendStatus;
+
 public class Client {
 	private Random rd = new Random();
 	private int maxPendingCount = 10000;
@@ -48,7 +50,7 @@ public class Client {
 	public Object getId() {
 		return this.id;
 	}
-	
+
 	public long getTotalSendMessageCount() {
 		return this.totalSendMessageCount;
 	}
@@ -87,6 +89,12 @@ public class Client {
 	}
 
 	public void flush(CancellationToken token, int count) {
+		// random queue for LRU load-balance
+		// LRU queue? https://github.com/wsky/top-push/issues/38
+		List<ClientConnection> list = Arrays.asList(this.connections.toArray(new ClientConnection[0]));
+		Collections.shuffle(list, this.rd);
+		Queue<ClientConnection> connectionQueue = new ConcurrentLinkedQueue<ClientConnection>(list);
+
 		int temp = 0;
 		long begin = System.currentTimeMillis();
 		for (int i = 0; i < count; i++) {
@@ -95,15 +103,18 @@ public class Client {
 			Object msg = this.pendingMessages.poll();
 			if (msg == null)
 				break;
-			this.SendMessage(token, msg);
+			// pass pre-prepared connections that avoid concurrent
+			// and work well for flush continuing flag
+			if (!this.SendMessage(token, msg, connectionQueue))
+				break;
 			temp++;
 		}
 		this.totalSendMessageCount += temp;
-		if (temp > 0)
+
+		if (temp > 0 && this.logger.isInfoEnabled())
 			this.logger.info(
 					"flush %s messages to client#%s, cost %sms, totalSendMessageCount=%s",
-					temp,
-					this.getId(),
+					temp, this.getId(),
 					System.currentTimeMillis() - begin,
 					this.totalSendMessageCount);
 	}
@@ -141,47 +152,53 @@ public class Client {
 				this.getId(), conn.getOrigin());
 	}
 
-	protected void SendMessage(CancellationToken token, Object message) {
-		// random queue for LRU load-balance
-		// LRU queue? https://github.com/wsky/top-push/issues/38
-		List<Object> list = Arrays.asList(this.connections.toArray());
-		Collections.shuffle(list, this.rd);
-		Queue<Object> connectionQueue = new ConcurrentLinkedQueue<Object>(list);
+	// result is that weather to continue flushing
+	protected boolean SendMessage(CancellationToken token, Object message, Queue<ClientConnection> connectionQueue) {
 		while (true) {
 			if (token.isCancelling()) {
 				onDrop(message, "canceled");
-				return;
+				return false;
 			}
 
 			ClientConnection connection = (ClientConnection) connectionQueue.poll();
 			if (connection == null) {
 				onDrop(message, "no valid connection");
-				return;
+				return false;
 			}
 
 			if (!connection.isOpen()) {
 				this.RemoveConnection(connection);
 				this.onDisconnect(connection);
-				this.logger.info("connection#%s[%s] is closed, remove it",
-						connection.getId(),
-						connection.getOrigin());
+				if (this.logger.isInfoEnabled())
+					this.logger.info("connection#%s[%s] is closed, remove it",
+							connection.getId(),
+							connection.getOrigin());
 				continue;
 			}
 
+			SendStatus status;
 			try {
 				// here maybe have many exception, use statusCode instead
-				if (!connection.sendMessage(message))
-					return;
+				status = connection.sendMessage(message);
 			} catch (Exception e) {
-				onDrop(message, "send message error");
-				this.logger.error("send message error", e);
-				return; // only send once
-			} finally {
-				connectionQueue.add(connection);
+				// exception maybe any kind of course, just contine
+				this.logger.error("send message error: " + message, e);
+				continue;
 			}
 
-			this.onSent(message);
-			return;
+			switch (status) {
+			case SENT:
+				connectionQueue.add(connection);
+				this.onSent(message);
+				return true;
+			case DROP:
+				// if drop, means that the connection maybe have some problem,
+				// and not want to be used in this flush loop,
+				// but flush loop still can be continued without using this dropped connection
+				return true;
+			case RETRY:
+				continue;
+			}
 		}
 	}
 

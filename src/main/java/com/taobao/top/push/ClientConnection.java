@@ -5,7 +5,7 @@ import java.util.Map;
 
 public abstract class ClientConnection {
 	private Object id;
-	
+
 	protected Date lastPingTime;
 	protected Map<String, String> headers;
 	protected String origin;
@@ -17,8 +17,8 @@ public abstract class ClientConnection {
 
 	public abstract boolean isOpen();
 
-	public abstract boolean sendMessage(Object msg) throws Exception;
-	
+	public abstract SendStatus sendMessage(Object msg) throws Exception;
+
 	public abstract void close(String reasonText);
 
 	public Object getId() {
@@ -57,4 +57,7 @@ public abstract class ClientConnection {
 		this.lastPingTime = new Date();
 	}
 
+	public enum SendStatus {
+		SENT, DROP, RETRY
+	}
 }
