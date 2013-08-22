@@ -19,7 +19,7 @@ public class Client {
 	private long totalSendMessageCount;
 
 	private LinkedList<ClientConnection> connections;
-	private ConcurrentLinkedQueue<Object> pendingMessages;
+	private Queue<Object> pendingMessages;
 
 	private MessageStateHandler messageStateHandler;
 	private ClientStateHandler clientStateHandler;
@@ -72,8 +72,7 @@ public class Client {
 			return false;
 		if (this.getPendingMessagesCount() >= this.maxPendingCount)
 			return false;
-		this.pendingMessages.add(message);
-		return true;
+		return this.pendingMessages.add(message);
 	}
 
 	public void clearPendingMessages() {

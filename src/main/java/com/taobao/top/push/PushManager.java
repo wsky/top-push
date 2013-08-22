@@ -1,11 +1,12 @@
 package com.taobao.top.push;
 
 import java.util.Date;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
 
@@ -20,16 +21,16 @@ public class PushManager {
 	private int totalConnections;
 	private long totalPendingMessages;
 	// easy find client by id
-	private HashMap<Object, Client> clients;
+	private Map<Object, Client> clients;
 	// hold clients which having pending messages and in processing
 	// not immediately
-	private ConcurrentLinkedQueue<Client> pendingClients;
+	private Queue<Client> pendingClients;
 	// hold clients which do not having pending messages and not in processing
 	// not immediately
-	private LinkedHashMap<Object, Client> idleClients;
+	private Map<Object, Client> idleClients;
 	// hold clients which do not having any active connections
 	// not immediately
-	private LinkedHashMap<Object, Client> offlineClients;
+	private Map<Object, Client> offlineClients;
 
 	private Thread sendWorker;
 	private Sender sender;
@@ -52,7 +53,7 @@ public class PushManager {
 
 		this.maxConnectionCount = maxConnectionCount;
 
-		this.clients = new HashMap<Object, Client>(1000);
+		this.clients = new ConcurrentHashMap<Object, Client>(1000);
 		this.pendingClients = new ConcurrentLinkedQueue<Client>();
 		this.idleClients = new LinkedHashMap<Object, Client>();
 		this.offlineClients = new LinkedHashMap<Object, Client>();
