@@ -48,6 +48,10 @@ public class Client {
 	public Object getId() {
 		return this.id;
 	}
+	
+	public long getTotalSendMessageCount() {
+		return this.totalSendMessageCount;
+	}
 
 	public int getPendingMessagesCount() {
 		// size() is O(n)
