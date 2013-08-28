@@ -60,7 +60,9 @@ public class ClientTest {
 			}
 		}, null);
 		client.pendingMessage(new Object());
-		client.flush(new CancellationToken(), 10);
+		// if no connection, will not flush
+		// client.flush(new CancellationToken(), 10);
+		client.SendMessage(new CancellationToken(), new Object(), new ConcurrentLinkedQueue<ClientConnection>());
 		latch.await();
 	}
 
@@ -133,6 +135,8 @@ public class ClientTest {
 		client.pendingMessage(new Object());
 		client.pendingMessage(new Object());
 		client.pendingMessage(new Object());
+
+		client.AddConnection(new ConnectionWrapper());
 
 		flag.set(true);
 		client.flush(new CancellationToken(), 2);

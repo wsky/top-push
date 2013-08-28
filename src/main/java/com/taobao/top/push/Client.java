@@ -100,6 +100,9 @@ public class Client {
 		for (int i = 0; i < count; i++) {
 			if (token.isCancelling())
 				break;
+			if(connectionQueue.size()==0)
+				break;
+
 			Object msg = this.pendingMessages.poll();
 			if (msg == null)
 				break;
