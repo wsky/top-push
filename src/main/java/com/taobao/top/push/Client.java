@@ -162,6 +162,7 @@ public class Client {
 
 			ClientConnection connection = (ClientConnection) connectionQueue.poll();
 			if (connection == null) {
+				this.logger.info("no valid connection, drop message: " + message);
 				onDrop(message, "no valid connection");
 				return false;
 			}
