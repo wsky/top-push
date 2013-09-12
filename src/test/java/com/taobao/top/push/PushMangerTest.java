@@ -25,37 +25,48 @@ public class PushMangerTest {
 	@Test
 	public void state_test() throws Exception {
 		// senderCount should be 0
-		PushManager manager = new PushManager(new DefaultLoggerFactory(), 2, 0, 100);
+		PushManager manager = new PushManager(new DefaultLoggerFactory(), 2, 0, 100) {
+			@Override
+			protected void prepareChecker(int stateBuilderIdle) {
+			}
+
+			@Override
+			protected void rebuildClientsState(Client client, boolean noPending, boolean pending, boolean offline) {
+				System.out.println(String.format("id=%s, noPending=%s, pending=%s, offline=%s", client.getId(), noPending, pending, offline));
+				super.rebuildClientsState(client, noPending, pending, offline);
+			}
+		};
 
 		Map<String, String> headers = new HashMap<String, String>();
 		headers.put("id", "1");
 		Client c1 = manager.connectClient(headers, new ConnectionWrapper(false, false));
 		c1.pendingMessage(new Object());
-		c1.flush(new CancellationToken(), 1);
+
 		headers.put("id", "2");
 		Client c2 = manager.connectClient(headers, new ConnectionWrapper(false, false));
 		c2.pendingMessage(new Object());
-		c2.flush(new CancellationToken(), 1);
 
-		Thread.sleep(1000);
+		manager.rebuildClientsState();
+		// offline
 		assertTrue(manager.isOfflineClient(c1.getId()));
 		assertTrue(manager.isOfflineClient(c2.getId()));
-		assertNull(manager.pollPendingClient());
+		assertEquals(0, manager.getPendingClientCount());
 
 		c1.AddConnection(new ConnectionWrapper());
-		Thread.sleep(1000);
-		assertTrue(manager.isIdleClient(c1.getId()));
+		manager.rebuildClientsState();
+		// pending
+		assertEquals(1, manager.getPendingClientCount());
+		assertEquals(c1, manager.pollPendingClient());
 		assertTrue(manager.isOfflineClient(c2.getId()));
-		assertNull(manager.pollPendingClient());
-		assertFalse(manager.isReachMaxConnectionCount());
 
-		c1.pendingMessage(new Object());
-		Thread.sleep(1000);
-		assertFalse(manager.isIdleClient(c1.getId()));
-		assertNotNull(manager.pollPendingClient());
+		c1.flush(new CancellationToken(), 10);
+		manager.rebuildClientsState();
+		// idle
+		assertTrue(manager.isIdleClient(c1.getId()));
+		assertEquals(0, manager.getPendingClientCount());
 
 		c1.AddConnection(new ConnectionWrapper());
-		Thread.sleep(1000);
+		manager.rebuildClientsState();
 		assertTrue(manager.isReachMaxConnectionCount());
 	}
 }

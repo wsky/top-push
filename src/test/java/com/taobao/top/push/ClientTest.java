@@ -40,6 +40,19 @@ public class ClientTest {
 	}
 
 	@Test
+	public void clean_connection_test() {
+		Client client = new Client(new DefaultLoggerFactory(), new DefaultIdentity("abc"));
+		ConnectionWrapper c1 = new ConnectionWrapper(false, false);
+		ConnectionWrapper c2 = new ConnectionWrapper(false, false);
+		ConnectionWrapper c3 = new ConnectionWrapper(true, true);
+		client.AddConnection(c1);
+		client.AddConnection(c2);
+		client.AddConnection(c3);
+		assertEquals(3, client.getConnectionsCount());
+		assertEquals(1, client.cleanConnections());
+	}
+
+	@Test
 	public void pending_message_test() {
 		Client client = new Client(new DefaultLoggerFactory(), new DefaultIdentity("abc"));
 		client.pendingMessage(new Object());

@@ -170,7 +170,7 @@ public class PushManager {
 		return this.clients.get(id);
 	}
 
-	private void prepareSenders() {
+	protected void prepareSenders() {
 		this.senderSemaphore = new Semaphore(0);
 		this.sender = new Sender(this.loggerFactory,
 				this.token,
@@ -190,7 +190,7 @@ public class PushManager {
 		this.sendWorker.start();
 	}
 
-	private void prepareChecker(int stateBuilderIdle) {
+	protected void prepareChecker(int stateBuilderIdle) {
 		// timer check
 		TimerTask task = new TimerTask() {
 			public void run() {
@@ -234,7 +234,7 @@ public class PushManager {
 	}
 
 	// build pending/idle clients queue
-	private void rebuildClientsState() {
+	protected void rebuildClientsState() {
 		int totalConn = 0;
 		int totalPending = 0;
 		int connCount, pendingCount;
@@ -252,7 +252,7 @@ public class PushManager {
 			if (client == null)
 				continue;
 
-			connCount = client.getConnectionsCount();
+			connCount = client.cleanConnections();
 			pendingCount = client.getPendingMessagesCount();
 
 			totalConn += connCount;
@@ -274,7 +274,7 @@ public class PushManager {
 		this.senderSemaphore.release();
 	}
 
-	private void rebuildClientsState(Client client, boolean noPending,
+	protected void rebuildClientsState(Client client, boolean noPending,
 			boolean pending, boolean offline) {
 		if (noPending && pending && !offline) {
 			this.pendingClients.add(client);

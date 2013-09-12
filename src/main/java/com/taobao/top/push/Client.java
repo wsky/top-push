@@ -1,8 +1,10 @@
 package com.taobao.top.push;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -122,7 +124,7 @@ public class Client {
 					this.totalSendMessageCount);
 	}
 
-	public void disconnect(String reasonText) {
+	public synchronized void disconnect(String reasonText) {
 		this.clearPendingMessages();
 		int size = this.connections.size();
 		for (int i = 0; i < size; i++) {
@@ -139,20 +141,28 @@ public class Client {
 		this.connections.clear();
 	}
 
-	protected void AddConnection(ClientConnection conn) {
-		synchronized (this.connections) {
-			this.connections.add(conn);
-		}
+	protected synchronized void AddConnection(ClientConnection conn) {
+		this.connections.add(conn);
 		this.logger.info("client#%s add new connection from %s",
 				this.getId(), conn.getOrigin());
 	}
 
-	protected void RemoveConnection(ClientConnection conn) {
-		synchronized (this.connections) {
-			this.connections.remove(conn);
-		}
+	protected synchronized void RemoveConnection(ClientConnection conn) {
+		this.connections.remove(conn);
 		this.logger.info("client#%s remove a connection from %s",
 				this.getId(), conn.getOrigin());
+	}
+
+	protected synchronized int cleanConnections() {
+		List<ClientConnection> trash = new ArrayList<ClientConnection>();
+		Iterator<ClientConnection> iterator = this.connections.iterator();
+		while (iterator.hasNext()) {
+			ClientConnection clientConnection = iterator.next();
+			if (!clientConnection.isOpen())
+				trash.add(clientConnection);
+		}
+		this.connections.removeAll(trash);
+		return this.connections.size();
 	}
 
 	// result is that weather to continue flushing
@@ -166,7 +176,7 @@ public class Client {
 			ClientConnection connection = (ClientConnection) connectionQueue.poll();
 			if (connection == null) {
 				this.logger.info(String.format(
-						"client#%s no valid connection, drop message: %s", 
+						"client#%s no valid connection, drop message: %s",
 						this.getId(), message));
 				onDrop(message, "no valid connection");
 				return false;
@@ -188,9 +198,9 @@ public class Client {
 				status = connection.sendMessage(message);
 			} catch (Exception e) {
 				// exception maybe any kind of course, just contine
-				this.logger.error(String.format("send message error to %s[%s]: %s", 
-						connection.getId(), 
-						connection.getOrigin(), 
+				this.logger.error(String.format("send message error to %s[%s]: %s",
+						connection.getId(),
+						connection.getOrigin(),
 						message), e);
 				continue;
 			}
