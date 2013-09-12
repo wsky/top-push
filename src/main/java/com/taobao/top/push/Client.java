@@ -100,7 +100,7 @@ public class Client {
 		for (int i = 0; i < count; i++) {
 			if (token.isCancelling())
 				break;
-			if(connectionQueue.size()==0)
+			if (connectionQueue.size() == 0)
 				break;
 
 			Object msg = this.pendingMessages.poll();
@@ -165,7 +165,9 @@ public class Client {
 
 			ClientConnection connection = (ClientConnection) connectionQueue.poll();
 			if (connection == null) {
-				this.logger.info("no valid connection, drop message: " + message);
+				this.logger.info(String.format(
+						"client#%s no valid connection, drop message: %s", 
+						this.getId(), message));
 				onDrop(message, "no valid connection");
 				return false;
 			}
@@ -186,7 +188,10 @@ public class Client {
 				status = connection.sendMessage(message);
 			} catch (Exception e) {
 				// exception maybe any kind of course, just contine
-				this.logger.error("send message error: " + message, e);
+				this.logger.error(String.format("send message error to %s[%s]: %s", 
+						connection.getId(), 
+						connection.getOrigin(), 
+						message), e);
 				continue;
 			}
 
