@@ -161,7 +161,8 @@ public class Client {
 			if (!clientConnection.isOpen())
 				trash.add(clientConnection);
 		}
-		this.connections.removeAll(trash);
+		for (ClientConnection c : trash)
+			this.RemoveConnection(c);
 		return this.connections.size();
 	}
 
