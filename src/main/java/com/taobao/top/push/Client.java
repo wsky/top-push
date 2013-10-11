@@ -66,6 +66,10 @@ public class Client {
 		return this.connections.size();
 	}
 
+	public ClientConnection[] getConnections() {
+		return this.connections.toArray(new ClientConnection[0]);
+	}
+
 	public Date getLastPingTime() {
 		return this.lastPingTime;
 	}
