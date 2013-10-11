@@ -101,6 +101,10 @@ public class PushManager {
 		return this.clients.get(id);
 	}
 
+	public Client[] getClients() {
+		return this.clients.values().toArray(new Client[0]);
+	}
+
 	public boolean isReachMaxConnectionCount() {
 		return this.totalConnections >= this.maxConnectionCount;
 	}
