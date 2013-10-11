@@ -6,6 +6,7 @@ import java.util.Map;
 public abstract class ClientConnection {
 	private Object id;
 
+	protected Date connectTime;
 	protected Date lastPingTime;
 	protected Map<String, String> headers;
 	protected String origin;
@@ -47,14 +48,23 @@ public abstract class ClientConnection {
 	}
 
 	public void init(Object id, Map<String, String> headers) {
+		this.connectTime = new Date();
 		this.receivePing();
 		this.id = id;
 		this.headers = headers;
 		this.initHeaders();
 	}
 
+	public Date getConnectTime() {
+		return this.connectTime;
+	}
+
 	public void receivePing() {
 		this.lastPingTime = new Date();
+	}
+
+	public Date getLastPingTime() {
+		return this.lastPingTime;
 	}
 
 	public enum SendStatus {

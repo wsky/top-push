@@ -132,6 +132,10 @@ public class Client {
 				ClientConnection connection = this.connections.get(i);
 				connection.close(reasonText);
 				this.onDisconnect(connection);
+				this.logger.info("client#%s disconnect a connection from %s: %s",
+						this.getId(),
+						connection.getOrigin(),
+						reasonText);
 			} catch (IndexOutOfBoundsException e) {
 				break;
 			} catch (Exception e) {
@@ -149,6 +153,7 @@ public class Client {
 
 	protected synchronized void RemoveConnection(ClientConnection conn) {
 		this.connections.remove(conn);
+		this.onDisconnect(conn);
 		this.logger.info("client#%s remove a connection from %s",
 				this.getId(), conn.getOrigin());
 	}
@@ -185,7 +190,6 @@ public class Client {
 
 			if (!connection.isOpen()) {
 				this.RemoveConnection(connection);
-				this.onDisconnect(connection);
 				if (this.logger.isInfoEnabled())
 					this.logger.info("connection#%s[%s] is closed, remove it",
 							connection.getId(),
