@@ -11,7 +11,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.jetty.websocket.WebSocket;
 import org.eclipse.jetty.websocket.WebSocketServlet;
 
-import com.taobao.top.push.Client;
 import com.taobao.top.push.DefaultIdentity;
 import com.taobao.top.push.Logger;
 import com.taobao.top.push.LoggerFactory;
@@ -39,7 +38,7 @@ public class FrontendServlet extends WebSocketServlet {
 			this.webSocket = new FrontendWebSocket(
 					InitServlet.loggerFactory,
 					manager,
-					manager.connectClient(id, clientConnection),
+					id,
 					clientConnection,
 					InitServlet.receiver,
 					InitServlet.processor);
@@ -74,11 +73,11 @@ public class FrontendServlet extends WebSocketServlet {
 	private class FrontendWebSocket extends WebSocketBase {
 		public FrontendWebSocket(LoggerFactory loggerFactory,
 				PushManager manager,
-				Client client,
+				Object clientId,
 				WebSocketClientConnection clientConnection,
 				Receiver receiver,
 				Processor processor) {
-			super(loggerFactory, manager, client, clientConnection, receiver, processor);
+			super(loggerFactory, manager, clientId, clientConnection, receiver, processor);
 		}
 	}
 

@@ -151,16 +151,16 @@ public class Client {
 
 	protected synchronized void AddConnection(ClientConnection conn) {
 		this.connections.add(conn);
-		this.onConnect(conn);
 		this.logger.info("client#%s add new connection from %s",
 				this.getId(), conn.getOrigin());
+		this.onConnect(conn);
 	}
 
 	protected synchronized void RemoveConnection(ClientConnection conn) {
 		this.connections.remove(conn);
-		this.onDisconnect(conn);
 		this.logger.info("client#%s remove a connection from %s",
 				this.getId(), conn.getOrigin());
+		this.onDisconnect(conn);
 	}
 
 	protected synchronized int cleanConnections() {
@@ -171,6 +171,7 @@ public class Client {
 			if (!clientConnection.isOpen())
 				trash.add(clientConnection);
 		}
+
 		for (ClientConnection c : trash)
 			this.RemoveConnection(c);
 		return this.connections.size();
