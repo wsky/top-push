@@ -30,7 +30,7 @@ public class Client {
 	private MessageStateHandler messageStateHandler;
 	private ClientStateHandler clientStateHandler;
 
-	private Map<String, Object> state;
+	private Map<Object, Object> state;
 
 	public Client(LoggerFactory factory, Object id) {
 		this(factory, id, null, null);
@@ -58,7 +58,7 @@ public class Client {
 		return this.id;
 	}
 
-	public Map<String, Object> getState() {
+	public Map<Object, Object> getState() {
 		return this.state;
 	}
 
@@ -162,13 +162,14 @@ public class Client {
 		this.connections.add(conn);
 		this.logger.info("client#%s add new connection from %s",
 				this.getId(), conn.getOrigin());
+		this.onConnect(conn);
 	}
 
 	protected synchronized void RemoveConnection(ClientConnection conn) {
 		this.connections.remove(conn);
-		this.onDisconnect(conn);
 		this.logger.info("client#%s remove a connection from %s",
 				this.getId(), conn.getOrigin());
+		this.onDisconnect(conn);
 	}
 
 	protected synchronized int cleanConnections() {
@@ -179,6 +180,7 @@ public class Client {
 			if (!clientConnection.isOpen())
 				trash.add(clientConnection);
 		}
+
 		for (ClientConnection c : trash)
 			this.RemoveConnection(c);
 		return this.connections.size();
@@ -202,6 +204,7 @@ public class Client {
 			}
 
 			if (!connection.isOpen()) {
+				// FIXME maybe should not remove here, just using pushmanager.stateBuilder for this
 				this.RemoveConnection(connection);
 				if (this.logger.isInfoEnabled())
 					this.logger.info("connection#%s[%s] is closed, remove it",
@@ -239,6 +242,21 @@ public class Client {
 		}
 	}
 
+	protected void markAsOffline() {
+		if (this.clientStateHandler != null)
+			this.clientStateHandler.onClientOffline(this);
+	}
+
+	protected void markAsIdle() {
+		if (this.clientStateHandler != null)
+			this.clientStateHandler.onClientIdle(this);
+	}
+
+	protected void markAsPending() {
+		if (this.clientStateHandler != null)
+			this.clientStateHandler.onClientPending(this);
+	}
+
 	private void onDrop(Object message, String reason) {
 		if (this.messageStateHandler != null)
 			this.messageStateHandler.onDropped(this.id, message, reason);
@@ -247,6 +265,11 @@ public class Client {
 	private void onSent(Object message) {
 		if (this.messageStateHandler != null)
 			this.messageStateHandler.onSent(this.id, message);
+	}
+
+	private void onConnect(ClientConnection connection) {
+		if (this.clientStateHandler != null)
+			this.clientStateHandler.onClientConnect(this, connection);
 	}
 
 	private void onDisconnect(ClientConnection connection) {

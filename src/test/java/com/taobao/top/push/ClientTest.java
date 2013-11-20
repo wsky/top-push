@@ -2,7 +2,6 @@ package com.taobao.top.push;
 
 import static org.junit.Assert.*;
 
-import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
@@ -125,8 +124,7 @@ public class ClientTest {
 					}
 
 					@Override
-					public Object onClientConnecting(Map<String, String> headers) throws Exception {
-						return null;
+					public void onClientConnect(Client client, ClientConnection clientConnection) {
 					}
 				});
 		client.pendingMessage(new Object());

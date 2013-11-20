@@ -21,18 +21,20 @@ public abstract class WebSocketBase implements WebSocket.OnTextMessage,
 	protected PushManager manager;
 	protected Processor processor;
 	protected Receiver receiver;
+
+	protected Object clientId;
 	protected Client client;
 	protected WebSocketClientConnection clientConnection;
 
 	public WebSocketBase(LoggerFactory loggerFactory,
 			PushManager manager,
-			Client client,
+			Object clientId,
 			WebSocketClientConnection clientConnection,
 			Receiver receiver,
 			Processor processor) {
 		this.logger = loggerFactory.create(this);
 		this.manager = manager;
-		this.client = client;
+		this.clientId = clientId;
 		this.clientConnection = clientConnection;
 		this.receiver = receiver;
 		this.processor = processor;
@@ -60,7 +62,8 @@ public abstract class WebSocketBase implements WebSocket.OnTextMessage,
 	@Override
 	public void onOpen(Connection connection) {
 		this.connection = connection;
-		this.clientConnection.init(connection, this.receiver);
+		this.clientConnection.init(this.connection, this.receiver);
+		this.client = this.manager.connectClient(this.clientId, clientConnection);
 	}
 
 	@Override
@@ -103,7 +106,7 @@ public abstract class WebSocketBase implements WebSocket.OnTextMessage,
 				Client client = this.manager.getClient(new DefaultIdentity(msg.to));
 				if (client != null)
 					client.pendingMessage(msg);
-				else 
+				else
 					this.receiver.release(msg);
 			}
 		} catch (Exception e) {

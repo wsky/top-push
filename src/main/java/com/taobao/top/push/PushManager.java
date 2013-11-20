@@ -127,17 +127,6 @@ public class PushManager {
 		return this.pendingClients.size();
 	}
 
-	public Client connectClient(Map<String, String> headers,
-			ClientConnection clientConnection) throws Exception {
-		Object id = this.clientStateHandler != null ?
-				this.clientStateHandler.onClientConnecting(headers) :
-				new DefaultIdentity(headers.get("id"));
-		clientConnection.init(id, headers);
-		Client client = this.getOrCreateClient(id);
-		client.AddConnection(clientConnection);
-		return client;
-	}
-
 	public Client connectClient(Object id, ClientConnection clientConnection) {
 		Client client = this.getOrCreateClient(id);
 		client.AddConnection(clientConnection);
@@ -145,18 +134,15 @@ public class PushManager {
 	}
 
 	public void disconnectClient(Client client, ClientConnection clientConnection) {
-		if (this.clientStateHandler != null)
-			this.clientStateHandler.onClientDisconnect(client, clientConnection);
-
 		client.RemoveConnection(clientConnection);
 		clientConnection.clear();
-		// need remove it if connections=0?
 	}
 
 	public void disconnectClient(Object id, String reasonText) {
 		Client client = this.getClient(id);
 		if (client == null)
 			return;
+		java.util.logging.LogManager.getLogManager().getLogger("").log(null);
 		client.disconnect(reasonText);
 		this.clients.remove(id);
 	}
@@ -284,21 +270,15 @@ public class PushManager {
 			this.pendingClients.add(client);
 			this.idleClients.remove(client.getId());
 			this.offlineClients.remove(client.getId());
-			if (this.clientStateHandler != null)
-				this.clientStateHandler.onClientPending(client);
+			client.markAsPending();
 		} else if (!pending && !offline) {
 			this.idleClients.put(client.getId(), client);
 			this.offlineClients.remove(client.getId());
-			if (this.clientStateHandler != null)
-				this.clientStateHandler.onClientIdle(client);
+			client.markAsIdle();
 		} else if (offline) {
 			this.offlineClients.put(client.getId(), client);
 			this.idleClients.remove(client.getId());
-			if (this.clientStateHandler != null)
-				// can clear pending messages of offline client in this handler
-				// after a long time
-				// client.clearPendingMessages();
-				this.clientStateHandler.onClientOffline(client);
+			client.markAsOffline();
 		}
 	}
 }
