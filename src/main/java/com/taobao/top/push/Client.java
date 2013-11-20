@@ -30,7 +30,7 @@ public class Client {
 	private MessageStateHandler messageStateHandler;
 	private ClientStateHandler clientStateHandler;
 
-	private Map<Object, Object> state;
+	private Map<String, Object> state;
 
 	public Client(LoggerFactory factory, Object id) {
 		this(factory, id, null, null);
@@ -58,7 +58,7 @@ public class Client {
 		return this.id;
 	}
 
-	public Map<Object, Object> getState() {
+	public Map<String, Object> getState() {
 		return this.state;
 	}
 
