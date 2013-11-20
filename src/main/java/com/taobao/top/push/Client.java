@@ -232,6 +232,21 @@ public class Client {
 		}
 	}
 
+	protected void markAsOffline() {
+		if (this.clientStateHandler != null)
+			this.clientStateHandler.onClientOffline(this);
+	}
+
+	protected void markAsIdle() {
+		if (this.clientStateHandler != null)
+			this.clientStateHandler.onClientIdle(this);
+	}
+
+	protected void markAsPending() {
+		if (this.clientStateHandler != null)
+			this.clientStateHandler.onClientPending(this);
+	}
+
 	private void onDrop(Object message, String reason) {
 		if (this.messageStateHandler != null)
 			this.messageStateHandler.onDropped(this.id, message, reason);
