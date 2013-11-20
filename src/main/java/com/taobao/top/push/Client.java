@@ -7,8 +7,10 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import com.taobao.top.push.ClientConnection.SendStatus;
@@ -28,6 +30,8 @@ public class Client {
 	private MessageStateHandler messageStateHandler;
 	private ClientStateHandler clientStateHandler;
 
+	private Map<Object, Object> state;
+
 	public Client(LoggerFactory factory, Object id) {
 		this(factory, id, null, null);
 	}
@@ -43,6 +47,7 @@ public class Client {
 		this.pendingMessages = new ConcurrentLinkedQueue<Object>();
 		this.messageStateHandler = messageStateHandler;
 		this.clientStateHandler = clientStateHandler;
+		this.state = new ConcurrentHashMap<Object, Object>();
 	}
 
 	public void setMaxPendingCount(int value) {
@@ -51,6 +56,10 @@ public class Client {
 
 	public Object getId() {
 		return this.id;
+	}
+
+	public Map<Object, Object> getState() {
+		return this.state;
 	}
 
 	public long getTotalSendMessageCount() {
