@@ -16,9 +16,7 @@ public class PushMangerTest {
 		PushManager manager = new PushManager(new DefaultLoggerFactory(), 10, 0, 100);
 		Object id = new DefaultIdentity("abc");
 		assertNull(manager.getClient(id));
-		Map<String, String> headers = new HashMap<String, String>();
-		headers.put("id", "abc");
-		manager.connectClient(headers, new ConnectionWrapper());
+		manager.connectClient(id, new ConnectionWrapper());
 		assertNotNull(manager.getClient(id));
 	}
 
@@ -39,11 +37,11 @@ public class PushMangerTest {
 
 		Map<String, String> headers = new HashMap<String, String>();
 		headers.put("id", "1");
-		Client c1 = manager.connectClient(headers, new ConnectionWrapper(false, false));
+		Client c1 = manager.connectClient("1", new ConnectionWrapper(false, false));
 		c1.pendingMessage(new Object());
 
 		headers.put("id", "2");
-		Client c2 = manager.connectClient(headers, new ConnectionWrapper(false, false));
+		Client c2 = manager.connectClient("2", new ConnectionWrapper(false, false));
 		c2.pendingMessage(new Object());
 
 		manager.rebuildClientsState();

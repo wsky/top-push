@@ -2,8 +2,11 @@ package com.taobao.top.push.websocket;
 
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
+
+import com.taobao.top.push.DefaultIdentity;
 
 public class Utils {
 
@@ -26,5 +29,14 @@ public class Utils {
 			headers.put(h, request.getHeader(h));
 		}
 		return headers;
+	}
+
+	public static DefaultIdentity parseIdentity(Map<String, String> headers) throws Exception {
+		String id = headers.get("origin");
+
+		if (id == null || id.trim() == "")
+			throw new Exception("origin is empty");
+
+		return new DefaultIdentity(id);
 	}
 }

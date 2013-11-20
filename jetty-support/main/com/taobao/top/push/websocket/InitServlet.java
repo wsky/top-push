@@ -1,7 +1,5 @@
 package com.taobao.top.push.websocket;
 
-import java.util.Map;
-
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -9,7 +7,6 @@ import javax.servlet.http.HttpServlet;
 import com.taobao.top.push.Client;
 import com.taobao.top.push.ClientConnection;
 import com.taobao.top.push.ClientStateHandler;
-import com.taobao.top.push.DefaultIdentity;
 import com.taobao.top.push.DefaultLoggerFactory;
 import com.taobao.top.push.LoggerFactory;
 import com.taobao.top.push.MessageStateHandler;
@@ -48,15 +45,9 @@ public class InitServlet extends HttpServlet {
 			@Override
 			public void onClientIdle(Client client) {
 			}
-
+			
 			@Override
-			public Object onClientConnecting(Map<String, String> headers) throws Exception {
-				String id = headers.get("origin");
-
-				if (id == null || id.trim() == "")
-					throw new Exception("origin is empty");
-
-				return new DefaultIdentity(id);
+			public void onClientConnect(Client client, ClientConnection clientConnection) {
 			}
 
 			@Override

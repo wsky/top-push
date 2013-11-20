@@ -12,6 +12,7 @@ import org.eclipse.jetty.websocket.WebSocket;
 import org.eclipse.jetty.websocket.WebSocketServlet;
 
 import com.taobao.top.push.Client;
+import com.taobao.top.push.DefaultIdentity;
 import com.taobao.top.push.Logger;
 import com.taobao.top.push.LoggerFactory;
 import com.taobao.top.push.PushManager;
@@ -33,12 +34,14 @@ public class FrontendServlet extends WebSocketServlet {
 
 		WebSocketClientConnection clientConnection = Utils.getClientConnectionPool().acquire();
 		try {
+			DefaultIdentity id = Utils.parseIdentity(headers);
+			clientConnection.init(id, headers);
 			this.webSocket = new FrontendWebSocket(
 					InitServlet.loggerFactory,
 					manager,
-					manager.connectClient(headers, clientConnection),
-					clientConnection, 
-					InitServlet.receiver, 
+					manager.connectClient(id, clientConnection),
+					clientConnection,
+					InitServlet.receiver,
 					InitServlet.processor);
 		} catch (Exception e) {
 			Utils.getClientConnectionPool().release(clientConnection);

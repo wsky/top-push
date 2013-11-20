@@ -151,6 +151,7 @@ public class Client {
 
 	protected synchronized void AddConnection(ClientConnection conn) {
 		this.connections.add(conn);
+		this.onConnect(conn);
 		this.logger.info("client#%s add new connection from %s",
 				this.getId(), conn.getOrigin());
 	}
@@ -193,6 +194,7 @@ public class Client {
 			}
 
 			if (!connection.isOpen()) {
+				// FIXME maybe should not remove here, just using pushmanager.stateBuilder for this
 				this.RemoveConnection(connection);
 				if (this.logger.isInfoEnabled())
 					this.logger.info("connection#%s[%s] is closed, remove it",
@@ -238,6 +240,11 @@ public class Client {
 	private void onSent(Object message) {
 		if (this.messageStateHandler != null)
 			this.messageStateHandler.onSent(this.id, message);
+	}
+
+	private void onConnect(ClientConnection connection) {
+		if (this.clientStateHandler != null)
+			this.clientStateHandler.onClientConnect(this, connection);
 	}
 
 	private void onDisconnect(ClientConnection connection) {

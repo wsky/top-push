@@ -1,10 +1,8 @@
 package com.taobao.top.push;
 
-import java.util.Map;
-
 public interface ClientStateHandler {
-
-	public Object onClientConnecting(Map<String, String> headers) throws Exception;
+	
+	public void onClientConnect(Client client, ClientConnection clientConnection);
 
 	public void onClientDisconnect(Client client, ClientConnection clientConnection);
 
