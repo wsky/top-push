@@ -142,7 +142,6 @@ public class PushManager {
 		Client client = this.getClient(id);
 		if (client == null)
 			return;
-		java.util.logging.LogManager.getLogManager().getLogger("").log(null);
 		client.disconnect(reasonText);
 		this.clients.remove(id);
 	}
