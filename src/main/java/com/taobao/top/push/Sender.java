@@ -18,6 +18,8 @@ public abstract class Sender implements Runnable {
 	private int maxFlushCount = 2000;
 	private int minFlushCount = 100;
 
+	private boolean balancing = true;
+
 	public Sender(LoggerFactory loggerFactory,
 			CancellationToken token,
 			Semaphore semaphore,
@@ -49,11 +51,15 @@ public abstract class Sender implements Runnable {
 		this.threadPool = threadPool;
 	}
 
+	public void setBalancing(boolean value) {
+		this.balancing = value;
+	}
+
 	@Override
 	public void run() {
 		while (!this.token.isStoping()) {
 			try {
-				this.semaphore.tryAcquire(2, TimeUnit.SECONDS);
+				this.semaphore.tryAcquire(1, TimeUnit.SECONDS);
 			} catch (InterruptedException e) {
 				if (this.logger.isWarnEnabled())
 					this.logger.warn(e);
@@ -109,6 +115,9 @@ public abstract class Sender implements Runnable {
 
 	// https://github.com/wsky/top-push/issues/24
 	protected int calculate(int pending) {
+		if (!this.balancing)
+			return this.maxFlushCount;
+		//TODO make it smarter
 		int flushCount = this.highwater / pending;
 		if (flushCount > this.maxFlushCount)
 			flushCount = this.maxFlushCount;

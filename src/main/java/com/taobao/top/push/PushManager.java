@@ -87,6 +87,10 @@ public class PushManager {
 		this.sender.setMinFlushCount(value);
 	}
 
+	public void setSenderBalancing(boolean value) {
+		this.sender.setBalancing(value);
+	}
+
 	// cancel all current job
 	public void cancelAll() {
 		this.token.setCancelling(true);
