@@ -31,7 +31,7 @@ public class DeliveryRater {
 		if (current - this.lastPeriodBegin <= this.deliveryRatePeriod)
 			return this.lastDeliveryRate;
 		this.lastDeliveryRate = this.sendCountInPeriod.floatValue() > 0 ?
-				this.deliveryNumberInPeriod.floatValue() / (float) this.sendCountInPeriod.floatValue() : 1;
+				this.deliveryNumberInPeriod.floatValue() / this.sendCountInPeriod.floatValue() : 1;
 		this.lastPeriodBegin = current;
 		this.sendCountInPeriod.set(0);
 		this.deliveryNumberInPeriod.set(0);
