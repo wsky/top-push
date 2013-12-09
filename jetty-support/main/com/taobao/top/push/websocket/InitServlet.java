@@ -30,9 +30,9 @@ public class InitServlet extends HttpServlet {
 		processor = new Processor();
 		manager = new PushManager(
 				loggerFactory,
-				this.get(config, "maxConnectionCount"),
 				this.get(config, "senderCount"),
 				this.get(config, "stateBuilderIdle"));
+		manager.setMaxConnectionCount(this.get(config, "maxConnectionCount"));
 		manager.setClientStateHandler(new ClientStateHandler() {
 			@Override
 			public void onClientPending(Client client) {

@@ -21,10 +21,8 @@ public class Sender implements Runnable {
 	private int minFlushCount = 100;
 
 	private boolean balancing = true;
-	
-	// hold clients which hold pending messages and in processing
-		// not immediately
-		private Queue<Client> pendingClients;
+
+	private Queue<Client> pendingClients;
 
 	public Sender(LoggerFactory loggerFactory,
 			CancellationToken token,
@@ -35,7 +33,7 @@ public class Sender implements Runnable {
 		this.semaphore = semaphore;
 
 		this.pendingClients = new ConcurrentLinkedQueue<Client>();
-		
+
 		if (senderCount > 0)
 			this.setThreadPool(new ThreadPoolExecutor(
 					senderCount, senderCount,
@@ -62,9 +60,9 @@ public class Sender implements Runnable {
 	public void setBalancing(boolean value) {
 		this.balancing = value;
 	}
-	
+
 	public void pendingClient(Client client) {
-		
+		this.pendingClients.add(client);
 	}
 
 	@Override
@@ -125,7 +123,7 @@ public class Sender implements Runnable {
 	protected int calculate(int pending) {
 		if (!this.balancing)
 			return this.maxFlushCount;
-		//TODO make it smarter
+		// TODO make it smarter
 		int flushCount = this.highwater / pending;
 		if (flushCount > this.maxFlushCount)
 			flushCount = this.maxFlushCount;

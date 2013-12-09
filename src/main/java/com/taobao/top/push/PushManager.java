@@ -14,7 +14,7 @@ public class PushManager {
 	private Logger logger;
 
 	private Object clientLock = new Object();
-	private int maxConnectionCount;
+	private int maxConnectionCount = 10000;
 
 	// all connections whatever from any client
 	private int totalConnectionCount;
@@ -34,18 +34,20 @@ public class PushManager {
 	private MessageStateHandler messageStateHandler;
 
 	public PushManager(LoggerFactory loggerFactory,
-			int maxConnectionCount,
 			int senderCount,
 			int stateBuilderIdle) {
 		this.loggerFactory = loggerFactory;
 		this.logger = this.loggerFactory.create(this);
-		this.maxConnectionCount = maxConnectionCount;
 		this.clients = new ConcurrentHashMap<Object, Client>(1000);
 		// TODO move to start and support start/stop/restart
 		this.token = new CancellationToken();
 		this.senderCount = senderCount;
 		this.prepareSenders();
 		this.prepareChecker(stateBuilderIdle);
+	}
+
+	public void setMaxConnectionCount(int value) {
+		this.maxConnectionCount = value;
 	}
 
 	public void setClientStateHandler(ClientStateHandler handler) {

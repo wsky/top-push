@@ -13,7 +13,7 @@ import com.taobao.top.push.PushManager;
 public class PushMangerTest {
 	@Test
 	public void get_client_test() throws Exception {
-		PushManager manager = new PushManager(new DefaultLoggerFactory(), 10, 0, 100);
+		PushManager manager = new PushManager(new DefaultLoggerFactory(), 0, 100);
 		Object id = new DefaultIdentity("abc");
 		assertNull(manager.getClient(id));
 		manager.connectClient(id, new ConnectionWrapper());
@@ -23,11 +23,12 @@ public class PushMangerTest {
 	@Test
 	public void state_test() throws Exception {
 		// senderCount should be 0
-		PushManager manager = new PushManager(new DefaultLoggerFactory(), 2, 0, 100) {
+		PushManager manager = new PushManager(new DefaultLoggerFactory(), 0, 100) {
 			@Override
 			protected void prepareChecker(int stateBuilderIdle) {
 			}
 		};
+		manager.setMaxConnectionCount(2);
 
 		Map<String, String> headers = new HashMap<String, String>();
 		headers.put("id", "1");
@@ -40,7 +41,7 @@ public class PushMangerTest {
 
 		manager.rebuildClientsState();
 		// offline
-		assertEquals(ClientStatus.Idle, manager.getClient(c1.getId()).getStatus());
+		assertEquals(ClientStatus.Offline, manager.getClient(c1.getId()).getStatus());
 		assertEquals(ClientStatus.Offline, manager.getClient(c2.getId()).getStatus());
 
 		c1.AddConnection(new ConnectionWrapper());
