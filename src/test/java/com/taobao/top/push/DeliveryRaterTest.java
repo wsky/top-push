@@ -16,6 +16,13 @@ public class DeliveryRaterTest {
 		assertEquals(1F, rater.getDeliveryRate(), 0.01);
 
 		Thread.sleep(100);
+		rater.increaseSendCount(1);
+		assertEquals(0, rater.getDeliveryRate(), 0.01);
+
+		Thread.sleep(100);
+		assertEquals(1F, rater.getDeliveryRate(), 0.01);
+
+		Thread.sleep(100);
 		rater.increaseSendCount(2);
 		rater.increaseDeliveryNubmer(1);
 		assertEquals(0.5, rater.getDeliveryRate(), 0.01);

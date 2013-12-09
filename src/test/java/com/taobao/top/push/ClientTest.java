@@ -310,4 +310,50 @@ public class ClientTest {
 		assertFalse(client.SendMessage(new CancellationToken(), new Object(), queue));
 		assertEquals(0, queue.size());
 	}
+
+	@Test
+	public void delivery_test() throws InterruptedException {
+		Client client = new Client(new DefaultLoggerFactory(), new DefaultIdentity("abc")) {
+			@Override
+			protected boolean SendMessage(CancellationToken token, Object message, Queue<ClientConnection> connectionQueue) {
+				return true;
+			}
+		};
+		client.AddConnection(new ConnectionWrapper());
+		for (int i = 0; i < 100; i++)
+			client.pendingMessage(i);
+
+		client.setDeliveryRateEnabled(true);
+		client.setDeliveryRatePeriodMillis(10);
+
+		// rate=1.0
+		client.flush(new CancellationToken(), 20);
+		assertEquals(20, client.getTotalSendMessageCount());
+
+		// rate=0.0
+		Thread.sleep(100);
+		client.flush(new CancellationToken(), 20);
+		assertEquals(30, client.getTotalSendMessageCount());
+
+		// rate=1.0
+		Thread.sleep(100);
+		for (int i = 0; i < 10; i++)
+			client.increaseDeliveryNubmer();
+		client.flush(new CancellationToken(), 20);
+		assertEquals(50, client.getTotalSendMessageCount());
+
+		// rate=0.5
+		Thread.sleep(100);
+		for (int i = 0; i < 10; i++)
+			client.increaseDeliveryNubmer();
+		client.flush(new CancellationToken(), 20);
+		assertEquals(60, client.getTotalSendMessageCount());
+
+		// rate=0.8
+		Thread.sleep(100);
+		for (int i = 0; i < 8; i++)
+			client.increaseDeliveryNubmer();
+		client.flush(new CancellationToken(), 20);
+		assertEquals(76, client.getTotalSendMessageCount());
+	}
 }

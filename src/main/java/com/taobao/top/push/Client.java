@@ -311,8 +311,11 @@ public class Client {
 		if (!this.deliveryRateEnabled)
 			return count;
 		float rate = this.getDeliveryRate();
-		if (rate >= 0.8)
+		if (rate >= 0.9)
 			return count;
+		// if no sending, in next rate period, rate will be 1
+		if (rate <= 0.1)
+			return 10;
 		int real = this.getPendingMessagesCount();
 		return (int) (count > real ? real * rate : count * rate);
 	}
