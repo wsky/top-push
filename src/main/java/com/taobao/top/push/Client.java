@@ -33,6 +33,9 @@ public class Client {
 	private Map<String, Object> state;
 	private ClientStatus status;
 
+	private boolean deliveryRateEnabled;
+	private DeliveryRater deliveryRater;
+
 	public Client(LoggerFactory factory, Object id) {
 		this(factory, id, null, null);
 	}
@@ -49,6 +52,7 @@ public class Client {
 		this.messageStateHandler = messageStateHandler;
 		this.clientStateHandler = clientStateHandler;
 		this.state = new ConcurrentHashMap<String, Object>();
+		this.deliveryRater = new DeliveryRater();
 	}
 
 	public void setMaxPendingCount(int value) {
@@ -92,6 +96,22 @@ public class Client {
 		this.lastPingTime = new Date();
 	}
 
+	public void setDeliveryRateEnabled(boolean value) {
+		this.deliveryRateEnabled = value;
+	}
+
+	public void setDeliveryRatePeriodMillis(int value) {
+		this.deliveryRater.setDeliveryRatePeriodMillis(value);
+	}
+
+	public float getDeliveryRate() {
+		return this.deliveryRater.getDeliveryRate();
+	}
+
+	public void increaseDeliveryNubmer() {
+		this.deliveryRater.increaseDeliveryNubmer(1);
+	}
+
 	// pend message waiting to be send
 	public boolean pendingMessage(Object message) {
 		if (message == null)
@@ -109,6 +129,7 @@ public class Client {
 	}
 
 	public void flush(CancellationToken token, int count) {
+		count = this.calculateFlushCount(count);
 		// random queue for LRU load-balance
 		// LRU queue? https://github.com/wsky/top-push/issues/38
 		List<ClientConnection> list = Arrays.asList(this.connections.toArray(new ClientConnection[0]));
@@ -133,6 +154,7 @@ public class Client {
 			temp++;
 		}
 		this.totalSendMessageCount += temp;
+		this.deliveryRater.increaseSendCount(temp);
 
 		if (temp > 0 && this.logger.isInfoEnabled())
 			this.logger.info(
@@ -283,5 +305,15 @@ public class Client {
 	private void onDisconnect(ClientConnection connection) {
 		if (this.clientStateHandler != null)
 			this.clientStateHandler.onClientDisconnect(this, connection);
+	}
+
+	private int calculateFlushCount(int count) {
+		if (!this.deliveryRateEnabled)
+			return count;
+		float rate = this.getDeliveryRate();
+		if (rate >= 0.8)
+			return count;
+		int real = this.getPendingMessagesCount();
+		return (int) (count > real ? real * rate : count * rate);
 	}
 }
