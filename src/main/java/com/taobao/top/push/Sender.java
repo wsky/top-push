@@ -1,5 +1,7 @@
 package com.taobao.top.push;
 
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.Semaphore;
@@ -7,7 +9,7 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-public abstract class Sender implements Runnable {
+public class Sender implements Runnable {
 	private Logger logger;
 	private CancellationToken token;
 	private Semaphore semaphore;
@@ -19,6 +21,10 @@ public abstract class Sender implements Runnable {
 	private int minFlushCount = 100;
 
 	private boolean balancing = true;
+	
+	// hold clients which hold pending messages and in processing
+		// not immediately
+		private Queue<Client> pendingClients;
 
 	public Sender(LoggerFactory loggerFactory,
 			CancellationToken token,
@@ -28,6 +34,8 @@ public abstract class Sender implements Runnable {
 		this.token = token;
 		this.semaphore = semaphore;
 
+		this.pendingClients = new ConcurrentLinkedQueue<Client>();
+		
 		if (senderCount > 0)
 			this.setThreadPool(new ThreadPoolExecutor(
 					senderCount, senderCount,
@@ -54,6 +62,10 @@ public abstract class Sender implements Runnable {
 	public void setBalancing(boolean value) {
 		this.balancing = value;
 	}
+	
+	public void pendingClient(Client client) {
+		
+	}
 
 	@Override
 	public void run() {
@@ -68,7 +80,7 @@ public abstract class Sender implements Runnable {
 			if (this.threadPool == null)
 				continue;
 
-			int pending = this.getPending();
+			int pending = this.pendingClients.size();
 			if (pending == 0)
 				continue;
 
@@ -78,7 +90,7 @@ public abstract class Sender implements Runnable {
 			while (!this.token.isCancelling()) {
 				if (pendingClient == null) {
 					try {
-						pendingClient = this.pollPending();
+						pendingClient = this.pendingClients.poll();
 					} catch (Exception e) {
 						this.logger.error(e);
 						break;
@@ -108,10 +120,6 @@ public abstract class Sender implements Runnable {
 
 		this.logger.info("sender stop");
 	}
-
-	protected abstract int getPending();
-
-	protected abstract Client pollPending();
 
 	// https://github.com/wsky/top-push/issues/24
 	protected int calculate(int pending) {

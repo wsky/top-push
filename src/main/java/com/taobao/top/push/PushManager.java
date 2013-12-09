@@ -1,13 +1,12 @@
 package com.taobao.top.push;
 
-import java.util.Date;
-import java.util.LinkedHashMap;
+import java.util.ConcurrentModificationException;
+import java.util.Iterator;
 import java.util.Map;
-import java.util.Queue;
+import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
 
 public class PushManager {
@@ -18,19 +17,9 @@ public class PushManager {
 	private int maxConnectionCount;
 
 	// all connections whatever from any client
-	private int totalConnections;
-	private long totalPendingMessages;
+	private int totalConnectionCount;
 	// easy find client by id
 	private Map<Object, Client> clients;
-	// hold clients which having pending messages and in processing
-	// not immediately
-	private Queue<Client> pendingClients;
-	// hold clients which do not having pending messages and not in processing
-	// not immediately
-	private Map<Object, Client> idleClients;
-	// hold clients which do not having any active connections
-	// not immediately
-	private Map<Object, Client> offlineClients;
 
 	private Thread sendWorker;
 	private Sender sender;
@@ -50,14 +39,8 @@ public class PushManager {
 			int stateBuilderIdle) {
 		this.loggerFactory = loggerFactory;
 		this.logger = this.loggerFactory.create(this);
-
 		this.maxConnectionCount = maxConnectionCount;
-
 		this.clients = new ConcurrentHashMap<Object, Client>(1000);
-		this.pendingClients = new ConcurrentLinkedQueue<Client>();
-		this.idleClients = new LinkedHashMap<Object, Client>();
-		this.offlineClients = new LinkedHashMap<Object, Client>();
-
 		// TODO move to start and support start/stop/restart
 		this.token = new CancellationToken();
 		this.senderCount = senderCount;
@@ -110,25 +93,7 @@ public class PushManager {
 	}
 
 	public boolean isReachMaxConnectionCount() {
-		return this.totalConnections >= this.maxConnectionCount;
-	}
-
-	public boolean isIdleClient(Object id) {
-		return this.idleClients.containsKey(id);
-	}
-
-	public boolean isOfflineClient(Object id) {
-		return this.offlineClients.containsKey(id);
-	}
-
-	public Client pollPendingClient() {
-		return this.pendingClients.poll();
-	}
-
-	public int getPendingClientCount() {
-		// size() is O(n)
-		// TODO:just change to list
-		return this.pendingClients.size();
+		return this.totalConnectionCount >= this.maxConnectionCount;
 	}
 
 	public Client connectClient(Object id, ClientConnection clientConnection) {
@@ -165,21 +130,10 @@ public class PushManager {
 
 	protected void prepareSenders() {
 		this.senderSemaphore = new Semaphore(0);
-		this.sender = new Sender(this.loggerFactory,
-				this.token,
-				this.senderSemaphore,
-				this.senderCount) {
-			@Override
-			protected int getPending() {
-				return getPendingClientCount();
-			}
-
-			@Override
-			protected Client pollPending() {
-				return pollPendingClient();
-			}
-		};
+		this.sender = new Sender(this.loggerFactory, this.token, this.senderSemaphore, this.senderCount);
 		this.sendWorker = new Thread(this.sender);
+		this.sendWorker.setDaemon(true);
+		this.sendWorker.setName("push-sender");
 		this.sendWorker.start();
 	}
 
@@ -195,7 +149,6 @@ public class PushManager {
 						return;
 					stateBuilding = true;
 				}
-
 				// checking senders
 				try {
 					if (!sendWorker.isAlive()) {
@@ -207,14 +160,7 @@ public class PushManager {
 				}
 				try {
 					rebuildClientsState();
-					if (logger.isDebugEnabled())
-						logger.debug(
-								"total %s pending messages, total %s connections, total %s clients, %s is idle, %s is offline",
-								totalPendingMessages,
-								totalConnections,
-								clients.size(),
-								idleClients.size(),
-								offlineClients.size());
+					senderSemaphore.release();
 				} catch (Exception e) {
 					logger.fatal("rebuildClientsState error!", e);
 				}
@@ -223,65 +169,51 @@ public class PushManager {
 			}
 		};
 		Timer timer = new Timer(true);
-		timer.schedule(task, new Date(), stateBuilderIdle);
+		timer.schedule(task, 0, stateBuilderIdle);
 	}
 
 	// build pending/idle clients queue
 	protected void rebuildClientsState() {
-		int totalConn = 0;
-		int totalPending = 0;
-		int connCount, pendingCount;
-		// still have pending clients in processing
-		boolean noPending = this.pendingClients.isEmpty();
-		boolean offline, pending;
+		int total = 0;
+		boolean flag = false;
+		do {
+			Iterator<Entry<Object, Client>> iterator = this.clients.entrySet().iterator();
+			while (iterator.hasNext()) {
+				Client client = null;
+				try {
+					client = iterator.next().getValue();
+				} catch (Exception e) {
+					if (this.logger.isDebugEnabled())
+						this.logger.debug(e);
+					if (e instanceof ConcurrentModificationException)
+						flag = true;
+					break;
+				}
 
-		Object[] keys = null;
-		// is there a better way? avoid array create
-		synchronized (this.clientLock) {
-			keys = this.clients.keySet().toArray();
-		}
-		for (int i = 0; i < keys.length; i++) {
-			Client client = this.clients.get(keys[i]);
-			if (client == null)
-				continue;
+				if (client == null)
+					continue;
 
-			connCount = client.cleanConnections();
-			pendingCount = client.getPendingMessagesCount();
+				try {
+					int connCount = client.cleanConnections();
+					if (connCount == 0) {
+						client.markAsOffline();
+						continue;
+					}
+					total += connCount;
 
-			totalConn += connCount;
-			totalPending += pendingCount;
+					if (client.getPendingMessagesCount() == 0) {
+						client.markAsIdle();
+						continue;
+					}
 
-			offline = connCount == 0;
-			pending = pendingCount > 0;
-
-			try {
-				this.rebuildClientsState(client, noPending, pending, offline);
-			} catch (Exception e) {
-				this.logger.error(String.format(
-						"error on rebuilding client#%s state", client.getId()), e);
+					client.markAsPending();
+					this.sender.pendingClient(client);
+				} catch (Exception e) {
+					this.logger.error(String.format(
+							"error on rebuilding client#%s state", client.getId()), e);
+				}
 			}
-		}
-		this.totalConnections = totalConn;
-		this.totalPendingMessages = totalPending;
-		// tell sender work
-		this.senderSemaphore.release();
-	}
-
-	protected void rebuildClientsState(Client client, boolean noPending,
-			boolean pending, boolean offline) {
-		if (noPending && pending && !offline) {
-			this.pendingClients.add(client);
-			this.idleClients.remove(client.getId());
-			this.offlineClients.remove(client.getId());
-			client.markAsPending();
-		} else if (!pending && !offline) {
-			this.idleClients.put(client.getId(), client);
-			this.offlineClients.remove(client.getId());
-			client.markAsIdle();
-		} else if (offline) {
-			this.offlineClients.put(client.getId(), client);
-			this.idleClients.remove(client.getId());
-			client.markAsOffline();
-		}
+		} while (flag);
+		this.totalConnectionCount = total;
 	}
 }

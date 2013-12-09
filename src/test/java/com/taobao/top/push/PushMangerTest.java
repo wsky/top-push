@@ -27,12 +27,6 @@ public class PushMangerTest {
 			@Override
 			protected void prepareChecker(int stateBuilderIdle) {
 			}
-
-			@Override
-			protected void rebuildClientsState(Client client, boolean noPending, boolean pending, boolean offline) {
-				System.out.println(String.format("id=%s, noPending=%s, pending=%s, offline=%s", client.getId(), noPending, pending, offline));
-				super.rebuildClientsState(client, noPending, pending, offline);
-			}
 		};
 
 		Map<String, String> headers = new HashMap<String, String>();
@@ -46,22 +40,19 @@ public class PushMangerTest {
 
 		manager.rebuildClientsState();
 		// offline
-		assertTrue(manager.isOfflineClient(c1.getId()));
-		assertTrue(manager.isOfflineClient(c2.getId()));
-		assertEquals(0, manager.getPendingClientCount());
+		assertEquals(ClientStatus.Idle, manager.getClient(c1.getId()).getStatus());
+		assertEquals(ClientStatus.Offline, manager.getClient(c2.getId()).getStatus());
 
 		c1.AddConnection(new ConnectionWrapper());
 		manager.rebuildClientsState();
 		// pending
-		assertEquals(1, manager.getPendingClientCount());
-		assertEquals(c1, manager.pollPendingClient());
-		assertTrue(manager.isOfflineClient(c2.getId()));
+		assertEquals(ClientStatus.Pending, manager.getClient(c1.getId()).getStatus());
+		assertEquals(ClientStatus.Offline, manager.getClient(c2.getId()).getStatus());
 
 		c1.flush(new CancellationToken(), 10);
 		manager.rebuildClientsState();
 		// idle
-		assertTrue(manager.isIdleClient(c1.getId()));
-		assertEquals(0, manager.getPendingClientCount());
+		assertEquals(ClientStatus.Idle, manager.getClient(c1.getId()).getStatus());
 
 		c1.AddConnection(new ConnectionWrapper());
 		manager.rebuildClientsState();

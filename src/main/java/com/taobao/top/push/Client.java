@@ -31,6 +31,7 @@ public class Client {
 	private ClientStateHandler clientStateHandler;
 
 	private Map<String, Object> state;
+	private ClientStatus status;
 
 	public Client(LoggerFactory factory, Object id) {
 		this(factory, id, null, null);
@@ -56,6 +57,10 @@ public class Client {
 
 	public Object getId() {
 		return this.id;
+	}
+
+	public ClientStatus getStatus() {
+		return status;
 	}
 
 	public Map<String, Object> getState() {
@@ -243,16 +248,19 @@ public class Client {
 	}
 
 	protected void markAsOffline() {
+		this.status = ClientStatus.Offline;
 		if (this.clientStateHandler != null)
 			this.clientStateHandler.onClientOffline(this);
 	}
 
 	protected void markAsIdle() {
+		this.status = ClientStatus.Idle;
 		if (this.clientStateHandler != null)
 			this.clientStateHandler.onClientIdle(this);
 	}
 
 	protected void markAsPending() {
+		this.status = ClientStatus.Pending;
 		if (this.clientStateHandler != null)
 			this.clientStateHandler.onClientPending(this);
 	}
