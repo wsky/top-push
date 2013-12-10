@@ -320,6 +320,7 @@ public class ClientTest {
 			}
 		};
 		client.AddConnection(new ConnectionWrapper());
+		client.AddConnection(new ConnectionWrapper());
 		for (int i = 0; i < 200; i++)
 			client.pendingMessage(i);
 
