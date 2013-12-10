@@ -100,12 +100,8 @@ public class Client {
 		this.deliveryRateEnabled = value;
 	}
 
-	public void setDeliveryRatePeriodMillis(int value) {
-		this.deliveryRater.setDeliveryRatePeriodMillis(value);
-	}
-
-	public float getDeliveryRate() {
-		return this.deliveryRater.getDeliveryRate();
+	public DeliveryRater getDeliveryRater() {
+		return this.deliveryRater;
 	}
 
 	public void increaseDeliveryNubmer() {
@@ -307,16 +303,12 @@ public class Client {
 			this.clientStateHandler.onClientDisconnect(this, connection);
 	}
 
-	private int calculateFlushCount(int count) {
+	private synchronized int calculateFlushCount(int count) {
 		if (!this.deliveryRateEnabled)
 			return count;
-		float rate = this.getDeliveryRate();
-		if (rate >= 0.9)
-			return count;
-		// if no sending, in next rate period, rate will be 1
-		if (rate <= 0.1)
-			return 10;
 		int real = this.getPendingMessagesCount();
-		return (int) (count > real ? real * rate : count * rate);
+		return (int) (count > real ?
+				real * this.deliveryRater.calculateSmartRate() :
+				count * this.deliveryRater.calculateSmartRate());
 	}
 }

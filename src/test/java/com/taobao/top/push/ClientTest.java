@@ -320,40 +320,41 @@ public class ClientTest {
 			}
 		};
 		client.AddConnection(new ConnectionWrapper());
-		for (int i = 0; i < 100; i++)
+		for (int i = 0; i < 200; i++)
 			client.pendingMessage(i);
 
 		client.setDeliveryRateEnabled(true);
-		client.setDeliveryRatePeriodMillis(10);
+		client.getDeliveryRater().setDeliveryRatePeriodMillis(10);
 
 		// rate=1.0
 		client.flush(new CancellationToken(), 20);
 		assertEquals(20, client.getTotalSendMessageCount());
 
-		// rate=0.0
-		Thread.sleep(100);
+		// rate=0.0, recovery=0.0
+		Thread.sleep(20);
 		client.flush(new CancellationToken(), 20);
-		assertEquals(30, client.getTotalSendMessageCount());
+		assertEquals(20, client.getTotalSendMessageCount());
 
-		// rate=1.0
-		Thread.sleep(100);
+		// rate=1.0, recovery=0.1
+		Thread.sleep(20);
 		for (int i = 0; i < 10; i++)
 			client.increaseDeliveryNubmer();
 		client.flush(new CancellationToken(), 20);
-		assertEquals(50, client.getTotalSendMessageCount());
+		assertEquals(22, client.getTotalSendMessageCount());
 
-		// rate=0.5
-		Thread.sleep(100);
+		// rate=1.0, recovery=0.2
+		Thread.sleep(20);
 		for (int i = 0; i < 10; i++)
 			client.increaseDeliveryNubmer();
+		System.out.println(client.getDeliveryRater().calculateSmartRate());
 		client.flush(new CancellationToken(), 20);
-		assertEquals(60, client.getTotalSendMessageCount());
+		assertEquals(26, client.getTotalSendMessageCount());
 
-		// rate=0.8
-		Thread.sleep(100);
-		for (int i = 0; i < 8; i++)
+		// rate=0.5, recovery=0.1
+		Thread.sleep(20);
+		for (int i = 0; i < 2; i++)
 			client.increaseDeliveryNubmer();
 		client.flush(new CancellationToken(), 20);
-		assertEquals(76, client.getTotalSendMessageCount());
+		assertEquals(28, client.getTotalSendMessageCount());
 	}
 }
