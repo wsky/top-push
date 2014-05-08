@@ -1,82 +1,57 @@
 package com.taobao.top.push;
 
 import java.util.ConcurrentModificationException;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Semaphore;
 
 public class PushManager {
-	private Object clientLock = new Object();
-	private int maxConnectionCount = 10000;
-
-	// all connections whatever from any client
-	private int totalConnectionCount;
-	// easy find client by id
 	private Map<Object, Client> clients;
-
-	private Thread sendWorker;
-	private Sender sender;
-	private Semaphore senderSemaphore;
-	private int senderCount;
-	// for managing some worker state
-	private CancellationToken token;
-
-	private boolean stateBuilding;
-	private Object stateBuildingLock = new Object();
 	private ClientStateHandler clientStateHandler;
-	private MessageStateHandler messageStateHandler;
+	private MessageSender sender;
 
-	public PushManager(int senderCount, int stateBuilderIdle) {
-		this.clients = new ConcurrentHashMap<Object, Client>(1000);
-		// TODO move to start and support start/stop/restart
-		this.token = new CancellationToken();
-		this.senderCount = senderCount;
-		this.prepareSenders();
-		this.prepareChecker(stateBuilderIdle);
-	}
+	private Timer timer;
+	private TimerTask timerTask;
 
-	public void setMaxConnectionCount(int value) {
-		this.maxConnectionCount = value;
+	private int connectionCount;
+
+	public PushManager() {
+		this.clients = new HashMap<Object, Client>();
+		// new TreeMap<Object, Client>();
+		this.setStateBuilderPeriod(1000);
 	}
 
 	public void setClientStateHandler(ClientStateHandler handler) {
 		this.clientStateHandler = handler;
 	}
 
-	public void setMessageStateHandler(MessageStateHandler messageStateHandler) {
-		this.messageStateHandler = messageStateHandler;
-	}
-
-	// sender settings
-
 	public void setSenderHighWater(int value) {
-		this.sender.setHighwater(value);
+
 	}
 
-	public void setSenderMaxFlushCount(int value) {
-		this.sender.setMaxFlushCount(value);
-	}
+	public void setStateBuilderPeriod(int period) {
+		if (this.timerTask != null)
+			this.timerTask.cancel();
 
-	public void setSenderMinFlushCount(int value) {
-		this.sender.setMinFlushCount(value);
-	}
+		if (period <= 0)
+			return;
 
-	public void setSenderBalancing(boolean value) {
-		this.sender.setBalancing(value);
-	}
+		if (this.timer == null)
+			this.timer = new Timer("state-builder", true);
 
-	// cancel all current job
-	public void cancelAll() {
-		this.token.setCancelling(true);
-	}
-
-	// resume job after cancelAll called
-	public void resume() {
-		this.token.setCancelling(false);
+		this.timer.purge();
+		this.timer.schedule(this.timerTask = new TimerTask() {
+			public void run() {
+				try {
+					rebuildState();
+				} catch (Exception e) {
+					error("rebuildState error", e);
+				}
+			}
+		}, period, period);
 	}
 
 	public Client getClient(Object id) {
@@ -87,80 +62,31 @@ public class PushManager {
 		return this.clients.values().toArray(new Client[0]);
 	}
 
-	public boolean isReachMaxConnectionCount() {
-		return this.totalConnectionCount >= this.maxConnectionCount;
+	public int getConnectionCount() {
+		return this.connectionCount;
 	}
 
-	public Client connectClient(Object id, ClientConnection clientConnection) {
+	public Client connectClient(Object id, ClientConnection connection) {
 		Client client = this.getOrCreateClient(id);
-		client.AddConnection(clientConnection);
+		client.addConnection(connection);
+		this.onConnect(client, connection);
 		return client;
 	}
 
-	public void disconnectClient(Client client, ClientConnection clientConnection) {
-		client.RemoveConnection(clientConnection);
-		clientConnection.clear();
+	public void disconnectClient(Client client, ClientConnection connection, String reasonText) {
+		client.removeConnection(connection);
+		this.onDisconnect(client, connection, reasonText);
 	}
 
 	public void disconnectClient(Object id, String reasonText) {
 		Client client = this.getClient(id);
 		if (client == null)
 			return;
-		client.disconnect(reasonText);
 		this.clients.remove(id);
+		this.cleanConnections(client, true, reasonText);
 	}
 
-	private Client getOrCreateClient(Object id) {
-		if (!this.clients.containsKey(id)) {
-			synchronized (this.clientLock) {
-				if (!this.clients.containsKey(id))
-					this.clients.put(id, new Client(
-							id,
-							this.messageStateHandler,
-							this.clientStateHandler));
-			}
-		}
-		return this.clients.get(id);
-	}
-
-	protected void prepareSenders() {
-		this.senderSemaphore = new Semaphore(0);
-		this.sender = new Sender(this.token, this.senderSemaphore, this.senderCount);
-		this.sendWorker = new Thread(this.sender);
-		this.sendWorker.setDaemon(true);
-		this.sendWorker.setName("push-sender");
-		this.sendWorker.start();
-	}
-
-	protected void prepareChecker(int stateBuilderIdle) {
-		TimerTask task = new TimerTask() {
-			public void run() {
-				if (stateBuilding)
-					return;
-
-				synchronized (stateBuildingLock) {
-					if (stateBuilding)
-						return;
-					stateBuilding = true;
-				}
-
-				try {
-					rebuildClientsState();
-					senderSemaphore.release();
-				} catch (Exception e) {
-					error("rebuildClientsState error!", e);
-				}
-
-				stateBuilding = false;
-			}
-		};
-		Timer timer = new Timer(true);
-		timer.schedule(task, 0, stateBuilderIdle);
-	}
-
-	// build pending/idle clients queue
-	protected void rebuildClientsState() {
-		int total = 0;
+	protected void rebuildState() {
 		boolean flag = false;
 		do {
 			Iterator<Entry<Object, Client>> iterator = this.clients.entrySet().iterator();
@@ -178,32 +104,77 @@ public class PushManager {
 					continue;
 
 				try {
-					int connCount = client.cleanConnections();
+					int connCount = this.cleanConnections(client, false, "state");
 					if (connCount == 0) {
-						client.markAsOffline();
+						this.markAsOffline(client);
 						continue;
 					}
-					total += connCount;
 
 					if (client.getPendingMessagesCount() == 0) {
-						client.markAsIdle();
+						this.markAsIdle(client);
 						continue;
 					}
 
-					client.markAsPending();
-					this.sender.pendingClient(client);
+					this.markAsPending(client);
 				} catch (Exception e) {
 					this.error(String.format(
 							"error on rebuilding client#%s state", client.getId()), e);
 				}
 			}
 		} while (flag);
-		this.totalConnectionCount = total;
 	}
 
 	protected void error(Object message, Exception e) {
 		System.out.println(message);
 		// FIXME log error
 		e.printStackTrace();
+	}
+
+	private Client getOrCreateClient(Object id) {
+		if (!this.clients.containsKey(id)) {
+			synchronized (this.clients) {
+				if (!this.clients.containsKey(id))
+					this.clients.put(id, new Client(id, this.sender));
+			}
+		}
+		return this.clients.get(id);
+	}
+
+	private int cleanConnections(Client client, boolean force, String reasonText) {
+		ClientConnection[] connections = client.getConnections();
+		for (ClientConnection c : connections) {
+			if (force || !c.isOpen()) {
+				client.removeConnection(c);
+				this.onDisconnect(client, c, reasonText);
+			}
+		}
+		return client.getConnectionsCount();
+	}
+
+	private void markAsOffline(Client client) {
+		if (this.clientStateHandler != null)
+			this.clientStateHandler.onClientOffline(client);
+	}
+
+	private void markAsIdle(Client client) {
+		if (this.clientStateHandler != null)
+			this.clientStateHandler.onClientIdle(client);
+	}
+
+	private void markAsPending(Client client) {
+		if (this.clientStateHandler != null)
+			this.clientStateHandler.onClientPending(client);
+	}
+
+	private void onConnect(Client client, ClientConnection connection) {
+		this.connectionCount++;
+		if (this.clientStateHandler != null)
+			this.clientStateHandler.onClientConnect(client, connection);
+	}
+
+	private void onDisconnect(Client client, ClientConnection connection, String reasonText) {
+		this.connectionCount--;
+		if (this.clientStateHandler != null)
+			this.clientStateHandler.onClientDisconnect(client, connection, reasonText);
 	}
 }

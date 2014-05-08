@@ -1,25 +1,18 @@
 package com.taobao.top.push;
 
-public class ConnectionWrapper extends ClientConnection {
+public class ConnectionMock extends ClientConnection {
 	public int sendCount;
 	private boolean isOpen;
 	private boolean canSend;
 
-	public ConnectionWrapper() {
+	public ConnectionMock() {
 		this(true, true);
 	}
 
-	public ConnectionWrapper(boolean isOpen, boolean canSend) {
+	public ConnectionMock(boolean isOpen, boolean canSend) {
+		super(null, null);
 		this.isOpen = isOpen;
 		this.canSend = canSend;
-	}
-
-	@Override
-	protected void initHeaders() {
-	}
-
-	@Override
-	protected void internalClear() {
 	}
 
 	@Override
@@ -32,7 +25,6 @@ public class ConnectionWrapper extends ClientConnection {
 		if (!this.canSend)
 			throw new Exception("send message exception mock!");
 		this.sendCount++;
-		ClientTest.sendCount++;
 		return SendStatus.SENT;
 	}
 

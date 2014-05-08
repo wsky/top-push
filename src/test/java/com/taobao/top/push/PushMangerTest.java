@@ -2,9 +2,6 @@ package com.taobao.top.push;
 
 import static org.junit.Assert.*;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.junit.Test;
 
 import com.taobao.top.push.Client;
@@ -13,50 +10,54 @@ import com.taobao.top.push.PushManager;
 public class PushMangerTest {
 	@Test
 	public void get_client_test() throws Exception {
-		PushManager manager = new PushManager(new DefaultLoggerFactory(), 0, 100);
-		Object id = new DefaultIdentity("abc");
+		PushManager manager = new PushManager();
+		Object id = "abc";
 		assertNull(manager.getClient(id));
-		manager.connectClient(id, new ConnectionWrapper());
+		manager.connectClient(id, new ConnectionMock());
 		assertNotNull(manager.getClient(id));
 	}
 
 	@Test
 	public void state_test() throws Exception {
-		// senderCount should be 0
-		PushManager manager = new PushManager(new DefaultLoggerFactory(), 0, 100) {
+		PushManager manager = new PushManager();
+		manager.setStateBuilderPeriod(0);
+		manager.setClientStateHandler(new ClientStateHandler() {
 			@Override
-			protected void prepareChecker(int stateBuilderIdle) {
+			public void onClientPending(Client client) {
+				System.out.println("pending: " + client.getId());
 			}
-		};
-		manager.setMaxConnectionCount(2);
 
-		Map<String, String> headers = new HashMap<String, String>();
-		headers.put("id", "1");
-		Client c1 = manager.connectClient("1", new ConnectionWrapper(false, false));
-		c1.pendingMessage(new Object());
+			@Override
+			public void onClientOffline(Client client) {
+				System.out.println("offline: " + client.getId());
+			}
 
-		headers.put("id", "2");
-		Client c2 = manager.connectClient("2", new ConnectionWrapper(false, false));
-		c2.pendingMessage(new Object());
+			@Override
+			public void onClientIdle(Client client) {
+				System.out.println("idle: " + client.getId());
+			}
 
-		manager.rebuildClientsState();
-		// offline
-		assertEquals(ClientStatus.Offline, manager.getClient(c1.getId()).getStatus());
-		assertEquals(ClientStatus.Offline, manager.getClient(c2.getId()).getStatus());
+			@Override
+			public void onClientDisconnect(Client client, ClientConnection clientConnection, String reasonText) {
+				System.out.println("disconnect: " + client.getId());
+			}
 
-		c1.AddConnection(new ConnectionWrapper());
-		manager.rebuildClientsState();
-		// pending
-		assertEquals(ClientStatus.Pending, manager.getClient(c1.getId()).getStatus());
-		assertEquals(ClientStatus.Offline, manager.getClient(c2.getId()).getStatus());
+			@Override
+			public void onClientConnect(Client client, ClientConnection clientConnection) {
+				System.out.println("connect: " + client.getId());
+			}
+		});
 
-		c1.flush(new CancellationToken(), 10);
-		manager.rebuildClientsState();
-		// idle
-		assertEquals(ClientStatus.Idle, manager.getClient(c1.getId()).getStatus());
+		Client c1 = manager.connectClient("1", new ConnectionMock(false, false));
+		Client c2 = manager.connectClient("2", new ConnectionMock(false, false));
+		manager.rebuildState();
+		assertEquals(0, manager.getConnectionCount());
+		assertEquals(0, manager.getClient(c1.getId()).getConnectionsCount());
+		assertEquals(0, manager.getClient(c2.getId()).getConnectionsCount());
 
-		c1.AddConnection(new ConnectionWrapper());
-		manager.rebuildClientsState();
-		assertTrue(manager.isReachMaxConnectionCount());
+		c1.addConnection(new ConnectionMock());
+		manager.rebuildState();
+		assertEquals(1, manager.getClient(c1.getId()).getConnectionsCount());
+		assertEquals(0, manager.getClient(c2.getId()).getConnectionsCount());
 	}
 }
