@@ -2,19 +2,26 @@
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-
   <groupId>com.taobao.top</groupId>
   <artifactId>top-push</artifactId>
-  <version>1.0-SNAPSHOT</version>
-  <packaging>war</packaging>
+  <version>2.0-SNAPSHOT</version>
+  <packaging>jar</packaging>
 
   <name>top-push</name>
   <url>http://open.taobao.com</url>
 
+  <distributionManagement>
+    <repository>
+      <id>releases</id>
+      <url>http://mvnrepo.taobao.ali.com/mvn/releases</url>
+    </repository>
+    <snapshotRepository>
+      <id>snapshots</id>
+      <url>http://mvnrepo.taobao.ali.com/mvn/snapshots</url>
+    </snapshotRepository>
+  </distributionManagement>
+
   <properties>
-  	<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <jetty.version>8.1.10.v20130312</jetty.version>
-    <javax.servlet.version>3.0.0.v201112011016</javax.servlet.version>
   </properties>
 
   <dependencies>
@@ -24,88 +31,23 @@
       <version>4.8.2</version>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>commons-lang</groupId>
-      <artifactId>commons-lang</artifactId>
-      <version>2.2</version>
-      <scope>test</scope>
-    </dependency>
-
-    <!--jetty-->
-    <dependency>
-      <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-websocket</artifactId>
-      <version>${jetty.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.jetty.orbit</groupId>
-      <artifactId>javax.servlet</artifactId>
-      <version>${javax.servlet.version}</version>
-    </dependency>
-    <dependency>
-	    <groupId>org.eclipse.jetty</groupId>
-	    <artifactId>jetty-server</artifactId>
-	    <version>${jetty.version}</version>
-	    <scope>test</scope>
-   	</dependency>
-    <dependency>
-      <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-servlet</artifactId>
-      <version>${jetty.version}</version>
-      <scope>test</scope>
-    </dependency>
   </dependencies>
 
   <build>
     <plugins>
       <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>build-helper-maven-plugin</artifactId>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
         <executions>
           <execution>
-            <phase>generate-sources</phase>
-            <goals><goal>add-source</goal></goals>
-            <configuration>
-              <sources>
-                <source>src/main/protocol</source>
-                <source>jetty-support/main</source>
-              </sources>
-            </configuration>
+            <id>attach-sources</id>
+            <goals>
+              <goal>jar</goal>
+            </goals>
           </execution>
         </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>build-helper-maven-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>add-test</id>
-            <phase>generate-sources</phase>
-            <goals><goal>add-test-source</goal></goals>
-            <configuration>
-              <sources>
-                <source>src/test/protocol</source>
-                <source>jetty-support/test</source>
-              </sources>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <!--maven-jetty-->
-      <plugin>
-        <groupId>org.mortbay.jetty</groupId>
-        <artifactId>jetty-maven-plugin</artifactId>
-        <version>${jetty.version}</version>
-        <configuration>
-          <scanIntervalSeconds>10</scanIntervalSeconds>
-          <webAppConfig>
-            <contextPath>/</contextPath>
-          </webAppConfig>
-          <jettyXml>scripts/jetty.xml</jettyXml>
-        </configuration>
       </plugin>
     </plugins>
-
     <pluginManagement>
       <plugins>
         <plugin>
@@ -122,5 +64,4 @@
       </plugins>
     </pluginManagement>
   </build>
-
 </project>

@@ -10,7 +10,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 public class Sender implements Runnable {
-	private Logger logger;
 	private CancellationToken token;
 	private Semaphore semaphore;
 	private ExecutorService threadPool;
@@ -24,11 +23,10 @@ public class Sender implements Runnable {
 
 	private Queue<Client> pendingClients;
 
-	public Sender(LoggerFactory loggerFactory,
+	public Sender(
 			CancellationToken token,
 			Semaphore semaphore,
 			int senderCount) {
-		this.logger = loggerFactory.create(this);
 		this.token = token;
 		this.semaphore = semaphore;
 

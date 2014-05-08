@@ -18,7 +18,6 @@ import com.taobao.top.push.ClientConnection.SendStatus;
 public class Client {
 	private Random rd = new Random();
 	private int maxPendingCount = 10000;
-	private Logger logger;
 	private Object id;
 	// ping from any connection
 	private Date lastPingTime;
@@ -36,15 +35,13 @@ public class Client {
 	private boolean deliveryRateEnabled;
 	private DeliveryRater deliveryRater;
 
-	public Client(LoggerFactory factory, Object id) {
-		this(factory, id, null, null);
+	public Client(Object id) {
+		this(id, null, null);
 	}
 
-	public Client(LoggerFactory factory,
-			Object id,
+	public Client(Object id,
 			MessageStateHandler messageStateHandler,
 			ClientStateHandler clientStateHandler) {
-		this.logger = factory.create(this);
 		this.id = id;
 		this.receivePing();
 		this.connections = new LinkedList<ClientConnection>();
@@ -151,13 +148,6 @@ public class Client {
 		}
 		this.totalSendMessageCount += temp;
 		this.deliveryRater.increaseSendCount(temp);
-
-		if (temp > 0 && this.logger.isInfoEnabled())
-			this.logger.info(
-					"flush %s messages to client#%s, cost %sms, totalSendMessageCount=%s",
-					temp, this.getId(),
-					System.currentTimeMillis() - begin,
-					this.totalSendMessageCount);
 	}
 
 	public synchronized void disconnect(String reasonText) {
@@ -168,14 +158,10 @@ public class Client {
 				ClientConnection connection = this.connections.get(i);
 				connection.close(reasonText);
 				this.onDisconnect(connection);
-				this.logger.info("client#%s disconnect a connection from %s: %s",
-						this.getId(),
-						connection.getOrigin(),
-						reasonText);
 			} catch (IndexOutOfBoundsException e) {
 				break;
 			} catch (Exception e) {
-				this.logger.error(e);
+				e.printStackTrace();
 			}
 		}
 		this.connections.clear();
@@ -183,15 +169,11 @@ public class Client {
 
 	protected synchronized void AddConnection(ClientConnection conn) {
 		this.connections.add(conn);
-		this.logger.info("client#%s add new connection from %s",
-				this.getId(), conn.getOrigin());
 		this.onConnect(conn);
 	}
 
 	protected synchronized void RemoveConnection(ClientConnection conn) {
 		this.connections.remove(conn);
-		this.logger.info("client#%s remove a connection from %s",
-				this.getId(), conn.getOrigin());
 		this.onDisconnect(conn);
 	}
 
@@ -219,9 +201,9 @@ public class Client {
 
 			ClientConnection connection = (ClientConnection) connectionQueue.poll();
 			if (connection == null) {
-				this.logger.info(String.format(
-						"client#%s no valid connection, drop message: %s",
-						this.getId(), message));
+				// this.logger.info(String.format(
+				// "client#%s no valid connection, drop message: %s",
+				// this.getId(), message));
 				onDrop(message, "no valid connection");
 				return false;
 			}
@@ -229,10 +211,10 @@ public class Client {
 			if (!connection.isOpen()) {
 				// FIXME maybe should not remove here, just using pushmanager.stateBuilder for this
 				this.RemoveConnection(connection);
-				if (this.logger.isInfoEnabled())
-					this.logger.info("connection#%s[%s] is closed, remove it",
-							connection.getId(),
-							connection.getOrigin());
+				// if (this.logger.isInfoEnabled())
+				// this.logger.info("connection#%s[%s] is closed, remove it",
+				// connection.getId(),
+				// connection.getOrigin());
 				continue;
 			}
 
@@ -242,10 +224,10 @@ public class Client {
 				status = connection.sendMessage(message);
 			} catch (Exception e) {
 				// exception maybe any kind of course, just contine
-				this.logger.error(String.format("send message error to %s[%s]: %s",
-						connection.getId(),
-						connection.getOrigin(),
-						message), e);
+				// this.logger.error(String.format("send message error to %s[%s]: %s",
+				// connection.getId(),
+				// connection.getOrigin(),
+				// message), e);
 				continue;
 			}
 

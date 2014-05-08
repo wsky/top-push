@@ -10,9 +10,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
 
 public class PushManager {
-	private LoggerFactory loggerFactory;
-	private Logger logger;
-
 	private Object clientLock = new Object();
 	private int maxConnectionCount = 10000;
 
@@ -33,11 +30,7 @@ public class PushManager {
 	private ClientStateHandler clientStateHandler;
 	private MessageStateHandler messageStateHandler;
 
-	public PushManager(LoggerFactory loggerFactory,
-			int senderCount,
-			int stateBuilderIdle) {
-		this.loggerFactory = loggerFactory;
-		this.logger = this.loggerFactory.create(this);
+	public PushManager(int senderCount, int stateBuilderIdle) {
 		this.clients = new ConcurrentHashMap<Object, Client>(1000);
 		// TODO move to start and support start/stop/restart
 		this.token = new CancellationToken();
@@ -122,7 +115,7 @@ public class PushManager {
 			synchronized (this.clientLock) {
 				if (!this.clients.containsKey(id))
 					this.clients.put(id, new Client(
-							this.loggerFactory, id,
+							id,
 							this.messageStateHandler,
 							this.clientStateHandler));
 			}
@@ -132,7 +125,7 @@ public class PushManager {
 
 	protected void prepareSenders() {
 		this.senderSemaphore = new Semaphore(0);
-		this.sender = new Sender(this.loggerFactory, this.token, this.senderSemaphore, this.senderCount);
+		this.sender = new Sender(this.token, this.senderSemaphore, this.senderCount);
 		this.sendWorker = new Thread(this.sender);
 		this.sendWorker.setDaemon(true);
 		this.sendWorker.setName("push-sender");
@@ -140,7 +133,6 @@ public class PushManager {
 	}
 
 	protected void prepareChecker(int stateBuilderIdle) {
-		// timer check
 		TimerTask task = new TimerTask() {
 			public void run() {
 				if (stateBuilding)
@@ -151,20 +143,12 @@ public class PushManager {
 						return;
 					stateBuilding = true;
 				}
-				// checking senders
-				try {
-					if (!sendWorker.isAlive()) {
-						logger.fatal("sender is broken! restarting...");
-						prepareSenders();
-					}
-				} catch (Exception e) {
-					logger.error(e);
-				}
+
 				try {
 					rebuildClientsState();
 					senderSemaphore.release();
 				} catch (Exception e) {
-					logger.fatal("rebuildClientsState error!", e);
+					error("rebuildClientsState error!", e);
 				}
 
 				stateBuilding = false;
@@ -185,8 +169,6 @@ public class PushManager {
 				try {
 					client = iterator.next().getValue();
 				} catch (Exception e) {
-					if (this.logger.isDebugEnabled())
-						this.logger.debug(e);
 					if (e instanceof ConcurrentModificationException)
 						flag = true;
 					break;
@@ -211,11 +193,17 @@ public class PushManager {
 					client.markAsPending();
 					this.sender.pendingClient(client);
 				} catch (Exception e) {
-					this.logger.error(String.format(
+					this.error(String.format(
 							"error on rebuilding client#%s state", client.getId()), e);
 				}
 			}
 		} while (flag);
 		this.totalConnectionCount = total;
+	}
+
+	protected void error(Object message, Exception e) {
+		System.out.println(message);
+		// FIXME log error
+		e.printStackTrace();
 	}
 }
