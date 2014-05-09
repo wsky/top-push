@@ -1,28 +1,22 @@
 package com.taobao.top.push;
 
-import java.util.List;
+import java.util.Queue;
 
 import com.taobao.top.push.ClientConnection.SendStatus;
 
-public class ClientMessageSender implements MessageSender {
-	private List<ClientConnection> connections;
-	private int index;
+public class BatchedMessageSender implements MessageSender {
+	private Queue<ClientConnection> connections;
 
-	public ClientMessageSender(List<ClientConnection> connections) {
+	public BatchedMessageSender(Queue<ClientConnection> connections) {
 		this.connections = connections;
 	}
 
-	@Override
 	public boolean send(Object message) {
-		int size = this.connections.size();
-		int begin = this.index++ % size;
-		int i = begin;
-
 		do {
-			ClientConnection connection = this.connections.get(i);
+			ClientConnection connection = this.connections.poll();
 
 			if (connection == null)
-				break;
+				return false;
 
 			if (!connection.isOpen())
 				continue;
@@ -31,20 +25,18 @@ public class ClientMessageSender implements MessageSender {
 			try {
 				status = connection.sendMessage(message);
 			} catch (Exception e) {
-				// FIXME log error
 				continue;
 			}
 
 			switch (status) {
 			case SENT:
+				this.connections.add(connection);
 				return true;
 			case DROP:
 				return true;
 			case RETRY:
 				continue;
 			}
-		} while ((i = i + 1 >= size ? 0 : i + 1) != begin);
-
-		return false;
+		} while (true);
 	}
 }

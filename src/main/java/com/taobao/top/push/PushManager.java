@@ -11,7 +11,7 @@ import java.util.TimerTask;
 public class PushManager {
 	private Map<Object, Client> clients;
 	private ClientStateHandler clientStateHandler;
-	private MessageSender sender;
+	private MessagingScheduler sender;
 
 	private Timer timer;
 	private TimerTask timerTask;

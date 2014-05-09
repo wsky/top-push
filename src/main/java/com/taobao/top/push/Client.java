@@ -11,26 +11,36 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class Client {
 	private Object id;
 	private List<ClientConnection> connections;
+
+	private MessagingScheduler scheduler;
 	private MessageSender sender;
 
 	private Random rd = new Random();
 
-	public Client(Object id, MessageSender sender) {
+	public Client(Object id, MessagingScheduler scheduler) {
 		this.id = id;
-		this.sender = sender;
+		this.scheduler = scheduler;
 		this.connections = new ArrayList<ClientConnection>();
+		this.sender = new ClientMessageSender(this.connections);
 	}
 
 	public Object getId() {
 		return this.id;
 	}
 
-	public void send(Object message, boolean ordering, MessageCallback callback) {
-		this.sender.send(message);
+	public void send(final Object message, boolean ordering, MessageCallback callback) {
+		if (!ordering) {
+			this.scheduler.schedule(this, new Runnable() {
+				@Override
+				public void run() {
+					sender.send(message);
+				}
+			});
+		}
 	}
 
-	public ClientMessageSender newSender() {
-		return new ClientMessageSender(this.createQueue());
+	public MessageSender newSender() {
+		return new BatchedMessageSender(this.createQueue());
 	}
 
 	public int getPendingMessagesCount() {
