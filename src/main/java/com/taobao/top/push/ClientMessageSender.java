@@ -11,9 +11,9 @@ public class ClientMessageSender implements MessageSender {
 	}
 
 	@Override
-	public boolean send(Object message) {
+	public MessagingStatus send(Object message) {
 		if (this.connections.length == 0)
-			return false;
+			return MessagingStatus.NONE_CONNECTION;
 
 		// use copy avoid index out of range
 		ClientConnection[] connections = this.connections;
@@ -34,20 +34,19 @@ public class ClientMessageSender implements MessageSender {
 			try {
 				status = connection.sendMessage(message);
 			} catch (Exception e) {
-				// FIXME log error
 				continue;
 			}
 
 			switch (status) {
 			case SENT:
-				return true;
-			case DROP:
-				return true;
+				return MessagingStatus.SENT;
+			case IN_DOUBT:
+				return MessagingStatus.IN_DOUBT;
 			case RETRY:
 				continue;
 			}
 		} while ((i = i + 1 >= connections.length ? 0 : i + 1) != begin);
 
-		return false;
+		return MessagingStatus.FAULT;
 	}
 }

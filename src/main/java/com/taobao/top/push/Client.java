@@ -29,19 +29,25 @@ public class Client {
 		this.scheduler = scheduler;
 	}
 
-	public void send(final Object message, boolean ordering, MessageCallback callback) {
+	public void send(final Object message, boolean ordering, final MessagingHandler handler) {
 		if (!ordering) {
 			this.scheduler.schedule(this, new Runnable() {
 				@Override
 				public void run() {
-					sender.send(message);
+					try {
+						if (handler.preSend())
+							handler.postSend(sender.send(message));
+					} catch (Exception e) {
+						handler.exceptionCaught(e);
+					}
+
 				}
 			});
 		}
 	}
 
 	public MessageSender newSender() {
-		// FIXME manage all sender
+		// TODO manage all senders
 		MessageSender sender = new BatchedMessageSender();
 		sender.setConnections(this.getConnections());
 		return sender;

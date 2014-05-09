@@ -28,7 +28,10 @@ public class BatchedMessageSender implements MessageSender {
 		this.connections = new ConcurrentLinkedQueue<ClientConnection>(list);
 	}
 
-	public boolean send(Object message) {
+	public MessagingStatus send(Object message) {
+		if (this.connections.isEmpty())
+			return MessagingStatus.NONE_CONNECTION;
+
 		// use copy
 		Queue<ClientConnection> connections = this.connections;
 
@@ -36,7 +39,7 @@ public class BatchedMessageSender implements MessageSender {
 			ClientConnection connection = connections.poll();
 
 			if (connection == null)
-				return false;
+				break;
 
 			if (!connection.isOpen())
 				continue;
@@ -51,12 +54,14 @@ public class BatchedMessageSender implements MessageSender {
 			switch (status) {
 			case SENT:
 				connections.add(connection);
-				return true;
-			case DROP:
-				return true;
+				return MessagingStatus.SENT;
+			case IN_DOUBT:
+				return MessagingStatus.IN_DOUBT;
 			case RETRY:
 				continue;
 			}
 		} while (true);
+
+		return MessagingStatus.FAULT;
 	}
 }

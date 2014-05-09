@@ -42,6 +42,6 @@ public abstract class ClientConnection {
 	public abstract void close(String reasonText);
 
 	public enum SendStatus {
-		SENT, DROP, RETRY
+		SENT, RETRY, IN_DOUBT
 	}
 }

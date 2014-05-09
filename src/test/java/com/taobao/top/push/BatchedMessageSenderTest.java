@@ -1,8 +1,6 @@
 package com.taobao.top.push;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -17,7 +15,7 @@ public class BatchedMessageSenderTest {
 		queue.add(new ConnectionMock());
 		queue.add(new ConnectionMock());
 		BatchedMessageSender sender = new BatchedMessageSender(queue);
-		assertTrue(sender.send(null));
+		assertEquals(MessagingStatus.SENT, sender.send(null));
 		assertEquals(2, queue.size());
 	}
 
@@ -30,7 +28,7 @@ public class BatchedMessageSenderTest {
 		queue.add(c2);
 
 		BatchedMessageSender sender = new BatchedMessageSender(queue);
-		assertTrue(sender.send(null));
+		assertEquals(MessagingStatus.SENT, sender.send(null));
 		assertEquals(0, c1.sendCount);
 		assertEquals(1, c2.sendCount);
 		assertEquals(1, queue.size());
@@ -45,7 +43,7 @@ public class BatchedMessageSenderTest {
 		queue.add(c2);
 
 		BatchedMessageSender sender = new BatchedMessageSender(queue);
-		assertFalse(sender.send(null));
+		assertEquals(MessagingStatus.FAULT, sender.send(null));
 		assertEquals(0, c1.sendCount);
 		assertEquals(0, c2.sendCount);
 		assertEquals(0, queue.size());
@@ -60,7 +58,7 @@ public class BatchedMessageSenderTest {
 		queue.add(c2);
 
 		BatchedMessageSender sender = new BatchedMessageSender(queue);
-		assertTrue(sender.send(null));
+		assertEquals(MessagingStatus.SENT, sender.send(null));
 		assertEquals(0, c1.sendCount);
 		assertEquals(1, c2.sendCount);
 		assertEquals(1, queue.size());
@@ -75,20 +73,20 @@ public class BatchedMessageSenderTest {
 		queue.add(c2);
 
 		BatchedMessageSender sender = new BatchedMessageSender(queue);
-		assertFalse(sender.send(null));
+		assertEquals(MessagingStatus.FAULT, sender.send(null));
 		assertEquals(0, c1.sendCount);
 		assertEquals(0, c2.sendCount);
 		assertEquals(0, queue.size());
 	}
 
 	@Test
-	public void send_drop_test() {
+	public void send_in_doubt_test() {
 		final AtomicInteger counter = new AtomicInteger();
 		Queue<ClientConnection> queue = new ConcurrentLinkedQueue<ClientConnection>();
 		queue.add(new ConnectionMock() {
 			@Override
 			public SendStatus sendMessage(Object msg) throws Exception {
-				return SendStatus.DROP;
+				return SendStatus.IN_DOUBT;
 			}
 		});
 		queue.add(new ConnectionMock() {
@@ -100,7 +98,7 @@ public class BatchedMessageSenderTest {
 		});
 
 		BatchedMessageSender sender = new BatchedMessageSender(queue);
-		assertTrue(sender.send(null));
+		assertEquals(MessagingStatus.IN_DOUBT, sender.send(null));
 		assertEquals(1, queue.size());
 		assertEquals(0, counter.get());
 	}
@@ -123,7 +121,7 @@ public class BatchedMessageSenderTest {
 			}
 		});
 		BatchedMessageSender sender = new BatchedMessageSender(queue);
-		assertTrue(sender.send(null));
+		assertEquals(MessagingStatus.SENT, sender.send(null));
 		assertEquals(1, queue.size());
 		assertEquals(1, counter.get());
 	}
@@ -144,7 +142,7 @@ public class BatchedMessageSenderTest {
 			}
 		});
 		BatchedMessageSender sender = new BatchedMessageSender(queue);
-		assertFalse(sender.send(null));
+		assertEquals(MessagingStatus.FAULT, sender.send(null));
 		assertEquals(0, queue.size());
 	}
 

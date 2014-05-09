@@ -15,11 +15,11 @@ public class ClientMessageSenderTest {
 		ClientMessageSender sender = new ClientMessageSender();
 		sender.setConnections(new ClientConnection[] { c1, c2 });
 
-		assertTrue(sender.send(null));
+		assertEquals(MessagingStatus.SENT, sender.send(null));
 		assertEquals(1, c1.sendCount);
 		assertEquals(0, c2.sendCount);
 
-		assertTrue(sender.send(null));
+		assertEquals(MessagingStatus.SENT, sender.send(null));
 		assertEquals(1, c1.sendCount);
 		assertEquals(1, c2.sendCount);
 	}
@@ -31,7 +31,7 @@ public class ClientMessageSenderTest {
 		ClientMessageSender sender = new ClientMessageSender();
 		sender.setConnections(new ClientConnection[] { c1, c2 });
 
-		assertFalse(sender.send(null));
+		assertEquals(MessagingStatus.FAULT, sender.send(null));
 		assertEquals(0, c1.sendCount);
 		assertEquals(0, c2.sendCount);
 	}
@@ -49,11 +49,11 @@ public class ClientMessageSenderTest {
 		sender.setConnections(new ClientConnection[] { c1, c2, c3 });
 
 		// begin=0, i=0
-		assertTrue(sender.send(null));
+		assertEquals(MessagingStatus.SENT, sender.send(null));
 		// begin=1, i=0
-		assertTrue(sender.send(null));
+		assertEquals(MessagingStatus.SENT, sender.send(null));
 		// begin=2, i=0
-		assertTrue(sender.send(null));
+		assertEquals(MessagingStatus.SENT, sender.send(null));
 
 		assertEquals(3, c1.sendCount);
 		assertEquals(0, c2.sendCount);
