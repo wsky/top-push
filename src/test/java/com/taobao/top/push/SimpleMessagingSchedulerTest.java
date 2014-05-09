@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
 
-public class MessagingSchedulerTest {
+public class SimpleMessagingSchedulerTest {
 	@Test(expected = RejectedExecutionException.class)
 	public void fixed_thread_and_rejected_test() {
 		this.send_test(4, new SynchronousQueue<Runnable>(), new ThreadPoolExecutor.AbortPolicy());
@@ -28,26 +28,27 @@ public class MessagingSchedulerTest {
 	}
 
 	private void send_test(int count, BlockingQueue<Runnable> workQueue, RejectedExecutionHandler policy) {
-		MessagingScheduler scheduler = new MessagingScheduler(new ThreadPoolExecutor(
+		MessagingScheduler scheduler = new SimpleMessagingScheduler(new ThreadPoolExecutor(
 				count, count,
 				30, TimeUnit.SECONDS,
 				workQueue,
 				Executors.defaultThreadFactory(),
 				policy));
 
-		Runnable r = new Runnable() {
+		MessagingTask task = new MessagingTask() {
 			@Override
-			public void run() {
+			public MessagingStatus execute() {
 				try {
 					Thread.sleep(100);
 				} catch (InterruptedException e) {
 				}
+				return MessagingStatus.SENT;
 			}
 		};
 
 		for (int i = 0; i < count; i++)
-			scheduler.schedule(null, r);
+			scheduler.schedule(null, task);
 
-		scheduler.schedule(null, r);
+		scheduler.schedule(null, task);
 	}
 }
