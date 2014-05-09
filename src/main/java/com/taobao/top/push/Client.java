@@ -10,6 +10,8 @@ public class Client {
 	private MessagingScheduler scheduler;
 	private MessageSender sender;
 
+	private int pendingCount;
+
 	public Client(Object id) {
 		this.id = id;
 		this.connections = new ArrayList<ClientConnection>();
@@ -30,17 +32,20 @@ public class Client {
 	}
 
 	public void send(final Object message, boolean ordering, final MessagingHandler handler) {
+		this.pendingCount++;
+
 		if (!ordering) {
 			this.scheduler.schedule(this, new Runnable() {
 				@Override
 				public void run() {
+					pendingCount--;
+
 					try {
 						if (handler.preSend())
 							handler.postSend(sender.send(message));
 					} catch (Exception e) {
 						handler.exceptionCaught(e);
 					}
-
 				}
 			});
 		}
@@ -54,8 +59,7 @@ public class Client {
 	}
 
 	public int getPendingMessagesCount() {
-		// FIXME pending count
-		return 0;
+		return this.pendingCount;
 	}
 
 	public int getConnectionsCount() {
