@@ -1,61 +1,13 @@
 # Top Push
 
-Message-Push abstraction component,
-
-provide a default server implementation via websocket(jetty).
-
-As a component, it was designed to be extensible, you can easily replace the transport, message protocol.
+Message-push abstraction component, provide useful messaging components.
 
 [![Build Status](https://travis-ci.org/wsky/top-push.png?branch=master)](https://travis-ci.org/wsky/top-push)
 
-server implementation:
-- jetty-support: build-in server, impl message forwarder.
-	- matched client: top-push-client https://github.com/wsky/top-push-client
-- top-link-support: poll/push mix server sample showing how it can be used
-	- https://github.com/wsky/top-link
-
-latest refact defail here:
-https://github.com/wsky/top-push/issues/35
-
-## Concept
-
-- Client/Connection
-- StateHandler
-- Scheduler
-- Queue
-
-## Sever
-
-```bash
-mvn clean jetty:run
-```
-
-## Build
-
-dev version v1.1.1
-https://github.com/wsky/top-push/issues?milestone=3&state=open
-
-- core
-
-```bash
-mvn clean -f pom-core.xml package
-```
-
-## Stress tests on AWS
-
-install
-
-```bash
-sudo sh build.sh
-```
-then log on bridge server:
-```bash
-sudo sh scripts/aws-install.sh
-```
-
-## Performance
-
-## Tuning
+- Client
+- ClientConnection
+- MessageSender
+- MessagingScheduler
 
 ## License
 
