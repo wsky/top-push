@@ -1,28 +1,31 @@
 package com.taobao.top.push;
 
-import java.util.List;
-
 import com.taobao.top.push.ClientConnection.SendStatus;
 
 public class ClientMessageSender implements MessageSender {
-	private List<ClientConnection> connections;
+	private ClientConnection[] connections;
 	private int index;
 
-	public ClientMessageSender(List<ClientConnection> connections) {
+	public void setConnections(ClientConnection[] connections) {
 		this.connections = connections;
 	}
 
 	@Override
 	public boolean send(Object message) {
-		int size = this.connections.size();
-		int begin = this.index++ % size;
+		if (this.connections.length == 0)
+			return false;
+
+		// use copy avoid index out of range
+		ClientConnection[] connections = this.connections;
+
+		int begin = this.index++ % connections.length;
 		int i = begin;
 
 		do {
-			ClientConnection connection = this.connections.get(i);
+			ClientConnection connection = connections[i];
 
 			if (connection == null)
-				break;
+				continue;
 
 			if (!connection.isOpen())
 				continue;
@@ -43,7 +46,7 @@ public class ClientMessageSender implements MessageSender {
 			case RETRY:
 				continue;
 			}
-		} while ((i = i + 1 >= size ? 0 : i + 1) != begin);
+		} while ((i = i + 1 >= connections.length ? 0 : i + 1) != begin);
 
 		return false;
 	}

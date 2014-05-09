@@ -9,7 +9,7 @@ import com.taobao.top.push.Client;
 public class ClientTest {
 	@Test
 	public void add_remove_connection_test() {
-		Client client = new Client(1, null);
+		Client client = new Client(1);
 		ConnectionMock c1 = new ConnectionMock();
 		ConnectionMock c2 = new ConnectionMock();
 		

@@ -11,7 +11,7 @@ import java.util.TimerTask;
 public class PushManager {
 	private Map<Object, Client> clients;
 	private ClientStateHandler clientStateHandler;
-	private MessagingScheduler sender;
+	private MessagingScheduler scheduler;
 
 	private Timer timer;
 	private TimerTask timerTask;
@@ -28,8 +28,8 @@ public class PushManager {
 		this.clientStateHandler = handler;
 	}
 
-	public void setSenderHighWater(int value) {
-
+	public void setMessagingScheduler(MessagingScheduler scheduler) {
+		this.scheduler = scheduler;
 	}
 
 	public void setStateBuilderPeriod(int period) {
@@ -134,7 +134,7 @@ public class PushManager {
 		if (!this.clients.containsKey(id)) {
 			synchronized (this.clients) {
 				if (!this.clients.containsKey(id))
-					this.clients.put(id, new Client(id, this.sender));
+					this.clients.put(id, new Client(id, this.scheduler));
 			}
 		}
 		return this.clients.get(id);

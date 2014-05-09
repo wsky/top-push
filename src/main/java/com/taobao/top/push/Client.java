@@ -1,12 +1,7 @@
 package com.taobao.top.push;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.Queue;
-import java.util.Random;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class Client {
 	private Object id;
@@ -15,17 +10,23 @@ public class Client {
 	private MessagingScheduler scheduler;
 	private MessageSender sender;
 
-	private Random rd = new Random();
+	public Client(Object id) {
+		this.id = id;
+		this.connections = new ArrayList<ClientConnection>();
+		this.sender = new ClientMessageSender();
+	}
 
 	public Client(Object id, MessagingScheduler scheduler) {
-		this.id = id;
-		this.scheduler = scheduler;
-		this.connections = new ArrayList<ClientConnection>();
-		this.sender = new ClientMessageSender(this.connections);
+		this(id);
+		this.setScheduler(scheduler);
 	}
 
 	public Object getId() {
 		return this.id;
+	}
+
+	public void setScheduler(MessagingScheduler scheduler) {
+		this.scheduler = scheduler;
 	}
 
 	public void send(final Object message, boolean ordering, MessageCallback callback) {
@@ -40,7 +41,10 @@ public class Client {
 	}
 
 	public MessageSender newSender() {
-		return new BatchedMessageSender(this.createQueue());
+		// FIXME manage all sender
+		MessageSender sender = new BatchedMessageSender();
+		sender.setConnections(this.getConnections());
+		return sender;
 	}
 
 	public int getPendingMessagesCount() {
@@ -59,15 +63,11 @@ public class Client {
 	protected synchronized void addConnection(ClientConnection connection) {
 		connection.setClientId(this.getId());
 		this.connections.add(connection);
+		this.sender.setConnections(this.getConnections());
 	}
 
 	protected synchronized void removeConnection(ClientConnection connection) {
 		this.connections.remove(connection);
-	}
-
-	private Queue<ClientConnection> createQueue() {
-		List<ClientConnection> list = Arrays.asList(this.connections.toArray(new ClientConnection[this.connections.size()]));
-		Collections.shuffle(list, this.rd);
-		return new ConcurrentLinkedQueue<ClientConnection>(list);
+		this.sender.setConnections(this.getConnections());
 	}
 }

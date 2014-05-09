@@ -22,6 +22,10 @@ public class MessagingScheduler {
 				Executors.defaultThreadFactory(),
 				new ThreadPoolExecutor.CallerRunsPolicy()));
 	}
+	
+	public void setSenderHighWater(int value) {
+
+	}
 
 	public void schedule(Client client, Runnable messaging) {
 		this.executor.submit(messaging);
