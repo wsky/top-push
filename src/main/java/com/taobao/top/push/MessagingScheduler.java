@@ -27,7 +27,7 @@ public class MessagingScheduler {
 	public void setSenderHighWater(int value) {
 	}
 
-	public void schedule(Client client, Runnable messaging) {
+	public void schedule(Client client, MessagingTask messaging) {
 		this.executor.submit(messaging);
 	}
 }

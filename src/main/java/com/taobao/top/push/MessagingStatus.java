@@ -4,5 +4,6 @@ public enum MessagingStatus {
 	SENT,
 	FAULT,
 	IN_DOUBT,
-	NONE_CONNECTION
+	NONE_CONNECTION,
+	ABORT
 }
