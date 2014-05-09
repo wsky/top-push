@@ -1,12 +1,12 @@
 package com.taobao.top.push;
 
 import java.util.ConcurrentModificationException;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.TreeMap;
 
 public class PushManager {
 	private Map<Object, Client> clients;
@@ -19,8 +19,7 @@ public class PushManager {
 	private int connectionCount;
 
 	public PushManager() {
-		this.clients = new HashMap<Object, Client>();
-		// new TreeMap<Object, Client>();
+		this.clients = new TreeMap<Object, Client>();
 		this.setStateBuilderPeriod(1000);
 	}
 
@@ -130,7 +129,7 @@ public class PushManager {
 		e.printStackTrace();
 	}
 
-	private Client getOrCreateClient(Object id) {
+	protected Client getOrCreateClient(Object id) {
 		if (!this.clients.containsKey(id)) {
 			synchronized (this.clients) {
 				if (!this.clients.containsKey(id))
