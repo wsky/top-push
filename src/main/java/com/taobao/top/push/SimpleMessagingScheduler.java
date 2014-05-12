@@ -23,7 +23,7 @@ public class SimpleMessagingScheduler implements MessagingScheduler {
 				new ThreadPoolExecutor.CallerRunsPolicy()));
 	}
 
-	// FIXME support high water
+	// TODO support high water
 	public void setSenderHighWater(int value) {
 	}
 
