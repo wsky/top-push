@@ -70,7 +70,7 @@ public abstract class PullRequestScheduler {
 							private boolean isBreak;
 
 							@Override
-							public boolean onMessage(List<Object> messages, boolean ordering) {
+							public boolean onMessage(List<?> messages, boolean ordering) {
 								if (messages != null)
 									pulled += messages.size();
 								return this.isBreak = !sendMessages(client, messages, ordering);
@@ -96,7 +96,7 @@ public abstract class PullRequestScheduler {
 		}
 	}
 
-	protected boolean sendMessages(Client client, List<Object> messages, boolean ordering) {
+	protected boolean sendMessages(Client client, List<?> messages, boolean ordering) {
 		if (messages == null)
 			return false;
 
@@ -154,7 +154,7 @@ public abstract class PullRequestScheduler {
 	protected abstract void pull(Object request, Client client, int amount, Callback callback);
 
 	public interface Callback {
-		public boolean onMessage(List<Object> messages, boolean ordering);
+		public boolean onMessage(List<?> messages, boolean ordering);
 
 		public void onComplete();
 	}
