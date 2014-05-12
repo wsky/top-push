@@ -18,10 +18,10 @@ public class ClientTest {
 		assertEquals(client.getId(), c1.getClientId());
 		assertEquals(client.getId(), c2.getClientId());
 		assertEquals(2, client.getConnections().length);
-		assertEquals(2, client.getConnectionsCount());
+		assertEquals(2, client.getConnectionCount());
 		
 		client.removeConnection(c1);
 		assertEquals(1, client.getConnections().length);
-		assertEquals(1, client.getConnectionsCount());
+		assertEquals(1, client.getConnectionCount());
 	}
 }

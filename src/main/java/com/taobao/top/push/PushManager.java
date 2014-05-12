@@ -63,7 +63,7 @@ public class PushManager {
 	}
 
 	public Client[] getClients() {
-		return this.clients.values().toArray(new Client[0]);
+		return this.clients.values().toArray(new Client[this.clients.size()]);
 	}
 
 	public int getConnectionCount() {
@@ -114,7 +114,7 @@ public class PushManager {
 						continue;
 					}
 
-					if (client.getPendingMessagesCount() == 0) {
+					if (client.getPendingMessageCount() == 0) {
 						this.markAsIdle(client);
 						continue;
 					}
@@ -146,7 +146,7 @@ public class PushManager {
 				this.onDisconnect(client, c, reasonText);
 			}
 		}
-		return client.getConnectionsCount();
+		return client.getConnectionCount();
 	}
 
 	private void markAsOffline(Client client) {

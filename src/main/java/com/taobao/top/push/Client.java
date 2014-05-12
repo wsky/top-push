@@ -74,11 +74,11 @@ public class Client {
 		return sender;
 	}
 
-	public int getPendingMessagesCount() {
+	public int getPendingMessageCount() {
 		return this.pendingCount;
 	}
 
-	public int getConnectionsCount() {
+	public int getConnectionCount() {
 		return this.connections.size();
 	}
 

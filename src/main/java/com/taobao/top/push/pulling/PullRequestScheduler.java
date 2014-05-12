@@ -130,11 +130,11 @@ public abstract class PullRequestScheduler {
 	}
 
 	protected boolean isOffline(Client client) {
-		return client == null || client.getConnectionsCount() == 0;
+		return client == null || client.getConnectionCount() == 0;
 	}
 
 	protected boolean reachPushMaxPending(Client client, Object request, int amount) {
-		return this.getPullMaxPendingCount(client, request) - client.getPendingMessagesCount() < (amount / 2);
+		return this.getPullMaxPendingCount(client, request) - client.getPendingMessageCount() < (amount / 2);
 	}
 
 	protected int getPullAmount(Client client, Object request) {

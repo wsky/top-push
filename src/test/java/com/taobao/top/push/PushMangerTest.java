@@ -52,13 +52,13 @@ public class PushMangerTest {
 		Client c2 = manager.connectClient("2", new ConnectionMock(false, false));
 		manager.rebuildState();
 		assertEquals(0, manager.getConnectionCount());
-		assertEquals(0, manager.getClient(c1.getId()).getConnectionsCount());
-		assertEquals(0, manager.getClient(c2.getId()).getConnectionsCount());
+		assertEquals(0, manager.getClient(c1.getId()).getConnectionCount());
+		assertEquals(0, manager.getClient(c2.getId()).getConnectionCount());
 
 		c1.addConnection(new ConnectionMock());
 		manager.rebuildState();
-		assertEquals(1, manager.getClient(c1.getId()).getConnectionsCount());
-		assertEquals(0, manager.getClient(c2.getId()).getConnectionsCount());
+		assertEquals(1, manager.getClient(c1.getId()).getConnectionCount());
+		assertEquals(0, manager.getClient(c2.getId()).getConnectionCount());
 	}
 
 	@Test
