@@ -31,6 +31,10 @@ public class Client {
 		return this.id;
 	}
 
+	public Map<Object, Object> getContext() {
+		return new HashMap<Object, Object>(this.context);
+	}
+
 	public Object getContext(Object key) {
 		return this.context.get(key);
 	}
