@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public abstract class PullingTriggers {
-	private static Logger logger = LoggerFactory.getLogger(PullingTriggers.class);
+	protected static Logger logger = LoggerFactory.getLogger(PullingTriggers.class);
 
 	private Timer dispatcher;
 	private AtomicInteger counter = new AtomicInteger();

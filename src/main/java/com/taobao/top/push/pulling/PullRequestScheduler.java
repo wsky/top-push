@@ -11,7 +11,7 @@ import com.taobao.top.push.MessageSender;
 import com.taobao.top.push.MessagingStatus;
 
 public abstract class PullRequestScheduler {
-	private static Logger logger = LoggerFactory.getLogger(PullRequestScheduler.class);
+	protected static Logger logger = LoggerFactory.getLogger(PullRequestScheduler.class);
 
 	private ExecutorService executor;
 	private PullRequestPendings pendings;
@@ -20,6 +20,10 @@ public abstract class PullRequestScheduler {
 	private int pullAmount = 320;
 	private int pullMaxPendingCount = 1000;
 	private int continuingTriggerDelay = 900;
+
+	public PullRequestScheduler(PullRequestPendings pendings) {
+		this.pendings = pendings;
+	}
 
 	public void setExecutor(ExecutorService executor) {
 		this.executor = executor;
@@ -67,7 +71,8 @@ public abstract class PullRequestScheduler {
 
 							@Override
 							public boolean onMessage(List<Object> messages, boolean ordering) {
-								pulled += messages.size();
+								if (messages != null)
+									pulled += messages.size();
 								return this.isBreak = !sendMessages(client, messages, ordering);
 							}
 
@@ -80,6 +85,7 @@ public abstract class PullRequestScheduler {
 					} catch (Exception e) {
 						logger.error("pull error", e);
 					} finally {
+						// FIXME cancel here? how about pulling is async?
 						pendings.cancelPending(request);
 					}
 				}
@@ -91,6 +97,9 @@ public abstract class PullRequestScheduler {
 	}
 
 	protected boolean sendMessages(Client client, List<Object> messages, boolean ordering) {
+		if (messages == null)
+			return false;
+
 		// TODO impl ordering push
 		MessageSender sender = client.newSender();
 		for (Object msg : messages)
