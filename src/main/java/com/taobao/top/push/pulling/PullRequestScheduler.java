@@ -13,16 +13,16 @@ import com.taobao.top.push.MessagingStatus;
 public abstract class PullRequestScheduler {
 	protected static Logger logger = LoggerFactory.getLogger(PullRequestScheduler.class);
 
+	private PullRequestLocks locks = new PullRequestLocks();
 	private ExecutorService executor;
-	private PullRequestLocks pendings;
 
 	private int pullStep = 32;
 	private int pullAmount = 320;
 	private int pullMaxPendingCount = 1000;
 	private int continuingTriggerDelay = 900;
 
-	public void setPendings(PullRequestLocks pendings) {
-		this.pendings = pendings;
+	public void setLocks(PullRequestLocks locks) {
+		this.locks = locks;
 	}
 
 	public void setExecutor(ExecutorService executor) {
@@ -59,7 +59,7 @@ public abstract class PullRequestScheduler {
 		}
 
 		try {
-			if (!this.pendings.acquire(client, request))
+			if (!this.locks.acquire(client, request))
 				return;
 
 			this.execute(new Runnable() {
@@ -78,20 +78,20 @@ public abstract class PullRequestScheduler {
 
 							@Override
 							public void onComplete() {
-								pendings.release(client, request);
+								locks.release(client, request);
 
 								if (this.isBreak || this.pulled >= amount)
 									continuingTrigger(request, continuingTriggerDelay);
 							}
 						});
 					} catch (Exception e) {
-						pendings.release(client, request);
+						locks.release(client, request);
 						logger.error("pull error", e);
 					}
 				}
 			});
 		} catch (Exception e) {
-			pendings.release(client, request);
+			locks.release(client, request);
 			logger.error("dispatch error", e);
 		}
 	}

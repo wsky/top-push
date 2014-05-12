@@ -143,8 +143,8 @@ public class PullRequestSchedulerTest {
 			this(new PullRequestLocks());
 		}
 
-		public PullingHandleMock(PullRequestLocks pendings) {
-			this.setPendings(pendings);
+		public PullingHandleMock(PullRequestLocks locks) {
+			this.setLocks(locks);
 		}
 
 		@Override
