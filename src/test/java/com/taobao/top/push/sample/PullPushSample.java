@@ -15,7 +15,7 @@ import org.slf4j.Logger;
 import com.taobao.top.push.Client;
 import com.taobao.top.push.ClientConnection;
 import com.taobao.top.push.PushManager;
-import com.taobao.top.push.pulling.PullRequestPendings;
+import com.taobao.top.push.pulling.PullRequestLocks;
 import com.taobao.top.push.pulling.PullRequestScheduler;
 import com.taobao.top.push.pulling.PullingTriggers;
 
@@ -52,7 +52,7 @@ public class PullPushSample {
 				triggers.delayTrigger(request, delay);
 			}
 		};
-		scheduler.setPendings(new PullRequestPendings());
+		scheduler.setPendings(new PullRequestLocks());
 		scheduler.setExecutor(new ThreadPoolExecutor(
 				4, 8,
 				300, TimeUnit.SECONDS,

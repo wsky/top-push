@@ -19,6 +19,7 @@ public class PullRequestSchedulerTest {
 		PullingHandleMock handle = new PullingHandleMock() {
 			@Override
 			protected void pull(Object request, Client client, int amount, Callback callback) {
+				callback.onComplete();
 				latch.countDown();
 			}
 		};
@@ -29,56 +30,60 @@ public class PullRequestSchedulerTest {
 	// pending flag
 
 	@Test
-	public void pending_test() throws InterruptedException {
-		final PullRequestPendings pendings = new PullRequestPendings();
-		PullingHandleMock handle = new PullingHandleMock(pendings) {
+	public void lock_test() throws InterruptedException {
+		final PullRequestLocks locks = new PullRequestLocks();
+		PullingHandleMock handle = new PullingHandleMock(locks) {
 			@Override
 			protected void pull(Object request, Client client, int amount, Callback callback) {
-				assertFalse(pendings.setPending(request));
+				assertFalse(locks.acquire(client, request));
 				callback.onComplete();
 			}
 		};
 		handle.dispatch(client, request);
-		assertTrue(pendings.setPending(request));
+		assertTrue(locks.acquire(client, request));
+		locks.release(client, request);
 	}
 
 	@Test
-	public void pending_canceled_if_can_not_pulling_test() throws InterruptedException {
-		final PullRequestPendings pendings = new PullRequestPendings();
-		PullingHandleMock handle = new PullingHandleMock(pendings) {
+	public void lock_released_if_can_not_pulling_test() throws InterruptedException {
+		final PullRequestLocks locks = new PullRequestLocks();
+		PullingHandleMock handle = new PullingHandleMock(locks) {
 			@Override
 			protected PullingState canPulling(Client client, Object request, int amount) {
 				return PullingState.FALSE;
 			}
 		};
 		handle.dispatch(client, request);
-		assertTrue(pendings.setPending(request));
+		assertTrue(locks.acquire(client, request));
+		locks.release(client, request);
 	}
 
 	@Test
-	public void pending_canceled_if_pull_error_test() throws InterruptedException {
-		final PullRequestPendings pendings = new PullRequestPendings();
-		PullingHandleMock handle = new PullingHandleMock(pendings) {
+	public void lock_released_if_pull_error_test() throws InterruptedException {
+		final PullRequestLocks locks = new PullRequestLocks();
+		PullingHandleMock handle = new PullingHandleMock(locks) {
 			@Override
 			protected void pull(Object request, Client client, int amount, Callback callback) {
 				throw new NullPointerException();
 			}
 		};
 		handle.dispatch(client, request);
-		assertTrue(pendings.setPending(request));
+		assertTrue(locks.acquire(client, request));
+		locks.release(client, request);
 	}
 
 	@Test
-	public void pending_canceled_if_execute_error_test() throws InterruptedException {
-		final PullRequestPendings pendings = new PullRequestPendings();
-		PullingHandleMock handle = new PullingHandleMock(pendings) {
+	public void lock_released_if_execute_error_test() throws InterruptedException {
+		final PullRequestLocks locks = new PullRequestLocks();
+		PullingHandleMock handle = new PullingHandleMock(locks) {
 			@Override
 			protected void execute(Runnable task) {
 				throw new NullPointerException();
 			}
 		};
 		handle.dispatch(client, request);
-		assertTrue(pendings.setPending(request));
+		assertTrue(locks.acquire(client, request));
+		locks.release(client, request);
 	}
 
 	// continuing trigger
@@ -135,10 +140,10 @@ public class PullRequestSchedulerTest {
 
 	class PullingHandleMock extends PullRequestScheduler {
 		public PullingHandleMock() {
-			this(new PullRequestPendings());
+			this(new PullRequestLocks());
 		}
 
-		public PullingHandleMock(PullRequestPendings pendings) {
+		public PullingHandleMock(PullRequestLocks pendings) {
 			this.setPendings(pendings);
 		}
 

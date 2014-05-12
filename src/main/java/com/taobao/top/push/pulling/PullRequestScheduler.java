@@ -14,14 +14,14 @@ public abstract class PullRequestScheduler {
 	protected static Logger logger = LoggerFactory.getLogger(PullRequestScheduler.class);
 
 	private ExecutorService executor;
-	private PullRequestPendings pendings;
+	private PullRequestLocks pendings;
 
 	private int pullStep = 32;
 	private int pullAmount = 320;
 	private int pullMaxPendingCount = 1000;
 	private int continuingTriggerDelay = 900;
 
-	public void setPendings(PullRequestPendings pendings) {
+	public void setPendings(PullRequestLocks pendings) {
 		this.pendings = pendings;
 	}
 
@@ -59,7 +59,7 @@ public abstract class PullRequestScheduler {
 		}
 
 		try {
-			if (!this.pendings.setPending(request))
+			if (!this.pendings.acquire(client, request))
 				return;
 
 			this.execute(new Runnable() {
@@ -78,20 +78,20 @@ public abstract class PullRequestScheduler {
 
 							@Override
 							public void onComplete() {
-								pendings.cancelPending(request);
+								pendings.release(client, request);
 
 								if (this.isBreak || this.pulled >= amount)
 									continuingTrigger(request, continuingTriggerDelay);
 							}
 						});
 					} catch (Exception e) {
-						pendings.cancelPending(request);
+						pendings.release(client, request);
 						logger.error("pull error", e);
 					}
 				}
 			});
 		} catch (Exception e) {
-			this.pendings.cancelPending(request);
+			pendings.release(client, request);
 			logger.error("dispatch error", e);
 		}
 	}
