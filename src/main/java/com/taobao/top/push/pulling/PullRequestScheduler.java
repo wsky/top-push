@@ -21,7 +21,7 @@ public abstract class PullRequestScheduler {
 	private int pullMaxPendingCount = 1000;
 	private int continuingTriggerDelay = 900;
 
-	public PullRequestScheduler(PullRequestPendings pendings) {
+	public void setPendings(PullRequestPendings pendings) {
 		this.pendings = pendings;
 	}
 
@@ -153,13 +153,13 @@ public abstract class PullRequestScheduler {
 
 	protected abstract void pull(Object request, Client client, int amount, Callback callback);
 
-	interface Callback {
+	public interface Callback {
 		public boolean onMessage(List<Object> messages, boolean ordering);
 
 		public void onComplete();
 	}
 
-	enum PullingState {
+	public enum PullingState {
 		TRUE,
 		FALSE,
 		Continuing

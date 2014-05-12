@@ -17,6 +17,10 @@ public class PullRequestPendings {
 	public void setTimeout(int value) {
 		this.timeout = value;
 	}
+	
+	public void clear() {
+		this.pendings.clear();
+	}
 
 	public boolean setPending(Object request) {
 		Entry<AtomicBoolean, Long> p = this.pendings.get(request);

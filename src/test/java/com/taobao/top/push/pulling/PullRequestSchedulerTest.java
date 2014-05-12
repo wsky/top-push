@@ -139,7 +139,7 @@ public class PullRequestSchedulerTest {
 		}
 
 		public PullingHandleMock(PullRequestPendings pendings) {
-			super(pendings);
+			this.setPendings(pendings);
 		}
 
 		@Override
