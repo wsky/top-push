@@ -78,15 +78,15 @@ public abstract class PullRequestScheduler {
 
 							@Override
 							public void onComplete() {
+								pendings.cancelPending(request);
+
 								if (this.isBreak || this.pulled >= amount)
 									continuingTrigger(request, continuingTriggerDelay);
 							}
 						});
 					} catch (Exception e) {
-						logger.error("pull error", e);
-					} finally {
-						// FIXME cancel here? how about pulling is async?
 						pendings.cancelPending(request);
+						logger.error("pull error", e);
 					}
 				}
 			});

@@ -35,6 +35,7 @@ public class PullRequestSchedulerTest {
 			@Override
 			protected void pull(Object request, Client client, int amount, Callback callback) {
 				assertFalse(pendings.setPending(request));
+				callback.onComplete();
 			}
 		};
 		handle.dispatch(client, request);
