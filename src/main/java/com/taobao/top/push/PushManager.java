@@ -8,7 +8,12 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.TreeMap;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class PushManager {
+	private static Logger logger = LoggerFactory.getLogger(PushManager.class);
+
 	private Map<Object, Client> clients;
 	private ClientStateHandler clientStateHandler;
 	private MessagingScheduler scheduler;
@@ -123,12 +128,6 @@ public class PushManager {
 		} while (flag);
 	}
 
-	protected void error(Object message, Exception e) {
-		System.out.println(message);
-		// FIXME log error
-		e.printStackTrace();
-	}
-
 	protected Client getOrCreateClient(Object id) {
 		if (!this.clients.containsKey(id)) {
 			synchronized (this.clients) {
@@ -175,5 +174,9 @@ public class PushManager {
 		this.connectionCount--;
 		if (this.clientStateHandler != null)
 			this.clientStateHandler.onClientDisconnect(client, connection, reasonText);
+	}
+
+	protected void error(String message, Exception e) {
+		logger.error(message, e);
 	}
 }

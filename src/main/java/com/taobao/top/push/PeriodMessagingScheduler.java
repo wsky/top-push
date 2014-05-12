@@ -16,7 +16,11 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class PeriodMessagingScheduler implements MessagingScheduler {
+	private static Logger logger = LoggerFactory.getLogger(PeriodMessagingScheduler.class);
 	private static Random RANDOM = new Random();
 
 	private Set<Client> pendingClients;
@@ -51,7 +55,12 @@ public class PeriodMessagingScheduler implements MessagingScheduler {
 		this.timer.schedule(this.task = new TimerTask() {
 			@Override
 			public void run() {
-				dispatch();
+				try {
+					dispatch();
+				} catch (Exception e) {
+					logger.error("dispatch error", e);
+				}
+
 			}
 		}, value, value);
 	}
@@ -82,7 +91,7 @@ public class PeriodMessagingScheduler implements MessagingScheduler {
 			try {
 				this.execute(client);
 			} catch (Exception e) {
-				// log
+				logger.error("dispatch error: " + client.getId(), e);
 			}
 		}
 	}
@@ -94,7 +103,7 @@ public class PeriodMessagingScheduler implements MessagingScheduler {
 				try {
 					flush(client);
 				} catch (Exception e) {
-					// log
+					logger.error("flush error: " + client.getId(), e);
 				}
 			}
 		});
@@ -102,14 +111,14 @@ public class PeriodMessagingScheduler implements MessagingScheduler {
 
 	protected void flush(Client client) {
 		Queue<MessagingTask> queue = this.getQueue(client);
-		MessagingTask task = null;
+		MessagingTask messaging = null;
 
-		while ((task = queue.poll()) != null) {
+		while ((messaging = queue.poll()) != null) {
 			try {
-				if (!this.isCompleted(task.execute()))
+				if (!this.isCompleted(messaging.execute()))
 					break;
 			} catch (Exception e) {
-				// FIXME log
+				logger.error("messaging error", e);
 			}
 		}
 	}
