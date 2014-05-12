@@ -40,10 +40,10 @@ public class PullingTriggersTest {
 
 		System.out.println(Runtime.getRuntime().totalMemory());
 		for (int i = 0; i < total; i++)
-			assertTrue(triggers.delayTrigger(request, 1000));
+			assertTrue(triggers.delayTrigger(request, 100));
 		System.out.println(Runtime.getRuntime().totalMemory());
 
-		assertFalse(triggers.delayTrigger(request, 1000));
+		assertFalse(triggers.delayTrigger(request, 100));
 
 		latch.await();
 		System.out.println(Runtime.getRuntime().totalMemory());

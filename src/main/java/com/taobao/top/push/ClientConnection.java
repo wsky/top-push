@@ -12,8 +12,10 @@ public abstract class ClientConnection {
 
 	public ClientConnection(Object id, Map<?, ?> headers) {
 		this.id = id;
-		this.headers = new HashMap<Object, Object>(headers);
 		this.connectTime = new Date();
+
+		if (headers != null)
+			this.headers = new HashMap<Object, Object>(headers);
 	}
 
 	protected void setClientId(Object id) {
@@ -29,11 +31,12 @@ public abstract class ClientConnection {
 	}
 
 	public Map<Object, Object> getHeaders() {
-		return new HashMap<Object, Object>(this.headers);
+		return this.headers != null ?
+				new HashMap<Object, Object>(this.headers) : null;
 	}
 
 	public Object getHeader(Object key) {
-		return this.headers.get(key);
+		return this.headers != null ? this.headers.get(key) : null;
 	}
 
 	public Date getConnectTime() {
