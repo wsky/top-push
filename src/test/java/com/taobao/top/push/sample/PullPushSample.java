@@ -1,5 +1,7 @@
 package com.taobao.top.push.sample;
 
+import static junit.framework.Assert.*;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,7 +43,7 @@ public class PullPushSample {
 				List<Object> messages = new ArrayList<Object>();
 				for (int i = 0; i < amount; i++)
 					messages.add(i);
-				callback.onMessage(messages, false);
+				assertTrue(callback.onMessage(messages, false));
 				callback.onComplete();
 			}
 

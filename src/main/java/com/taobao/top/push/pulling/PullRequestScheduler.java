@@ -73,7 +73,7 @@ public abstract class PullRequestScheduler {
 							public boolean onMessage(List<?> messages, boolean ordering) {
 								if (messages != null)
 									pulled += messages.size();
-								return this.isBreak = !sendMessages(client, messages, ordering);
+								return sendMessages(client, messages, ordering) ? true : !(this.isBreak = true);
 							}
 
 							@Override
