@@ -2,22 +2,22 @@ package com.taobao.top.push;
 
 public class ConnectionMock extends ClientConnection {
 	public int sendCount;
-	private boolean isOpen;
+	private boolean isValid;
 	private boolean canSend;
 
 	public ConnectionMock() {
 		this(true, true);
 	}
 
-	public ConnectionMock(boolean isOpen, boolean canSend) {
+	public ConnectionMock(boolean isValid, boolean canSend) {
 		super(null, null);
-		this.isOpen = isOpen;
+		this.isValid = isValid;
 		this.canSend = canSend;
 	}
 
 	@Override
-	public boolean isOpen() {
-		return this.isOpen;
+	public boolean isValid() {
+		return this.isValid;
 	}
 
 	@Override
@@ -27,9 +27,4 @@ public class ConnectionMock extends ClientConnection {
 		this.sendCount++;
 		return SendStatus.SENT;
 	}
-
-	@Override
-	public void close(String reasonText) {
-	}
-
 }

@@ -27,7 +27,7 @@ public class ClientMessageSender implements MessageSender {
 			if (connection == null)
 				continue;
 
-			if (!connection.isOpen())
+			if (!connection.isValid())
 				continue;
 
 			SendStatus status;

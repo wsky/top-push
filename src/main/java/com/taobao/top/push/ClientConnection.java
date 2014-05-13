@@ -43,11 +43,9 @@ public abstract class ClientConnection {
 		return this.connectTime;
 	}
 
-	public abstract boolean isOpen();
+	public abstract boolean isValid();
 
 	public abstract SendStatus sendMessage(Object msg) throws Exception;
-
-	public abstract void close(String reasonText);
 
 	public enum SendStatus {
 		SENT, RETRY, IN_DOUBT

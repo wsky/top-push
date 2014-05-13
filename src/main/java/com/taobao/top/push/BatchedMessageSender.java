@@ -41,7 +41,7 @@ public class BatchedMessageSender implements MessageSender {
 			if (connection == null)
 				break;
 
-			if (!connection.isOpen())
+			if (!connection.isValid())
 				continue;
 
 			SendStatus status;

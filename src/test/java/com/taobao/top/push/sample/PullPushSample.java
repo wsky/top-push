@@ -72,12 +72,8 @@ public class PullPushSample {
 			}
 
 			@Override
-			public boolean isOpen() {
+			public boolean isValid() {
 				return true;
-			}
-
-			@Override
-			public void close(String reasonText) {
 			}
 		});
 
