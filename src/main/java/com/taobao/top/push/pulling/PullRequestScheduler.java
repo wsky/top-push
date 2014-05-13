@@ -76,7 +76,7 @@ public abstract class PullRequestScheduler {
 								if (messages != null)
 									pulled += messages.size();
 								// TODO impl send ordering
-								return sendMessages(sender, client, messages) ? true : !(this.isBreak = true);
+								return sendMessages(sender, client, request, messages) ? true : !(this.isBreak = true);
 							}
 
 							@Override
@@ -99,14 +99,14 @@ public abstract class PullRequestScheduler {
 		}
 	}
 
-	protected boolean sendMessages(MessageSender sender, Client client, List<?> messages) {
+	protected boolean sendMessages(MessageSender sender, Client client, Object request, List<?> messages) {
 		if (messages == null)
 			return false;
 
 		boolean dropped = false;
 		for (Object msg : messages) {
 			if (dropped)
-				this.dropMessage(client, msg);
+				this.dropMessage(client, request, msg);
 			else if (!this.isMessageSent(sender.send(msg)))
 				dropped = true;
 		}
@@ -154,9 +154,9 @@ public abstract class PullRequestScheduler {
 		return this.pullMaxPendingCount;
 	}
 
-	protected void dropMessage(Client client, Object message) {
+	protected void dropMessage(Client client, Object request, Object message) {
 	}
-	
+
 	protected abstract void continuingTrigger(Object request, int delay);
 
 	protected abstract void pull(Object request, Client client, int amount, Callback callback);

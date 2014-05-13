@@ -145,7 +145,8 @@ public class PullRequestSchedulerTest {
 		final AtomicInteger count = new AtomicInteger();
 		PullingHandleMock mock = new PullingHandleMock() {
 			@Override
-			protected void dropMessage(Client client, Object message) {
+			protected void dropMessage(Client client, Object request2, Object message) {
+				assertEquals(request, request2);
 				count.incrementAndGet();
 			}
 
@@ -158,7 +159,7 @@ public class PullRequestSchedulerTest {
 				assertFalse(callback.onMessage(messages, false));
 			}
 		};
-		mock.dispatch(client, mock);
+		mock.dispatch(client, request);
 		assertEquals(2, count.get());
 	}
 
