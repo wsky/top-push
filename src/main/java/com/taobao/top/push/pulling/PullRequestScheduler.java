@@ -66,7 +66,7 @@ public abstract class PullRequestScheduler {
 				public void run() {
 					try {
 						final MessageSender sender = client.newSender();
-						
+
 						pull(request, client, amount, new Callback() {
 							private int pulled;
 							private boolean isBreak;
@@ -103,10 +103,14 @@ public abstract class PullRequestScheduler {
 		if (messages == null)
 			return false;
 
-		for (Object msg : messages)
-			if (!this.isMessageSent(sender.send(msg)))
-				return false;
-		return true;
+		boolean dropped = false;
+		for (Object msg : messages) {
+			if (dropped)
+				this.dropMessage(client, msg);
+			else if (!this.isMessageSent(sender.send(msg)))
+				dropped = true;
+		}
+		return !dropped;
 	}
 
 	protected boolean isMessageSent(MessagingStatus status) {
@@ -150,6 +154,9 @@ public abstract class PullRequestScheduler {
 		return this.pullMaxPendingCount;
 	}
 
+	protected void dropMessage(Client client, Object message) {
+	}
+	
 	protected abstract void continuingTrigger(Object request, int delay);
 
 	protected abstract void pull(Object request, Client client, int amount, Callback callback);

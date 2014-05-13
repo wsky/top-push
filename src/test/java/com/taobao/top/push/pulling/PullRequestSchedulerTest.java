@@ -2,6 +2,8 @@ package com.taobao.top.push.pulling;
 
 import static junit.framework.Assert.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -136,6 +138,28 @@ public class PullRequestSchedulerTest {
 		};
 		handle.dispatch(client, request);
 		assertEquals(1, count.get());
+	}
+
+	@Test
+	public void drop_test() {
+		final AtomicInteger count = new AtomicInteger();
+		PullingHandleMock mock = new PullingHandleMock() {
+			@Override
+			protected void dropMessage(Client client, Object message) {
+				count.incrementAndGet();
+			}
+
+			@Override
+			protected void pull(Object request, Client client, int amount, Callback callback) {
+				List<Object> messages = new ArrayList<Object>();
+				messages.add(0);
+				messages.add(1);
+				messages.add(2);
+				assertFalse(callback.onMessage(messages, false));
+			}
+		};
+		mock.dispatch(client, mock);
+		assertEquals(2, count.get());
 	}
 
 	class PullingHandleMock extends PullRequestScheduler {
