@@ -64,7 +64,7 @@ public class PullPushSample {
 		scheduler.setContinuingTriggerDelayMillis(1000);
 
 		// connect
-		manager.connectClient(clientId, new ClientConnection(clientId, null) {
+		manager.getOrCreateClient(clientId).addConnection(new ClientConnection(clientId, null) {
 			@Override
 			public SendStatus sendMessage(Object msg) throws Exception {
 				logger.info(msg.toString());

@@ -90,13 +90,13 @@ public class Client {
 		return this.connections.toArray(new ClientConnection[this.connections.size()]);
 	}
 
-	protected synchronized void addConnection(ClientConnection connection) {
+	public synchronized void addConnection(ClientConnection connection) {
 		connection.setClientId(this.getId());
 		this.connections.add(connection);
 		this.sender.setConnections(this.getConnections());
 	}
 
-	protected synchronized void removeConnection(ClientConnection connection) {
+	public synchronized void removeConnection(ClientConnection connection) {
 		this.connections.remove(connection);
 		this.sender.setConnections(this.getConnections());
 	}
