@@ -65,6 +65,8 @@ public abstract class PullRequestScheduler {
 			this.execute(new Runnable() {
 				public void run() {
 					try {
+						final MessageSender sender = client.newSender();
+						
 						pull(request, client, amount, new Callback() {
 							private int pulled;
 							private boolean isBreak;
@@ -73,7 +75,8 @@ public abstract class PullRequestScheduler {
 							public boolean onMessage(List<?> messages, boolean ordering) {
 								if (messages != null)
 									pulled += messages.size();
-								return sendMessages(client, messages, ordering) ? true : !(this.isBreak = true);
+								// TODO impl send ordering
+								return sendMessages(sender, client, messages) ? true : !(this.isBreak = true);
 							}
 
 							@Override
@@ -96,12 +99,10 @@ public abstract class PullRequestScheduler {
 		}
 	}
 
-	protected boolean sendMessages(Client client, List<?> messages, boolean ordering) {
+	protected boolean sendMessages(MessageSender sender, Client client, List<?> messages) {
 		if (messages == null)
 			return false;
 
-		// TODO impl ordering push
-		MessageSender sender = client.newSender();
 		for (Object msg : messages)
 			if (!this.isMessageSent(sender.send(msg)))
 				return false;
