@@ -1,6 +1,8 @@
 package com.taobao.top.push.pulling;
 
 import java.util.AbstractMap;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -8,6 +10,7 @@ import com.taobao.top.push.Client;
 
 public class PullRequestLocks {
 	private int timeout = 1000 * 10;
+	protected String contextKey = "locks";
 
 	public void setTimeout(int value) {
 		this.timeout = value;
@@ -53,12 +56,21 @@ public class PullRequestLocks {
 		return new AbstractMap.SimpleEntry<AtomicBoolean, Long>(new AtomicBoolean(), System.currentTimeMillis());
 	}
 
-	@SuppressWarnings("unchecked")
 	private Entry<AtomicBoolean, Long> getLock(Client client, Object request) {
-		return (Entry<AtomicBoolean, Long>) client.getContext(request);
+		return this.getLocks(client).get(request);
 	}
 
 	private void setLock(Client client, Object request, Entry<AtomicBoolean, Long> lock) {
-		client.setContext(request, lock);
+		this.getLocks(client).put(request, lock);
+	}
+
+	@SuppressWarnings("unchecked")
+	private Map<Object, Entry<AtomicBoolean, Long>> getLocks(Client client) {
+		Map<Object, Entry<AtomicBoolean, Long>> locks =
+				(Map<Object, Entry<AtomicBoolean, Long>>) client.getContext(this.contextKey);
+		if (locks == null)
+			client.setContext(this.contextKey,
+					locks = new HashMap<Object, Map.Entry<AtomicBoolean, Long>>());
+		return locks;
 	}
 }
