@@ -8,6 +8,7 @@ Message-push abstraction component, provide useful messaging components.
 - ClientConnection
 - MessageSender
 - MessagingScheduler
+- Pulling
 
 ## License
 
