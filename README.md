@@ -10,17 +10,40 @@ Message-push abstraction component, provide useful messaging components.
 - MessagingScheduler
 - Pulling
 
+## How to
+
+prepare client
+
 ```java
 PushManager manager = new PushManager();
 Client client = manager.getOrCreateClient(id);
 client.addConnection(new Connection());
+```
 
+send message
+
+```java
 // send via global sender
 client.send(msg, ordering, handler);
 
 // send in new sender
 MessageSender sender = client.newSender();
 sender.send(msg);
+```
+
+delivery rate
+
+```java
+DeliveryRater rater = new DeliveryRater();
+rater.setDeliveryRatePeriodMillis(10);
+rater.setRecoveryStep(0.1F);
+rater.setDelta(0.11F);
+
+rater.increaseSendCount(2);
+rater.increaseDeliveryNubmer(1);
+
+rater.getLatestDeliveryRate();
+rater.calculateSmartRate();
 ```
 
 ## License
