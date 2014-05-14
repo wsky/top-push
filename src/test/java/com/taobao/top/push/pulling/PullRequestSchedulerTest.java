@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.junit.After;
 import org.junit.Test;
 
 import com.taobao.top.push.Client;
@@ -14,6 +15,11 @@ import com.taobao.top.push.Client;
 public class PullRequestSchedulerTest {
 	private static Object request = "pull_request";
 	private static Client client = new Client("abc");
+
+	@After
+	public void after() {
+		new PullRequestLocks().release(client);
+	}
 
 	@Test
 	public void dispatch_test() throws InterruptedException {
@@ -43,7 +49,6 @@ public class PullRequestSchedulerTest {
 		};
 		handle.dispatch(client, request);
 		assertTrue(locks.acquire(client, request));
-		locks.release(client, request);
 	}
 
 	@Test
@@ -57,7 +62,6 @@ public class PullRequestSchedulerTest {
 		};
 		handle.dispatch(client, request);
 		assertTrue(locks.acquire(client, request));
-		locks.release(client, request);
 	}
 
 	@Test
@@ -71,7 +75,6 @@ public class PullRequestSchedulerTest {
 		};
 		handle.dispatch(client, request);
 		assertTrue(locks.acquire(client, request));
-		locks.release(client, request);
 	}
 
 	@Test
@@ -85,7 +88,6 @@ public class PullRequestSchedulerTest {
 		};
 		handle.dispatch(client, request);
 		assertTrue(locks.acquire(client, request));
-		locks.release(client, request);
 	}
 
 	// continuing trigger

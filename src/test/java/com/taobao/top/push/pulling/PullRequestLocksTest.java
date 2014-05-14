@@ -5,12 +5,18 @@ import static org.junit.Assert.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.junit.After;
 import org.junit.Test;
 
 import com.taobao.top.push.Client;
 
 public class PullRequestLocksTest {
 	private Client client = new Client(1);
+
+	@After
+	public void after() {
+		new PullRequestLocks().release(client);
+	}
 
 	@Test
 	public void acquire_test() {
@@ -19,6 +25,21 @@ public class PullRequestLocksTest {
 		assertFalse(locks.acquire(client, 1));
 		locks.release(client, 1);
 		assertTrue(locks.acquire(client, 1));
+	}
+
+	@Test
+	public void release_test() {
+		PullRequestLocks locks = new PullRequestLocks();
+
+		assertTrue(locks.acquire(client, 1));
+		assertFalse(locks.acquire(client, 1));
+
+		assertTrue(locks.acquire(client, 2));
+		assertFalse(locks.acquire(client, 2));
+
+		locks.release(client);
+		assertTrue(locks.acquire(client, 1));
+		assertTrue(locks.acquire(client, 2));
 	}
 
 	@Test

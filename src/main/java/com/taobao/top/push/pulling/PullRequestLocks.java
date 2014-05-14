@@ -43,6 +43,12 @@ public class PullRequestLocks {
 		this.getLock(client, request).getKey().set(false);
 	}
 
+	public void release(Client client) {
+		Map<Object, Entry<AtomicBoolean, Long>> locks = this.getLocks(client);
+		for (Entry<Object, Entry<AtomicBoolean, Long>> e : locks.entrySet())
+			this.release(client, e.getKey());
+	}
+
 	private void lock(Entry<AtomicBoolean, Long> lock) {
 		lock.getKey().set(true);
 		lock.setValue(System.currentTimeMillis());
@@ -64,13 +70,21 @@ public class PullRequestLocks {
 		this.getLocks(client).put(request, lock);
 	}
 
-	@SuppressWarnings("unchecked")
 	private Map<Object, Entry<AtomicBoolean, Long>> getLocks(Client client) {
-		Map<Object, Entry<AtomicBoolean, Long>> locks =
-				(Map<Object, Entry<AtomicBoolean, Long>>) client.getContext(this.contextKey);
-		if (locks == null)
-			client.setContext(this.contextKey,
-					locks = new HashMap<Object, Map.Entry<AtomicBoolean, Long>>());
+		Map<Object, Entry<AtomicBoolean, Long>> locks = this.getLocksInContext(client);
+		if (locks == null) {
+			synchronized (client) {
+				if ((locks = this.getLocksInContext(client)) == null)
+					client.setContext(
+							this.contextKey,
+							locks = new HashMap<Object, Map.Entry<AtomicBoolean, Long>>());
+			}
+		}
 		return locks;
+	}
+
+	@SuppressWarnings("unchecked")
+	private Map<Object, Entry<AtomicBoolean, Long>> getLocksInContext(Client client) {
+		return (Map<Object, Entry<AtomicBoolean, Long>>) client.getContext(this.contextKey);
 	}
 }
