@@ -10,6 +10,19 @@ Message-push abstraction component, provide useful messaging components.
 - MessagingScheduler
 - Pulling
 
+```java
+PushManager manager = new PushManager();
+Client client = manager.getOrCreateClient(id);
+client.addConnection(new Connection());
+
+// send via global sender
+client.send(msg, ordering, handler);
+
+// send in new sender
+MessageSender sender = client.newSender();
+sender.send(msg);
+```
+
 ## License
 
 	Licensed under the Apache License, Version 2.0 (the "License");
