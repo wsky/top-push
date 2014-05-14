@@ -119,7 +119,7 @@ public class PullRequestSchedulerTest {
 			@Override
 			protected PullingState canPulling(Client client, Object request, int amount) {
 				PullingState state = this.canPullingBase(client, request, 10);
-				assertEquals(PullingState.Continuing, state);
+				assertEquals(PullingState.MAX_PENDING, state);
 				return state;
 			}
 

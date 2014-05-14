@@ -50,10 +50,13 @@ public abstract class PullRequestScheduler {
 
 		PullingState state = this.canPulling(client, request, amount);
 
-		if (state == PullingState.FALSE)
+		if (state == PullingState.FALSE ||
+				state == PullingState.UNKNOWN ||
+				state == PullingState.OFFLINE ||
+				state == PullingState.AMOUNT_ZERO)
 			return;
 
-		if (state == PullingState.Continuing) {
+		if (state == PullingState.MAX_PENDING) {
 			this.continuingTrigger(request, this.continuingTriggerDelay);
 			return;
 		}
@@ -123,13 +126,13 @@ public abstract class PullRequestScheduler {
 
 	protected PullingState canPulling(Client client, Object request, int amount) {
 		if (amount <= 0)
-			return PullingState.FALSE;
+			return PullingState.AMOUNT_ZERO;
 
 		if (this.isOffline(client))
-			return PullingState.FALSE;
+			return PullingState.OFFLINE;
 
 		if (this.reachPushMaxPending(client, request, amount))
-			return PullingState.Continuing;
+			return PullingState.MAX_PENDING;
 
 		return PullingState.TRUE;
 	}
@@ -170,6 +173,9 @@ public abstract class PullRequestScheduler {
 	public enum PullingState {
 		TRUE,
 		FALSE,
-		Continuing
+		OFFLINE,
+		AMOUNT_ZERO,
+		MAX_PENDING,
+		UNKNOWN
 	}
 }
