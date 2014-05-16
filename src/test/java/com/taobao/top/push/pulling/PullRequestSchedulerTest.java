@@ -26,7 +26,7 @@ public class PullRequestSchedulerTest {
 		final CountDownLatch latch = new CountDownLatch(1);
 		PullingHandleMock handle = new PullingHandleMock() {
 			@Override
-			protected void pull(Object request, Client client, int amount, Callback callback) {
+			protected void pull(Object request, Client client, int amount, int pullStep, Callback callback) {
 				callback.onComplete();
 				latch.countDown();
 			}
@@ -42,7 +42,7 @@ public class PullRequestSchedulerTest {
 		final PullRequestLocks locks = new PullRequestLocks();
 		PullingHandleMock handle = new PullingHandleMock(locks) {
 			@Override
-			protected void pull(Object request, Client client, int amount, Callback callback) {
+			protected void pull(Object request, Client client, int amount, int pullStep, Callback callback) {
 				assertFalse(locks.acquire(client, request));
 				callback.onComplete();
 			}
@@ -56,7 +56,7 @@ public class PullRequestSchedulerTest {
 		final PullRequestLocks locks = new PullRequestLocks();
 		PullingHandleMock handle = new PullingHandleMock(locks) {
 			@Override
-			protected PullingState canPulling(Client client, Object request, int amount) {
+			protected PullingState canPulling(Client client, Object request, int amount, int pullStep) {
 				return PullingState.FALSE;
 			}
 		};
@@ -69,7 +69,7 @@ public class PullRequestSchedulerTest {
 		final PullRequestLocks locks = new PullRequestLocks();
 		PullingHandleMock handle = new PullingHandleMock(locks) {
 			@Override
-			protected void pull(Object request, Client client, int amount, Callback callback) {
+			protected void pull(Object request, Client client, int amount, int pullStep, Callback callback) {
 				throw new NullPointerException();
 			}
 		};
@@ -97,7 +97,7 @@ public class PullRequestSchedulerTest {
 		final AtomicInteger count = new AtomicInteger();
 		PullingHandleMock handle = new PullingHandleMock() {
 			@Override
-			protected void pull(Object request, Client client, int amount, Callback callback) {
+			protected void pull(Object request, Client client, int amount, int pullStep, Callback callback) {
 				callback.onMessage(null, false);
 				callback.onComplete();
 				count.incrementAndGet();
@@ -117,8 +117,8 @@ public class PullRequestSchedulerTest {
 		final AtomicInteger count = new AtomicInteger();
 		PullingHandleMock handle = new PullingHandleMock() {
 			@Override
-			protected PullingState canPulling(Client client, Object request, int amount) {
-				PullingState state = this.canPullingBase(client, request, 10);
+			protected PullingState canPulling(Client client, Object request, int amount, int pullStep) {
+				PullingState state = this.canPullingBase(client, request, 10, 1);
 				assertEquals(PullingState.MAX_PENDING, state);
 				return state;
 			}
@@ -153,7 +153,7 @@ public class PullRequestSchedulerTest {
 			}
 
 			@Override
-			protected void pull(Object request, Client client, int amount, Callback callback) {
+			protected void pull(Object request, Client client, int amount, int pullStep, Callback callback) {
 				List<Object> messages = new ArrayList<Object>();
 				messages.add(0);
 				messages.add(1);
@@ -175,12 +175,12 @@ public class PullRequestSchedulerTest {
 		}
 
 		@Override
-		protected PullingState canPulling(Client client, Object request, int amount) {
+		protected PullingState canPulling(Client client, Object request, int amount, int pullStep) {
 			return PullingState.TRUE;
 		}
 
-		protected PullingState canPullingBase(Client client, Object request, int amount) {
-			return super.canPulling(client, request, amount);
+		protected PullingState canPullingBase(Client client, Object request, int amount, int pullStep) {
+			return super.canPulling(client, request, amount, pullStep);
 		}
 
 		@Override
@@ -197,7 +197,7 @@ public class PullRequestSchedulerTest {
 		}
 
 		@Override
-		protected void pull(Object request, Client client, int amount, Callback callback) {
+		protected void pull(Object request, Client client, int amount, int pullStep, Callback callback) {
 		}
 	}
 }

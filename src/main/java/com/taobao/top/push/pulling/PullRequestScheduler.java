@@ -47,13 +47,16 @@ public abstract class PullRequestScheduler {
 
 	public void dispatch(final Client client, final Object request) {
 		final int amount = this.getPullAmount(client, request);
+		final int pullStep = this.getPullStep(client, request);
 
-		PullingState state = this.canPulling(client, request, amount);
+		PullingState state = this.acquirePulling(client, request, amount, pullStep);
 
 		if (state == PullingState.FALSE ||
 				state == PullingState.UNKNOWN ||
 				state == PullingState.OFFLINE ||
-				state == PullingState.AMOUNT_ZERO)
+				state == PullingState.AMOUNT_ZERO ||
+				state == PullingState.STEP_ZERO ||
+				state == PullingState.LOCK)
 			return;
 
 		if (state == PullingState.MAX_PENDING) {
@@ -62,15 +65,12 @@ public abstract class PullRequestScheduler {
 		}
 
 		try {
-			if (!this.locks.acquire(client, request))
-				return;
-
 			this.execute(new Runnable() {
 				public void run() {
 					try {
 						final MessageSender sender = client.newSender();
 
-						pull(request, client, amount, new Callback() {
+						pull(request, client, amount, pullStep, new Callback() {
 							private int pulled;
 							private boolean isBreak;
 
@@ -84,20 +84,20 @@ public abstract class PullRequestScheduler {
 
 							@Override
 							public void onComplete() {
-								locks.release(client, request);
+								releasePulling(client, request);
 
 								if (this.isBreak || this.pulled >= amount)
 									continuingTrigger(request, continuingTriggerDelay);
 							}
 						});
 					} catch (Exception e) {
-						locks.release(client, request);
+						releasePulling(client, request);
 						logger.error("pull error", e);
 					}
 				}
 			});
 		} catch (Exception e) {
-			locks.release(client, request);
+			releasePulling(client, request);
 			logger.error("dispatch error", e);
 		}
 	}
@@ -124,17 +124,36 @@ public abstract class PullRequestScheduler {
 		this.executor.submit(task);
 	}
 
-	protected PullingState canPulling(Client client, Object request, int amount) {
+	protected PullingState acquirePulling(Client client, Object request, int amount, int pullStep) {
+		PullingState state = this.canPulling(client, request, amount, pullStep);
+
+		if (state != PullingState.TRUE)
+			return state;
+
+		if (!this.locks.acquire(client, request))
+			return PullingState.LOCK;
+
+		return PullingState.TRUE;
+	}
+
+	protected PullingState canPulling(Client client, Object request, int amount, int pullStep) {
+		if (this.isOffline(client))
+			return PullingState.OFFLINE;
+
 		if (amount <= 0)
 			return PullingState.AMOUNT_ZERO;
 
-		if (this.isOffline(client))
-			return PullingState.OFFLINE;
+		if (pullStep <= 0)
+			return PullingState.STEP_ZERO;
 
 		if (this.reachPushMaxPending(client, request, amount))
 			return PullingState.MAX_PENDING;
 
 		return PullingState.TRUE;
+	}
+
+	protected void releasePulling(Client client, Object request) {
+		locks.release(client, request);
 	}
 
 	protected boolean isOffline(Client client) {
@@ -158,11 +177,12 @@ public abstract class PullRequestScheduler {
 	}
 
 	protected void dropMessage(Client client, Object request, Object message) {
+		// FIXME should store dropped messages
 	}
 
 	protected abstract void continuingTrigger(Object request, int delay);
 
-	protected abstract void pull(Object request, Client client, int amount, Callback callback);
+	protected abstract void pull(Object request, Client client, int amount, int pullStep, Callback callback);
 
 	public interface Callback {
 		public boolean onMessage(List<?> messages, boolean ordering);
@@ -175,7 +195,9 @@ public abstract class PullRequestScheduler {
 		FALSE,
 		OFFLINE,
 		AMOUNT_ZERO,
+		STEP_ZERO,
 		MAX_PENDING,
+		LOCK,
 		UNKNOWN
 	}
 }
