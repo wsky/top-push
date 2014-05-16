@@ -146,7 +146,7 @@ public abstract class PullRequestScheduler {
 		if (pullStep <= 0)
 			return PullingState.STEP_ZERO;
 
-		if (this.reachPushMaxPending(client, request, amount))
+		if (this.reachPullMaxPending(client, request, amount))
 			return PullingState.MAX_PENDING;
 
 		return PullingState.TRUE;
@@ -160,7 +160,7 @@ public abstract class PullRequestScheduler {
 		return client == null || client.getConnectionCount() == 0;
 	}
 
-	protected boolean reachPushMaxPending(Client client, Object request, int amount) {
+	protected boolean reachPullMaxPending(Client client, Object request, int amount) {
 		return this.getPullMaxPendingCount(client, request) - client.getPendingMessageCount() < (amount / 2);
 	}
 

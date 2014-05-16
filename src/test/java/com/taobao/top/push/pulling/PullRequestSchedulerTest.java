@@ -134,7 +134,7 @@ public class PullRequestSchedulerTest {
 			}
 
 			@Override
-			protected boolean reachPushMaxPending(Client client, Object request, int amount) {
+			protected boolean reachPullMaxPending(Client client, Object request, int amount) {
 				return true;
 			}
 		};
