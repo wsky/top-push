@@ -1,12 +1,12 @@
 package com.taobao.top.push;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class DeliveryRater {
 	private int deliveryRatePeriod = 5000;
 	private long latestPeriodBegin;
-	private AtomicInteger sendCountInPeriod;
-	private AtomicInteger deliveryNumberInPeriod;
+	private AtomicLong sendCountInPeriod;
+	private AtomicLong deliveryNumberInPeriod;
 
 	private float delta = 0.11F;
 	private float recoveryStep = 0.1F;
@@ -16,8 +16,8 @@ public class DeliveryRater {
 	private float recoveryRate = 1;
 
 	public DeliveryRater() {
-		this.sendCountInPeriod = new AtomicInteger(0);
-		this.deliveryNumberInPeriod = new AtomicInteger(0);
+		this.sendCountInPeriod = new AtomicLong(0);
+		this.deliveryNumberInPeriod = new AtomicLong(0);
 	}
 
 	public void setDeliveryRatePeriodMillis(int value) {
