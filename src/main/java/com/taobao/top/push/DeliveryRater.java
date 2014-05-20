@@ -32,11 +32,11 @@ public class DeliveryRater {
 		this.recoveryStep = value;
 	}
 
-	protected void increaseSendCount(int value) {
+	public void increaseSendCount(int value) {
 		this.sendCountInPeriod.addAndGet(value);
 	}
 
-	protected void increaseDeliveryNubmer(int value) {
+	public void increaseDeliveryNubmer(int value) {
 		this.deliveryNumberInPeriod.addAndGet(value);
 	}
 
