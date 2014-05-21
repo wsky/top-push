@@ -191,13 +191,24 @@ public abstract class PullRequestScheduler {
 	}
 
 	public enum PullingState {
-		TRUE,
-		FALSE,
-		OFFLINE,
-		AMOUNT_ZERO,
-		STEP_ZERO,
-		MAX_PENDING,
-		LOCK,
-		UNKNOWN
+		TRUE("TRUE"),
+		FALSE("FALSE"),
+		OFFLINE("OFFLINE"),
+		AMOUNT_ZERO("AMOUNT_ZERO"),
+		STEP_ZERO("STEP_ZERO"),
+		MAX_PENDING("MAX_PENDING"),
+		LOCK("LOCK"),
+		UNKNOWN("UNKNOWN");
+
+		private String name;
+
+		private PullingState(String name) {
+			this.name = name;
+		}
+
+		@Override
+		public String toString() {
+			return this.name;
+		}
 	}
 }
