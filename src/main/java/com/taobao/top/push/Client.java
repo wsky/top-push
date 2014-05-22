@@ -5,7 +5,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class Client {
+	private Logger logger;
 	private Object id;
 	private Map<Object, Object> context;
 	private List<ClientConnection> connections;
@@ -16,6 +20,7 @@ public class Client {
 	private int pendingCount;
 
 	public Client(Object id) {
+		this.logger = LoggerFactory.getLogger(this.getClass());
 		this.id = id;
 		this.context = new HashMap<Object, Object>();
 		this.connections = new ArrayList<ClientConnection>();
@@ -86,18 +91,36 @@ public class Client {
 		return this.connections.size();
 	}
 
+	public int getValidConnectionCount() {
+		int c = 0;
+		try {
+			int size = this.connections.size();
+			for (int i = 0; i < size; i++) {
+				if (this.connections.get(i).isValid())
+					c++;
+			}
+		} catch (Exception e) {
+			this.logger.warn("count error", e);
+		}
+		return c;
+	}
+
 	public ClientConnection[] getConnections() {
 		return this.connections.toArray(new ClientConnection[this.connections.size()]);
 	}
 
-	public synchronized void addConnection(ClientConnection connection) {
-		connection.setClientId(this.getId());
-		this.connections.add(connection);
-		this.sender.setConnections(this.getConnections());
+	public void addConnection(ClientConnection connection) {
+		synchronized (this.connections) {
+			connection.setClientId(this.getId());
+			this.connections.add(connection);
+			this.sender.setConnections(this.getConnections());
+		}
 	}
 
-	public synchronized void removeConnection(ClientConnection connection) {
-		this.connections.remove(connection);
-		this.sender.setConnections(this.getConnections());
+	public void removeConnection(ClientConnection connection) {
+		synchronized (this.connections) {
+			this.connections.remove(connection);
+			this.sender.setConnections(this.getConnections());
+		}
 	}
 }

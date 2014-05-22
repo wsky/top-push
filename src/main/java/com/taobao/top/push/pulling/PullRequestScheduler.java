@@ -157,7 +157,7 @@ public abstract class PullRequestScheduler {
 	}
 
 	protected boolean isOffline(Client client) {
-		return client == null || client.getConnectionCount() == 0;
+		return client == null || client.getValidConnectionCount() == 0;
 	}
 
 	protected boolean reachPullMaxPending(Client client, Object request, int amount) {
