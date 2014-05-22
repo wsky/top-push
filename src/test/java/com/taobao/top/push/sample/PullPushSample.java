@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import com.taobao.top.push.Client;
 import com.taobao.top.push.ClientConnection;
 import com.taobao.top.push.PushManager;
+import com.taobao.top.push.SendStatus;
 import com.taobao.top.push.pulling.PullRequestScheduler;
 import com.taobao.top.push.pulling.PullingTriggers;
 

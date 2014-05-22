@@ -46,8 +46,4 @@ public abstract class ClientConnection {
 	public abstract boolean isValid();
 
 	public abstract SendStatus sendMessage(Object msg) throws Exception;
-
-	public enum SendStatus {
-		SENT, RETRY, IN_DOUBT
-	}
 }

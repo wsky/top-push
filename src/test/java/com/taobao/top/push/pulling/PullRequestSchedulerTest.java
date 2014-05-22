@@ -129,7 +129,7 @@ public class PullRequestSchedulerTest {
 			}
 
 			@Override
-			protected boolean isOffline(Client client) {
+			protected boolean isInvalid(Client client) {
 				return false;
 			}
 

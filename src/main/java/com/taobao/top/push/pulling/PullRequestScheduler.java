@@ -53,7 +53,7 @@ public abstract class PullRequestScheduler {
 
 		if (state == PullingState.FALSE ||
 				state == PullingState.UNKNOWN ||
-				state == PullingState.OFFLINE ||
+				state == PullingState.NO_VALID_CONNECTION ||
 				state == PullingState.AMOUNT_ZERO ||
 				state == PullingState.STEP_ZERO ||
 				state == PullingState.LOCK)
@@ -137,8 +137,8 @@ public abstract class PullRequestScheduler {
 	}
 
 	protected PullingState canPulling(Client client, Object request, int amount, int pullStep) {
-		if (this.isOffline(client))
-			return PullingState.OFFLINE;
+		if (this.isInvalid(client))
+			return PullingState.NO_VALID_CONNECTION;
 
 		if (amount <= 0)
 			return PullingState.AMOUNT_ZERO;
@@ -156,7 +156,7 @@ public abstract class PullRequestScheduler {
 		locks.release(client, request);
 	}
 
-	protected boolean isOffline(Client client) {
+	protected boolean isInvalid(Client client) {
 		return client == null || client.getValidConnectionCount() == 0;
 	}
 
@@ -188,27 +188,5 @@ public abstract class PullRequestScheduler {
 		public boolean onMessage(List<?> messages, boolean ordering);
 
 		public void onComplete();
-	}
-
-	public enum PullingState {
-		TRUE("TRUE"),
-		FALSE("FALSE"),
-		OFFLINE("OFFLINE"),
-		AMOUNT_ZERO("AMOUNT_ZERO"),
-		STEP_ZERO("STEP_ZERO"),
-		MAX_PENDING("MAX_PENDING"),
-		LOCK("LOCK"),
-		UNKNOWN("UNKNOWN");
-
-		private String name;
-
-		private PullingState(String name) {
-			this.name = name;
-		}
-
-		@Override
-		public String toString() {
-			return this.name;
-		}
 	}
 }

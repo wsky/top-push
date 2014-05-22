@@ -7,8 +7,6 @@ import java.util.Queue;
 import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import com.taobao.top.push.ClientConnection.SendStatus;
-
 public class BatchedMessageSender implements MessageSender {
 	private static Random RANDOM = new Random();
 

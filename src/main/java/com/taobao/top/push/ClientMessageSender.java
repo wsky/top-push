@@ -1,7 +1,5 @@
 package com.taobao.top.push;
 
-import com.taobao.top.push.ClientConnection.SendStatus;
-
 public class ClientMessageSender implements MessageSender {
 	private ClientConnection[] connections;
 	private int index;
