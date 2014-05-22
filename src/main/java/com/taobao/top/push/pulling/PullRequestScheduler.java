@@ -59,7 +59,8 @@ public abstract class PullRequestScheduler {
 				state == PullingState.LOCK)
 			return;
 
-		if (state == PullingState.MAX_PENDING) {
+		if (state == PullingState.MAX_PENDING ||
+				state == PullingState.CONTINUE) {
 			this.continuingTrigger(request, this.continuingTriggerDelay);
 			return;
 		}
@@ -86,7 +87,10 @@ public abstract class PullRequestScheduler {
 							public void onComplete() {
 								releasePulling(client, request);
 
-								if (this.isBreak || this.pulled >= amount)
+								PullingState state = afterPulling(this.isBreak, this.pulled, amount);
+
+								if (state == PullingState.CONTINUE ||
+										state == PullingState.BREAK)
 									continuingTrigger(request, continuingTriggerDelay);
 							}
 						});
@@ -153,7 +157,17 @@ public abstract class PullRequestScheduler {
 	}
 
 	protected void releasePulling(Client client, Object request) {
-		locks.release(client, request);
+		this.locks.release(client, request);
+	}
+
+	protected PullingState afterPulling(boolean isBreak, int pulled, int amount) {
+		if (isBreak)
+			return PullingState.BREAK;
+
+		if (pulled < amount)
+			return PullingState.LESS_THAN_AMOUNT;
+
+		return PullingState.CONTINUE;
 	}
 
 	protected boolean isInvalid(Client client) {

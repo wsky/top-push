@@ -1,6 +1,7 @@
 package com.taobao.top.push.pulling;
 
 public enum PullingState {
+	UNKNOWN,
 	TRUE,
 	FALSE,
 	NO_VALID_CONNECTION,
@@ -8,5 +9,8 @@ public enum PullingState {
 	STEP_ZERO,
 	MAX_PENDING,
 	LOCK,
-	UNKNOWN
+
+	BREAK,
+	LESS_THAN_AMOUNT,
+	CONTINUE
 }
