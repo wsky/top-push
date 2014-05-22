@@ -87,7 +87,7 @@ public abstract class PullRequestScheduler {
 							public void onComplete() {
 								releasePulling(client, request);
 
-								PullingState state = afterPulling(this.isBreak, this.pulled, amount);
+								PullingState state = afterPulling(client, request, this.isBreak, this.pulled, amount);
 
 								if (state == PullingState.CONTINUE ||
 										state == PullingState.BREAK)
@@ -160,7 +160,7 @@ public abstract class PullRequestScheduler {
 		this.locks.release(client, request);
 	}
 
-	protected PullingState afterPulling(boolean isBreak, int pulled, int amount) {
+	protected PullingState afterPulling(Client client, Object request, boolean isBreak, int pulled, int amount) {
 		if (isBreak)
 			return PullingState.BREAK;
 
