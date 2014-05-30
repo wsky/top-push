@@ -19,7 +19,8 @@ public abstract class PullRequestScheduler {
 	private int pullStep = 32;
 	private int pullAmount = 320;
 	private int pullMaxPendingCount = 1000;
-	private int continuingTriggerDelay = 900;
+	private int continuingTriggerDelay = 1000;
+	private boolean fixedRate = true;
 
 	public void setLocks(PullRequestLocks locks) {
 		this.locks = locks;
@@ -43,6 +44,10 @@ public abstract class PullRequestScheduler {
 
 	public void setContinuingTriggerDelayMillis(int value) {
 		this.continuingTriggerDelay = value;
+	}
+
+	public void setContinuingTriggerDelayInFixedRate(boolean value) {
+		this.fixedRate = value;
 	}
 
 	public void dispatch(final Client client, final Object request) {
@@ -70,6 +75,7 @@ public abstract class PullRequestScheduler {
 				public void run() {
 					try {
 						final MessageSender sender = client.newSender();
+						final long begin = System.currentTimeMillis();
 
 						pull(request, client, amount, pullStep, new Callback() {
 							private int pulled;
@@ -89,9 +95,11 @@ public abstract class PullRequestScheduler {
 
 								PullingState state = afterPulling(client, request, this.isBreak, this.pulled, amount);
 
+								int cost = fixedRate ? (int) (System.currentTimeMillis() - begin) : 0;
+
 								if (state == PullingState.CONTINUE ||
 										state == PullingState.BREAK)
-									continuingTrigger(request, continuingTriggerDelay);
+									continuingTrigger(request, continuingTriggerDelay - cost);
 							}
 						});
 					} catch (Exception e) {

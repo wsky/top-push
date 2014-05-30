@@ -41,6 +41,11 @@ public class PullPushSample {
 		scheduler = new PullRequestScheduler() {
 			@Override
 			protected void pull(Object request, Client client, int amount, int pullStep, Callback callback) {
+				try {
+					Thread.sleep(100);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
 				List<Object> messages = new ArrayList<Object>();
 				for (int i = 0; i < amount; i++)
 					messages.add(i);

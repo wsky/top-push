@@ -34,7 +34,7 @@ public abstract class PullingTriggers {
 					counter.decrementAndGet();
 				}
 			}
-		}, delay);
+		}, delay >= 0 ? delay : 0);
 	}
 
 	protected abstract void dispatch(Object trigger);

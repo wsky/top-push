@@ -23,7 +23,21 @@ public class PullingTriggersTest {
 		assertTrue(triggers.delayTrigger(request, 500));
 		latch.await();
 		assertTrue(System.currentTimeMillis() - begin >= 500);
+	}
 
+	@Test
+	public void delay_zero_test() throws InterruptedException {
+		final CountDownLatch latch = new CountDownLatch(2);
+		PullingTriggers triggers = new PullingTriggers() {
+			@Override
+			protected void dispatch(Object trigger) {
+				latch.countDown();
+
+			}
+		};
+		assertTrue(triggers.delayTrigger(request, 0));
+		assertTrue(triggers.delayTrigger(request, -100));
+		latch.await();
 	}
 
 	@Test
