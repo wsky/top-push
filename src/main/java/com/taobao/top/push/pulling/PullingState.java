@@ -8,7 +8,6 @@ public enum PullingState {
 	AMOUNT_ZERO,
 	STEP_ZERO,
 	MAX_PENDING,
-	LOCK,
 
 	BREAK,
 	LESS_THAN_AMOUNT,

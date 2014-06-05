@@ -34,7 +34,7 @@ public class PullPushSample {
 		triggers = new PullingTriggers() {
 			@Override
 			protected void dispatch(Object trigger) {
-				scheduler.dispatch(manager.getClient(trigger), trigger);
+				scheduler.dispatch(manager.getClient(trigger), trigger,null);
 			}
 		};
 
