@@ -78,7 +78,14 @@ public class PullPushSample {
 		pullings.setPeriod(500);
 		pullings.setScheduler(scheduler);
 		
-		pullings.add(manager.getClient(clientId));
+		for (int i = 0; i < 5; i++)
+			new Thread(new Runnable() {
+				@Override
+				public void run() {
+					while (true)
+						pullings.add(manager.getClient(clientId));
+				}
+			}).start();
 		
 		System.in.read();
 	}
