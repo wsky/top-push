@@ -71,10 +71,8 @@ public class PullPushSample {
 		
 		pullings = new ClientPullings() {
 			@Override
-			protected List<Object> getPullRequests(Client client) {
-				List<Object> requests = new ArrayList<Object>();
-				requests.add("1");
-				return requests;
+			protected Object getPullRequest(Client client) {
+				return "request";
 			}
 		};
 		pullings.setPeriod(500);

@@ -2,8 +2,6 @@ package com.taobao.top.push.pulling;
 
 import static org.junit.Assert.*;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Test;
@@ -14,7 +12,7 @@ public class ClientPullingsTest {
 	public static void main(String[] args) throws InterruptedException {
 		ClientPullings pullings = new ClientPullings() {
 			@Override
-			protected List<Object> getPullRequests(Client client) {
+			protected Object getPullRequest(Client client) {
 				return null;
 			}
 			
@@ -41,10 +39,8 @@ public class ClientPullingsTest {
 	public void dispatch_test() throws InterruptedException {
 		ClientPullings pullings = new ClientPullings() {
 			@Override
-			protected List<Object> getPullRequests(Client client) {
-				List<Object> requests = new ArrayList<Object>();
-				requests.add("request");
-				return requests;
+			protected Object getPullRequest(Client client) {
+				return "request";
 			}
 			
 			@Override
@@ -60,7 +56,7 @@ public class ClientPullingsTest {
 		final AtomicInteger count = new AtomicInteger();
 		ClientPullings pullings = new ClientPullings() {
 			@Override
-			protected List<Object> getPullRequests(Client client) {
+			protected Object getPullRequest(Client client) {
 				return null;
 			}
 			

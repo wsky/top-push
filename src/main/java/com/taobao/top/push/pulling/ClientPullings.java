@@ -60,15 +60,19 @@ public abstract class ClientPullings extends PeriodTaskExecutor {
 	}
 	
 	protected void dispatch(Client client) {
-		List<Object> requests = this.getPullRequests(client);
+		Object r = this.getPullRequest(client);
 		
-		for (Object request : requests) {
-			try {
-				this.dispatch(client, request);
-			} catch (Exception e) {
-				logger.error("dispatch error: " + request, e);
+		if (r instanceof List<?>) {
+			List<?> requests = (List<?>) r;
+			for (Object o : requests) {
+				try {
+					this.dispatch(client, o);
+				} catch (Exception e) {
+					logger.error("dispatch error: " + o, e);
+				}
 			}
-		}
+		} else
+			this.dispatch(client, r);
 	}
 	
 	protected void dispatch(Client client, Object request) {
@@ -82,5 +86,5 @@ public abstract class ClientPullings extends PeriodTaskExecutor {
 		return Collections.newSetFromMap(new ConcurrentHashMap<Client, Boolean>());
 	}
 	
-	protected abstract List<Object> getPullRequests(Client client);
+	protected abstract Object getPullRequest(Client client);
 }
