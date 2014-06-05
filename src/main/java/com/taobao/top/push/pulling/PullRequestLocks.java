@@ -15,25 +15,28 @@ public class PullRequestLocks {
 	}
 	
 	public boolean acquire(Client client, Object request) {
+		return this.acquireAndGet(client, request) != null;
+	}
+	
+	public Lock acquireAndGet(Client client, Object request) {
 		Lock lock = this.getLock(client, request);
 		
 		if (lock == null) {
 			synchronized (client) {
 				if (this.getLock(client, request) == null)
 					this.setLock(client, request, lock = this.createLock());
-				
 			}
 		}
 		
 		if (this.isLocked(lock))
-			return false;
+			return null;
 		
 		synchronized (lock) {
 			if (this.isLocked(lock))
-				return false;
+				return null;
 			
 			this.lock(lock);
-			return true;
+			return lock;
 		}
 	}
 	

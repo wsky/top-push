@@ -1,6 +1,8 @@
 package com.taobao.top.push.pulling;
 
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
 
 import org.slf4j.Logger;
@@ -19,6 +21,8 @@ public abstract class PullRequestScheduler {
 	private int pullStep = 32;
 	private int pullAmount = 320;
 	private int pullMaxPendingCount = 1000;
+	
+	private Timer continuingTrigger = new Timer("continuing-trigger", true);
 	private int continuingTriggerDelay = 1000;
 	private boolean fixedRate = true;
 	
@@ -36,6 +40,10 @@ public abstract class PullRequestScheduler {
 	
 	public void setPullStep(int value) {
 		this.pullStep = value;
+	}
+	
+	public void setContinuingTrigger(Timer timer) {
+		this.continuingTrigger = timer;
 	}
 	
 	public void setContinuingTriggerDelayMillis(int value) {
@@ -61,8 +69,10 @@ public abstract class PullRequestScheduler {
 			return;
 		}
 		
-		if (state == PullingState.MAX_PENDING || state == PullingState.CONTINUE) {
-			this.continuingTrigger(request, this.continuingTriggerDelay);
+		if (state == PullingState.MAX_PENDING ||
+				state == PullingState.CONTINUE) {
+			continuing.lock();
+			this.continuingTrigger(client, request, continuing, this.continuingTriggerDelay);
 			return;
 		}
 		
@@ -93,7 +103,7 @@ public abstract class PullRequestScheduler {
 								
 								if (state == PullingState.CONTINUE || state == PullingState.BREAK) {
 									continuing.lock();
-									continuingTrigger(request, continuingTriggerDelay - cost);
+									continuingTrigger(client, request, continuing, continuingTriggerDelay - cost);
 								} else
 									continuing.unlock();
 							}
@@ -108,6 +118,22 @@ public abstract class PullRequestScheduler {
 			continuing.unlock();
 			logger.error("dispatch error", e);
 		}
+	}
+	
+	protected void continuingTrigger(final Client client,
+			final Object request,
+			final Lock continuing,
+			int delay) {
+		this.continuingTrigger.schedule(new TimerTask() {
+			@Override
+			public void run() {
+				try {
+					dispatch(client, request, continuing);
+				} catch (Exception e) {
+					logger.error("dispatch error", e);
+				}
+			}
+		}, delay >= 0 ? delay : 0);
 	}
 	
 	protected boolean sendMessages(MessageSender sender, Client client, Object request, List<?> messages) {
@@ -188,8 +214,6 @@ public abstract class PullRequestScheduler {
 	protected void dropMessage(Client client, Object request, Object message) {
 		// FIXME should store dropped messages
 	}
-	
-	protected abstract void continuingTrigger(Object request, int delay);
 	
 	protected abstract void pull(Object request, Client client, int amount, int pullStep, Callback callback);
 	
