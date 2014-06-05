@@ -22,8 +22,8 @@ public abstract class PullRequestScheduler {
 	private int pullAmount = 320;
 	private int pullMaxPendingCount = 1000;
 	
-	private Timer continuingTrigger = new Timer("continuing-trigger", true);
-	private int continuingTriggerDelay = 1000;
+	private Timer continuing = new Timer("continuing", true);
+	private int continuingDelay = 1000;
 	private boolean fixedRate = true;
 	
 	public void setExecutor(ExecutorService executor) {
@@ -42,12 +42,12 @@ public abstract class PullRequestScheduler {
 		this.pullStep = value;
 	}
 	
-	public void setContinuingTrigger(Timer timer) {
-		this.continuingTrigger = timer;
+	public void setContinuing(Timer timer) {
+		this.continuing = timer;
 	}
 	
-	public void setContinuingTriggerDelayMillis(int value) {
-		this.continuingTriggerDelay = value;
+	public void setContinuingDelayMillis(int value) {
+		this.continuingDelay = value;
 	}
 	
 	public void setContinuingTriggerDelayInFixedRate(boolean value) {
@@ -72,7 +72,7 @@ public abstract class PullRequestScheduler {
 		if (state == PullingState.MAX_PENDING ||
 				state == PullingState.CONTINUE) {
 			continuing.lock();
-			this.continuingTrigger(client, request, continuing, this.continuingTriggerDelay);
+			this.continuing(client, request, continuing, this.continuingDelay);
 			return;
 		}
 		
@@ -97,13 +97,15 @@ public abstract class PullRequestScheduler {
 							
 							@Override
 							public void onComplete() {
-								PullingState state = afterPulling(client, request, this.isBreak, this.pulled, amount);
+								PullingState state = afterPulling(
+										client, request, this.isBreak, this.pulled, amount);
 								
 								int cost = fixedRate ? (int) (System.currentTimeMillis() - begin) : 0;
 								
-								if (state == PullingState.CONTINUE || state == PullingState.BREAK) {
+								if (state == PullingState.CONTINUE ||
+										state == PullingState.BREAK) {
 									continuing.lock();
-									continuingTrigger(client, request, continuing, continuingTriggerDelay - cost);
+									continuing(client, request, continuing, continuingDelay - cost);
 								} else
 									continuing.unlock();
 							}
@@ -120,11 +122,12 @@ public abstract class PullRequestScheduler {
 		}
 	}
 	
-	protected void continuingTrigger(final Client client,
+	protected void continuing(
+			final Client client,
 			final Object request,
 			final Lock continuing,
 			int delay) {
-		this.continuingTrigger.schedule(new TimerTask() {
+		this.continuing.schedule(new TimerTask() {
 			@Override
 			public void run() {
 				try {

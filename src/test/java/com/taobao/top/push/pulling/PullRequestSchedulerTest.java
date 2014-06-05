@@ -108,7 +108,7 @@ public class PullRequestSchedulerTest {
 			}
 			
 			@Override
-			protected void continuingTrigger(Client client, Object request, Lock continuing, int delay) {
+			protected void continuing(Client client, Object request, Lock continuing, int delay) {
 				count.incrementAndGet();
 			}
 		};
@@ -129,7 +129,7 @@ public class PullRequestSchedulerTest {
 			}
 			
 			@Override
-			protected void continuingTrigger(Client client, Object request, Lock continuing, int delay) {
+			protected void continuing(Client client, Object request, Lock continuing, int delay) {
 				count.incrementAndGet();
 			}
 			
@@ -200,7 +200,7 @@ public class PullRequestSchedulerTest {
 		}
 		
 		@Override
-		protected void continuingTrigger(Client client, Object request, Lock continuing, int delay) {
+		protected void continuing(Client client, Object request, Lock continuing, int delay) {
 		}
 		
 		@Override

@@ -53,7 +53,7 @@ public class PullPushSample {
 				new ThreadPoolExecutor.CallerRunsPolicy()));
 		scheduler.setPullStep(1);
 		scheduler.setPullAmount(10);
-		scheduler.setContinuingTriggerDelayMillis(1000);
+		scheduler.setContinuingDelayMillis(1000);
 		
 		// connect
 		manager.getOrCreateClient(clientId).addConnection(new ClientConnection(clientId, null) {
