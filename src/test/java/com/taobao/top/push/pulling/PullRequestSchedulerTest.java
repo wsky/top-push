@@ -5,7 +5,6 @@ import static junit.framework.Assert.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Before;
@@ -13,15 +12,17 @@ import org.junit.Test;
 
 import com.taobao.top.push.Client;
 import com.taobao.top.push.MessagingStatus;
+import com.taobao.top.push.pulling.PullRequestLocks.Lock;
 
 public class PullRequestSchedulerTest {
 	private static Object request = "pull_request";
 	private static Client client = new Client("abc");
-	private static AtomicBoolean continuing = new AtomicBoolean(true);
+	private static Lock continuing = new Lock();
+	private static int timeout = 10;
 	
 	@Before
 	public void before() {
-		continuing.set(true);
+		continuing.lock();
 	}
 	
 	@Test
@@ -56,7 +57,7 @@ public class PullRequestSchedulerTest {
 			}
 		};
 		handle.dispatch(client, request, continuing);
-		assertFalse(continuing.get());
+		assertFalse(continuing.isLocked(timeout));
 	}
 	
 	@Test
@@ -68,7 +69,7 @@ public class PullRequestSchedulerTest {
 			}
 		};
 		handle.dispatch(client, request, continuing);
-		assertFalse(continuing.get());
+		assertFalse(continuing.isLocked(timeout));
 	}
 	
 	@Test
@@ -80,7 +81,7 @@ public class PullRequestSchedulerTest {
 			}
 		};
 		handle.dispatch(client, request, continuing);
-		assertFalse(continuing.get());
+		assertFalse(continuing.isLocked(timeout));
 	}
 	
 	@Test
@@ -92,7 +93,7 @@ public class PullRequestSchedulerTest {
 			}
 		};
 		handle.dispatch(client, request, continuing);
-		assertFalse(continuing.get());
+		assertFalse(continuing.isLocked(timeout));
 	}
 	
 	@Test
@@ -113,7 +114,7 @@ public class PullRequestSchedulerTest {
 		};
 		handle.dispatch(client, request, continuing);
 		assertEquals(2, count.get());
-		assertTrue(continuing.get());
+		assertTrue(continuing.isLocked(timeout));
 	}
 	
 	@Test
@@ -144,6 +145,7 @@ public class PullRequestSchedulerTest {
 		};
 		handle.dispatch(client, request, continuing);
 		assertEquals(1, count.get());
+		assertTrue(continuing.isLocked(timeout));
 	}
 	
 	@Test

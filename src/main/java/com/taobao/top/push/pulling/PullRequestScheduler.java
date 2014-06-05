@@ -2,7 +2,6 @@ package com.taobao.top.push.pulling;
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import com.taobao.top.push.Client;
 import com.taobao.top.push.MessageSender;
 import com.taobao.top.push.MessagingStatus;
+import com.taobao.top.push.pulling.PullRequestLocks.Lock;
 
 public abstract class PullRequestScheduler {
 	protected static Logger logger = LoggerFactory.getLogger(PullRequestScheduler.class);
@@ -46,7 +46,7 @@ public abstract class PullRequestScheduler {
 		this.fixedRate = value;
 	}
 	
-	public void dispatch(final Client client, final Object request, final AtomicBoolean continuing) {
+	public void dispatch(final Client client, final Object request, final Lock continuing) {
 		final int amount = this.getPullAmount(client, request);
 		final int pullStep = this.getPullStep(client, request);
 		
@@ -57,7 +57,7 @@ public abstract class PullRequestScheduler {
 				state == PullingState.NO_VALID_CONNECTION ||
 				state == PullingState.AMOUNT_ZERO ||
 				state == PullingState.STEP_ZERO) {
-			continuing.set(false);
+			continuing.unlock();
 			return;
 		}
 		
@@ -91,20 +91,21 @@ public abstract class PullRequestScheduler {
 								
 								int cost = fixedRate ? (int) (System.currentTimeMillis() - begin) : 0;
 								
-								if (state == PullingState.CONTINUE || state == PullingState.BREAK)
+								if (state == PullingState.CONTINUE || state == PullingState.BREAK) {
+									continuing.lock();
 									continuingTrigger(request, continuingTriggerDelay - cost);
-								else
-									continuing.set(false);
+								} else
+									continuing.unlock();
 							}
 						});
 					} catch (Exception e) {
-						continuing.set(false);
+						continuing.unlock();
 						logger.error("pull error", e);
 					}
 				}
 			});
 		} catch (Exception e) {
-			continuing.set(false);
+			continuing.unlock();
 			logger.error("dispatch error", e);
 		}
 	}
