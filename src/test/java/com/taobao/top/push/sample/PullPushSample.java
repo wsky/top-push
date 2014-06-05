@@ -11,7 +11,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.LoggerFactory;
-
 import org.slf4j.Logger;
 
 import com.taobao.top.push.Client;
@@ -19,25 +18,18 @@ import com.taobao.top.push.ClientConnection;
 import com.taobao.top.push.PushManager;
 import com.taobao.top.push.SendStatus;
 import com.taobao.top.push.pulling.PullRequestScheduler;
-import com.taobao.top.push.pulling.PullingTriggers;
+import com.taobao.top.push.pulling.ClientPullings;
 
 public class PullPushSample {
 	static Logger logger = LoggerFactory.getLogger(PullPushSample.class);
 	static PushManager manager;
-	static PullingTriggers triggers;
+	static ClientPullings pullings;
 	static PullRequestScheduler scheduler;
 	static Object clientId = "client-test";
-
+	
 	public static void main(String[] args) throws IOException, InterruptedException {
 		manager = new PushManager();
-
-		triggers = new PullingTriggers() {
-			@Override
-			protected void dispatch(Object trigger) {
-				scheduler.dispatch(manager.getClient(trigger), trigger,null);
-			}
-		};
-
+		
 		scheduler = new PullRequestScheduler() {
 			@Override
 			protected void pull(Object request, Client client, int amount, int pullStep, Callback callback) {
@@ -52,12 +44,6 @@ public class PullPushSample {
 				assertTrue(callback.onMessage(messages, false));
 				callback.onComplete();
 			}
-
-			@Override
-			protected void continuingTrigger(Object request, int delay) {
-				logger.info("continuing trigger");
-				triggers.delayTrigger(request, delay);
-			}
 		};
 		scheduler.setExecutor(new ThreadPoolExecutor(
 				4, 8,
@@ -68,7 +54,7 @@ public class PullPushSample {
 		scheduler.setPullStep(1);
 		scheduler.setPullAmount(10);
 		scheduler.setContinuingTriggerDelayMillis(1000);
-
+		
 		// connect
 		manager.getOrCreateClient(clientId).addConnection(new ClientConnection(clientId, null) {
 			@Override
@@ -76,16 +62,26 @@ public class PullPushSample {
 				logger.info(msg.toString());
 				return SendStatus.SENT;
 			}
-
+			
 			@Override
 			public boolean isValid() {
 				return true;
 			}
 		});
-
-		// trigger
-		triggers.delayTrigger(clientId, 10);
-
+		
+		pullings = new ClientPullings() {
+			@Override
+			protected List<Object> getPullRequests(Client client) {
+				List<Object> requests = new ArrayList<Object>();
+				requests.add("1");
+				return requests;
+			}
+		};
+		pullings.setPeriod(500);
+		pullings.setScheduler(scheduler);
+		
+		pullings.add(manager.getClient(clientId));
+		
 		System.in.read();
 	}
 }
