@@ -37,7 +37,7 @@ public class Client {
 	}
 
 	public Map<Object, Object> getContext() {
-		return new HashMap<Object, Object>(this.context);
+		return this.context;
 	}
 
 	public Object getContext(Object key) {
