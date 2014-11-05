@@ -19,7 +19,7 @@ public class PushMangerTest {
 	@Test
 	public void clients_perf_test() {
 		PushManager manager = new PushManager();
-		int total = 10000;
+		int total = 100000;
 		for (int i = 0; i < total; i++)
 			manager.getOrCreateClient(this.parseId(i));
 
