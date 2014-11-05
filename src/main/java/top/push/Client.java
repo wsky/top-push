@@ -1,9 +1,9 @@
 package top.push;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +22,7 @@ public class Client {
 	public Client(Object id) {
 		this.logger = LoggerFactory.getLogger(this.getClass());
 		this.id = id;
-		this.context = new HashMap<Object, Object>();
+		this.context = new ConcurrentHashMap<Object, Object>();
 		this.connections = new ArrayList<ClientConnection>();
 		this.sender = new ClientMessageSender();
 	}
