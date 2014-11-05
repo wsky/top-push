@@ -40,6 +40,14 @@ public class DeliveryRater {
 		this.deliveryNumberInPeriod.addAndGet(value);
 	}
 
+	public long getLatestSendCount() {
+		return this.sendCountInPeriod.get();
+	}
+	
+	public long getLatestDeliveryNumber() {
+		return this.deliveryNumberInPeriod.get();
+	}
+	
 	public synchronized float getLatestDeliveryRate() {
 		if (!this.isNextPeriod())
 			return this.latestRate;
